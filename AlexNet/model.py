@@ -23,7 +23,7 @@ class AlexNet(nn.Module):
         self.classifier = nn.Sequential(
             nn.Dropout(p=0.5),
             nn.Linear(128 * 6 * 6, 2048),
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=True), # inplace = True can reduce memory usage
             nn.Dropout(p=0.5),
             nn.Linear(2048, 2048),
             nn.ReLU(inplace=True),

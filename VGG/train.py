@@ -4,13 +4,11 @@ import json
 
 import torch
 import torch.nn as nn
-from torchvision import transforms, datasets, utils
-import matplotlib.pyplot as plt
-import numpy as np
+from torchvision import transforms, datasets
 import torch.optim as optim
 from tqdm import tqdm
 
-from model import AlexNet
+from model import vgg
 
 
 def main():
@@ -22,12 +20,12 @@ def main():
                                      transforms.RandomHorizontalFlip(),
                                      transforms.ToTensor(),
                                      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]),
-        "val": transforms.Compose([transforms.Resize((224, 224)),  # cannot 224, must (224, 224)
+        "val": transforms.Compose([transforms.Resize((224, 224)),
                                    transforms.ToTensor(),
                                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])}
 
-    data_root = os.path.abspath(os.path.join(os.getcwd(), ".."))  # get data root path
-    image_path = os.path.join(data_root, "flowerDataset", "flower_data")  # flower data set path
+    data_root = os.path.abspath(os.path.join(os.getcwd(), "../.."))  # get data root path
+    image_path = os.path.join(data_root, "data_set", "flower_data")  # flower data set path
     assert os.path.exists(image_path), "{} path does not exist.".format(image_path)
     train_dataset = datasets.ImageFolder(root=os.path.join(image_path, "train"),
                                          transform=data_transform["train"])
@@ -47,41 +45,32 @@ def main():
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=batch_size, shuffle=True,
-                                               num_workers=0) # change to nw
+                                               num_workers=nw)
 
     validate_dataset = datasets.ImageFolder(root=os.path.join(image_path, "val"),
                                             transform=data_transform["val"])
     val_num = len(validate_dataset)
     validate_loader = torch.utils.data.DataLoader(validate_dataset,
-                                                  batch_size=4, shuffle=False,
-                                                  num_workers=0) # change to nw
-
+                                                  batch_size=batch_size, shuffle=False,
+                                                  num_workers=nw)
     print("using {} images for training, {} images for validation.".format(train_num,
                                                                            val_num))
+
     # test_data_iter = iter(validate_loader)
     # test_image, test_label = test_data_iter.next()
-    #
-    # def imshow(img):
-    #     img = img / 2 + 0.5  # unnormalize
-    #     npimg = img.numpy()
-    #     plt.imshow(np.transpose(npimg, (1, 2, 0)))
-    #     plt.show()
-    #
-    # print(' '.join('%5s' % cla_dict[test_label[j].item()] for j in range(4)))
-    # imshow(utils.make_grid(test_image))
 
-    net = AlexNet(num_classes=5, init_weights=True)
-
+    model_name = "vgg16"
+    net = vgg(model_name=model_name, num_classes=5, init_weights=True)
     net.to(device)
     loss_function = nn.CrossEntropyLoss()
-    # pata = list(net.parameters())
-    optimizer = optim.Adam(net.parameters(), lr=0.0002)
+    optimizer = optim.Adam(net.parameters(), lr=0.0001)
 
-    epochs = 10
-    save_path = 'model/AlexNet.pth'
+    epochs = 30
     best_acc = 0.0
+    save_path = './{}Net.pth'.format(model_name)
     train_steps = len(train_loader)
     for epoch in range(epochs):
+        # train
         net.train()
         running_loss = 0.0
         train_bar = tqdm(train_loader, file=sys.stdout)
@@ -93,11 +82,16 @@ def main():
             loss.backward()
             optimizer.step()
 
+            # print statistics
             running_loss += loss.item()
-            train_bar.desc = "train epoch[{}/{}] loss:{:.3f}".format(epoch + 1, epochs, loss)
 
+            train_bar.desc = "train epoch[{}/{}] loss:{:.3f}".format(epoch + 1,
+                                                                     epochs,
+                                                                     loss)
+
+        # validate
         net.eval()
-        acc = 0.0
+        acc = 0.0  # accumulate accurate number / epoch
         with torch.no_grad():
             val_bar = tqdm(validate_loader, file=sys.stdout)
             for val_data in val_bar:
