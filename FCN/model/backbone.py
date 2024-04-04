@@ -32,9 +32,9 @@ class residualBlock(nn.Module):
         x += initial
         return self.relu(x)
     
-class ResNet(nn.Module):
+class ResNet50(nn.Module):
     def __init__(self, block, layers, numClasses=1000, groups=1, groupWidth=64):
-        super(ResNet, self).__init__()
+        super(ResNet50, self).__init__()
         self.inputC = 64
         self.dilation = 1
         self.groups = groups
