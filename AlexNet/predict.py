@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from model import AlexNet
 
 
-def main():
+def AlexNet_predict():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     data_transform = transforms.Compose(
@@ -60,4 +60,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    AlexNet_predict()

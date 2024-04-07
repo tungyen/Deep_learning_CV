@@ -13,7 +13,7 @@ from tqdm import tqdm
 from model import AlexNet
 
 
-def main():
+def AlexNet_train():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("using {} device.".format(device))
 
@@ -47,14 +47,14 @@ def main():
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=batch_size, shuffle=True,
-                                               num_workers=0) # change to nw
+                                               num_workers=nw) # change to nw
 
     validate_dataset = datasets.ImageFolder(root=os.path.join(image_path, "val"),
                                             transform=data_transform["val"])
     val_num = len(validate_dataset)
     validate_loader = torch.utils.data.DataLoader(validate_dataset,
                                                   batch_size=4, shuffle=False,
-                                                  num_workers=0) # change to nw
+                                                  num_workers=nw) # change to nw
 
     print("using {} images for training, {} images for validation.".format(train_num,
                                                                            val_num))
@@ -118,4 +118,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    AlexNet_train()

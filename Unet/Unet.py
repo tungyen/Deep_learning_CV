@@ -67,8 +67,6 @@ class UNET(nn.Module):
         self.u4 = upSampling(128)
         self.c9 = convBlock(128, 64)
         self.out = nn.Conv2d(64, numClasses, 1, 1)
-        self.sigmoid = nn.Sigmoid()
-        self.softmax = nn.Softmax(numClasses)
         
         
     def forward(self, x):
@@ -81,7 +79,7 @@ class UNET(nn.Module):
         x7 = self.c7(self.u2(x6, x3))
         x8 = self.c8(self.u3(x7, x2))
         x9 = self.c9(self.u4(x8, x1))
-        out = self.softmax(self.out(x9))
+        out = self.out(x9)
         return out
     
 if __name__ == '__main__':

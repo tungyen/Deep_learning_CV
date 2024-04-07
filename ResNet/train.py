@@ -11,7 +11,7 @@ from tqdm import tqdm
 from model import resnet34
 
 
-def main():
+def ResNet_train():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("using {} device.".format(device))
 
@@ -46,7 +46,7 @@ def main():
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=batch_size, shuffle=True,
-                                               num_workers=0)
+                                               num_workers=nw)
 
     validate_dataset = datasets.ImageFolder(root=os.path.join(image_path, "val"), transform=data_transform["val"])
     val_num = len(validate_dataset)
@@ -125,4 +125,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    ResNet_train()

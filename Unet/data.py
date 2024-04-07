@@ -21,10 +21,13 @@ class vocDataset(Dataset):
         segmentPath = os.path.join(self.dataPath, 'SegmentationClass', segmentName)
         imagePath = os.path.join(self.dataPath, 'JPEGImages', segmentName.replace('png', 'jpg'))
         
-        segmentImg = imageResize(segmentPath)
+        segmentImg = maskResize(segmentPath)
         img = imageResize(imagePath)
-        return transform(img), transform(segmentImg)
+        s = segmentImg.size[-1]
+        return transform(img), transform(segmentImg).view(s, s).long()
     
-# if __name__ == '__main__':
-#     dataPath = '../Dataset/VOCdevkit/VOC2012'
-#     data = vocDataset(dataPath)
+if __name__ == '__main__':
+    dataPath = '../Dataset/VOCdevkit/VOC2012'
+    data = vocDataset(dataPath)
+    img1, label1 = data[0]
+    print(label1.shape)

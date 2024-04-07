@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from model import resnet34
 
 
-def main():
+def ResNet_predict():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     data_transform = transforms.Compose(
@@ -61,4 +61,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    ResNet_predict()

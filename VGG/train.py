@@ -11,7 +11,7 @@ from tqdm import tqdm
 from model import vgg
 
 
-def main():
+def VGG_train():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("using {} device.".format(device))
 
@@ -112,4 +112,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    VGG_train()
