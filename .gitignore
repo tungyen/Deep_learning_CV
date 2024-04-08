@@ -34,3 +34,5 @@ VOCdevkit
 *.pth
 *.xml
 *.meta
+*.pts
+*.json

@@ -21,7 +21,7 @@ class FocalLoss(nn.Module):
         focalLoss = self.alpha * (1-pt) ** self.gamma * CE_loss
         return focalLoss
 
-def main():
+def pointNet_train():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     trainningPath = "Dataset/train"
     dataset = chairDataset(trainningPath)
@@ -51,7 +51,7 @@ def main():
                 
                 
 if __name__ =='__main__':
-    main()
+    pointNet_train()
     
     
     
