@@ -36,3 +36,4 @@ VOCdevkit
 *.meta
 *.pts
 *.json
+*.bin
