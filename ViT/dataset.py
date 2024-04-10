@@ -63,8 +63,8 @@ class flowerDataset(Dataset):
         return img, torch.tensor(flower_dict[self.labels[idx]], dtype=torch.long)
     
 
-if __name__ == '__main__':
-    data = flowerDataset('..\\Dataset\\flowerDataset\\flower_data')
-    img, label = data[5]
-    print(img.shape)
+# if __name__ == '__main__':
+#     data = flowerDataset('..\\Dataset\\flowerDataset\\flower_data')
+#     img, label = data[5]
+#     print(img.shape)
     
