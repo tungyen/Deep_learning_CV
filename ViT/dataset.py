@@ -1,70 +1,68 @@
 from torch.utils.data import Dataset
 import torch
-from torchvision import transforms
-import random
-import os
 from PIL import Image as im
 
-flower_dict = {'daisy':0, 'dandelion':1, 'roses':2, 'sunflowers':3, 'tulips':4}
+import os
+import sys
+import json
+import random
 
-data_transform = {
-        "train": transforms.Compose([transforms.RandomResizedCrop(224),
-                                     transforms.RandomHorizontalFlip(),
-                                     transforms.ToTensor(),
-                                     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
-        "val": transforms.Compose([transforms.Resize(256),
-                                   transforms.CenterCrop(224),
-                                   transforms.ToTensor(),
-                                   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])}
+
+def dataLoading(rootPath, valRatio=0.2):
+    random.seed(0)
+    flowerClasses = [cla for cla in os.listdir(rootPath) if os.path.isdir(os.path.join(rootPath, cla))]
+    flowerClasses.sort()
+    classIndex = dict((key, value) for value, key in enumerate(flowerClasses))
+    jsonStr = json.dumps(dict((val, key) for key, val in classIndex.items()), indent=4)
+    with open('classIndex.json', 'w') as jsonFile:
+        jsonFile.write(jsonStr)
+        
+    supported = [".jpg", ".JPG", ".png", ".PNG"]
+    trainImgPaths = []
+    trainLabels = []
+    valImgPaths = []
+    valLabels = []
+    classNum = []
+    
+    for cla in flowerClasses:
+        claPath = os.path.join(rootPath, cla)
+        imgPaths = [os.path.join(rootPath, cla, i) for i in os.listdir(claPath) if os.path.splitext(i)[-1] in supported]
+        imgPaths.sort()
+        claIndex = classIndex[cla]
+        classNum.append(len(imgPaths))
+        valPaths = random.sample(imgPaths, k=int(len(imgPaths) * valRatio))
+        
+        for imgPath in imgPaths:
+            if imgPath in valPaths:
+                valImgPaths.append(imgPath)
+                valLabels.append(claIndex)
+            else:
+                trainImgPaths.append(imgPath)
+                trainLabels.append(claIndex)
+                
+    return trainImgPaths, trainLabels, valImgPaths, valLabels
 
 
 class flowerDataset(Dataset):
-    def __init__(self, dataPath, train=True):
-        self.dataPath = dataPath
-        self.train = train
-        self.flowerDict = flower_dict
-        
-        if self.train:
-            self.transform = data_transform['train']
-            datasetPath = os.path.join(self.dataPath, 'train')
-        else:
-            self.transform = data_transform['val']
-            datasetPath = os.path.join(self.dataPath, 'val')
-        
-        flower_class = os.listdir(datasetPath) 
-        self.datasetPath = datasetPath
-        
-        flowerFiles = []
-        labels = []
-        
-        for cla in flower_class:
-            class_path = os.path.join(self.datasetPath, cla)
-            class_files = os.listdir(class_path)
-            
-            for class_file in class_files:
-                flowerFiles.append(class_file)
-                labels.append(cla)
-
-        data = list(zip(flowerFiles, labels))
-        random.shuffle(data)
-        flowerFiles, labels = zip(*data)
-        self.flowerFiles = list(flowerFiles)
-        self.labels = list(labels)
-                
-        
+    def __init__(self, imgPath, labels, transform=None):
+        self.imgPath = imgPath
+        self.labels = labels
+        self.transform = transform
+                   
     def __len__(self):
-        return len(self.labels)
+        return len(self.imgPath)
         
     def __getitem__(self, idx):
-        imgPath = os.path.join(self.datasetPath, self.labels[idx], self.flowerFiles[idx])
-        img = im.open(imgPath)
-        img = self.transform(img)
+        img = im.open(self.imgPath[idx])
+        label = self.labels[idx]
+        if self.transform is not None:
+            img = self.transform(img)
             
-        return img, torch.tensor(flower_dict[self.labels[idx]], dtype=torch.long)
+        return img, label
     
-
-# if __name__ == '__main__':
-#     data = flowerDataset('..\\Dataset\\flowerDataset\\flower_data')
-#     img, label = data[5]
-#     print(img.shape)
-    
+    @staticmethod
+    def collate_fn(batch):
+        images, labels = tuple(zip(*batch))
+        images = torch.stack(images, dim=0)
+        labels = torch.as_tensor(labels)
+        return images, labels

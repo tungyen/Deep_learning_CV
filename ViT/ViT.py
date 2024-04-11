@@ -13,42 +13,35 @@ class PatchEmbedding(nn.Module):
         self.inputC = inputC
         self.embeddingC = embeddingC
 
-        self.embedding = nn.Sequential(
-            Rearrange('b c (h h1) (w w1) -> b (h w) (h1 w1 c)', h1=self.patchSize, w1=self.patchSize),
-            nn.Linear(self.patchSize*self.patchSize*self.inputC, self.embeddingC)
-        )
+        self.embedding = nn.Conv2d(inputC, embeddingC, kernel_size=patchSize, stride=patchSize)
         self.patchLength = self.imgSize // self.patchSize
         self.CLS = nn.Parameter(torch.randn(1, 1, self.embeddingC))
         self.posEmbedding = nn.Parameter(torch.randn(self.patchLength**2+1, self.embeddingC))
+        nn.init.trunc_normal_(self.posEmbedding, std=0.02)
+        nn.init.trunc_normal_(self.CLS, std=0.02)
         
     def forward(self, x):
         batchSize = x.shape[0]
-        x = self.embedding(x)
+        x = self.embedding(x).flatten(2).transpose(1, 2)
         clsToken = repeat(self.CLS, 'h w c -> b (h w) c', b=batchSize)
         x = torch.cat([clsToken, x], dim=1)
         x += self.posEmbedding
         return x
     
 class MultiHeadAttention(nn.Module):
-    def __init__(self, embeddingC=768, headNum=8, dropProb=0):
+    def __init__(self, embeddingC=768, headNum=12, dropProb=0):
         super(MultiHeadAttention, self).__init__()
         self.embeddingC = embeddingC
         self.headNum = headNum
         self.dropProb = dropProb
-        
-        self.keys = nn.Linear(self.embeddingC ,self.embeddingC)
-        self.queries = nn.Linear(self.embeddingC ,self.embeddingC)
-        self.values = nn.Linear(self.embeddingC ,self.embeddingC)
-        
+        self.qkv = nn.Linear(embeddingC, embeddingC*3, bias=False)
         self.dropPath = nn.Dropout(self.dropProb)
         self.proj = nn.Linear(self.embeddingC, self.embeddingC)
         self.scaling = (self.embeddingC // self.headNum) ** -0.5
         
     def forward(self, x, mask=None):
-        q = rearrange(self.queries(x), 'b n (h d) -> b h n d', h=self.headNum)
-        k = rearrange(self.keys(x), 'b n (h d) -> b h n d', h=self.headNum)
-        v = rearrange(self.values(x), 'b n (h d) -> b h n d', h=self.headNum)
-        
+        qkv = rearrange(self.qkv(x), "b n (h d qkv) -> (qkv) b h n d", h=self.headNum, qkv=3)
+        q, k, v = qkv[0], qkv[1], qkv[2]
         weight = torch.einsum('bhqd, bhkd -> bhqk', q, k)
         
         if mask is not None:
@@ -61,6 +54,7 @@ class MultiHeadAttention(nn.Module):
         output = torch.einsum('bhqk, bhvd -> bhqd', weight, v)
         output = rearrange(output, 'b h q d -> b q (h d)')
         output = self.proj(output)
+        output = self.dropPath(output)
         return output
     
 class residualAdding(nn.Module):
@@ -81,6 +75,7 @@ class MLP(nn.Sequential):
             nn.GELU(),
             nn.Dropout(dropProb),
             nn.Linear(embeddingC * expansion, embeddingC),
+            nn.Dropout(dropProb)
         )
         
         
@@ -106,13 +101,16 @@ class TransformerEncoder(nn.Sequential):
 
 
 
-class MLP_head(nn.Sequential):
+class MLP_head(nn.Module):
     def __init__(self, embeddingC=768, classNum = 5):
-        super(MLP_head, self).__init__(
-            Reduce('b n d -> b d', 'mean'),
-            nn.LayerNorm(embeddingC),
-            nn.Linear(embeddingC, classNum)
-        )
+        super(MLP_head, self).__init__()
+        self.ln = nn.LayerNorm(embeddingC)
+        self.fc = nn.Linear(embeddingC, classNum)
+        
+    def forward(self, x):
+        x = x[:, 0, :]
+        x = self.fc(self.ln(x))
+        return x
         
         
 class ViT(nn.Sequential):
@@ -122,8 +120,21 @@ class ViT(nn.Sequential):
             TransformerEncoder(L, **kwargs),
             MLP_head(embeddingC, classNum)
         )
+        self.apply(_init_vit_weights)
         
-        
+
+def _init_vit_weights(m):
+    if isinstance(m, nn.Linear):
+        nn.init.trunc_normal_(m.weight, std=.01)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.Conv2d):
+        nn.init.kaiming_normal_(m.weight, mode="fan_out")
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    elif isinstance(m, nn.LayerNorm):
+        nn.init.zeros_(m.bias)
+        nn.init.ones_(m.weight)     
     
 if __name__ == '__main__':
     x = torch.randn(4, 3, 224, 224)
