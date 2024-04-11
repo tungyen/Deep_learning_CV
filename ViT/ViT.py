@@ -40,19 +40,19 @@ class MultiHeadAttention(nn.Module):
         self.scaling = (self.embeddingC // self.headNum) ** -0.5
         
     def forward(self, x, mask=None):
-        qkv = rearrange(self.qkv(x), "b n (h d qkv) -> (qkv) b h n d", h=self.headNum, qkv=3)
+        B, N, C = x.shape
+        qkv = self.qkv(x).reshape(B, N, 3, self.headNum, C // self.headNum).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
-        weight = torch.einsum('bhqd, bhkd -> bhqk', q, k)
         
+        weight = (q @ k.transpose(-2, -1)) * self.scaling
         if mask is not None:
             fill = torch.finfo(torch.float32).min
             weight.masked_fill(~mask, fill)
-            
-        weight = F.softmax(weight * self.scaling, dim=-1)
+        
+        weight = weight.softmax(dim=-1)
         weight = self.dropPath(weight)
         
-        output = torch.einsum('bhqk, bhvd -> bhqd', weight, v)
-        output = rearrange(output, 'b h q d -> b q (h d)')
+        output = (weight @ v).transpose(1, 2).reshape(B, N, C)
         output = self.proj(output)
         output = self.dropPath(output)
         return output
@@ -80,11 +80,11 @@ class MLP(nn.Sequential):
         
         
 class TransformerEncoderBlock(nn.Sequential):
-    def __init__(self, embeddingC=768, dropProb=0, expansion=4, dropProbMLP=0, **kwargs):
+    def __init__(self, embeddingC=768, headNum=12, dropProb=0, expansion=4, dropProbMLP=0, **kwargs):
         super(TransformerEncoderBlock, self).__init__(
             residualAdding(nn.Sequential(
                 nn.LayerNorm(embeddingC),
-                MultiHeadAttention(embeddingC, **kwargs),
+                MultiHeadAttention(embeddingC, headNum,**kwargs),
                 nn.Dropout(dropProb)
             )),
             residualAdding(nn.Sequential(
