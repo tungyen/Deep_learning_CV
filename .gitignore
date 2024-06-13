@@ -38,3 +38,4 @@ ModelNet40
 *.json
 *.bin
 *.pts
+.history

@@ -1,8 +1,9 @@
 import os
-import torch.utils.data as data
+from torch.utils.data import Dataset, DataLoader
 from PIL import Image
+import transforms as T
 
-class VOCSegmentation(data.Dataset):
+class VOCSegmentation(Dataset):
     def __init__(self, voc_root, year="2012", transforms=None, txt_name: str = "train.txt"):
         super(VOCSegmentation, self).__init__()
         assert year in ["2007", "2012"], "year must be in ['2007', '2012']"
@@ -48,3 +49,20 @@ def cat_list(images, fill_value=0):
     for img, pad_img in zip(images, batched_imgs):
         pad_img[..., :img.shape[-2], :img.shape[-1]].copy_(img)
     return batched_imgs
+
+if __name__ == '__main__':
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
+    trans = []
+    trans.extend([
+        T.ToTensor(),
+        T.Normalize(mean=mean, std=std),
+    ])
+    transforms = T.Compose(trans)
+        
+    dataset = VOCSegmentation(voc_root='../Dataset', transforms=transforms)
+    train_loader = DataLoader(dataset, batch_size=4, shuffle=True, num_workers=0, pin_memory=True,
+                                               collate_fn=dataset.collate_fn)
+    for img, mask in train_loader:
+        print(img.shape)
+        print(mask.shape)

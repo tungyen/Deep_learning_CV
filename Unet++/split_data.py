@@ -1,7 +1,7 @@
 import os
 import random
 
-filePath = "../../Dataset/VOCdevkit/VOC2012/Annotations"
+filePath = "../Dataset/VOCdevkit/VOC2012/Annotations"
 if not os.path.exists(filePath):
     print("This folder does not exist!")
     exit(1)
