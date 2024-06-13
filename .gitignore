@@ -18,6 +18,8 @@ CIFAR
 COCO
 VOCdevkit
 flowerDataset
+shapenet
+ModelNet40
 *.tiff
 *.csv
 *.asc
@@ -33,6 +35,6 @@ flowerDataset
 *.pth
 *.xml
 *.meta
-*.pts
 *.json
 *.bin
+*.pts
