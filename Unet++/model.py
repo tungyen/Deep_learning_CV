@@ -1,5 +1,6 @@
 import torch
 from torch import nn as nn
+from torch.nn import functional as F
 
 class convBlock(nn.Module):
     def __init__(self, input_ch, mid_ch, out_ch):
@@ -23,7 +24,8 @@ class Unet_plus2(nn.Module):
         ch_list = [32, 64, 128, 256, 512]
         self.deep_supervise = deep_supervise
         self.pool = nn.MaxPool2d(2, 2)
-        self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        # self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        self.up = nn.UpsamplingBilinear2d(scale_factor=2)
         
         self.conv00 = convBlock(input_ch, ch_list[0], ch_list[0])
         self.conv10 = convBlock(ch_list[0], ch_list[1], ch_list[1])
@@ -59,20 +61,21 @@ class Unet_plus2(nn.Module):
         x20 = self.conv20(self.pool(x10))
         x30 = self.conv30(self.pool(x20))
         x40 = self.conv40(self.pool(x30))
+
         
-        x01 = self.conv01(torch.cat([x00, self.up(x10)], 1))
-        x11 = self.conv11(torch.cat([x10, self.up(x20)], 1))
-        x21 = self.conv21(torch.cat([x20, self.up(x30)], 1))
-        x31 = self.conv31(torch.cat([x30, self.up(x40)], 1))
+        x01 = self.conv01(torch.cat([x00, self.pad(x00, self.up(x10))], 1))
+        x11 = self.conv11(torch.cat([x10, self.pad(x10, self.up(x20))], 1))
+        x21 = self.conv21(torch.cat([x20, self.pad(x20, self.up(x30))], 1))
+        x31 = self.conv31(torch.cat([x30, self.pad(x30, self.up(x40))], 1))
         
-        x02 = self.conv02(torch.cat([x00, x01, self.up(x11)], 1))
-        x12 = self.conv12(torch.cat([x10, x11, self.up(x21)], 1))
-        x22 = self.conv22(torch.cat([x20, x21, self.up(x31)], 1))
+        x02 = self.conv02(torch.cat([x00, x01, self.pad(x00, self.up(x11))], 1))
+        x12 = self.conv12(torch.cat([x10, x11, self.pad(x10, self.up(x21))], 1))
+        x22 = self.conv22(torch.cat([x20, x21, self.pad(x20, self.up(x31))], 1))
         
-        x03 = self.conv03(torch.cat([x00, x01, x02, self.up(x12)], 1))
-        x13 = self.conv13(torch.cat([x10, x11, x12, self.up(x21)], 1))
+        x03 = self.conv03(torch.cat([x00, x01, x02, self.pad(x00, self.up(x12))], 1))
+        x13 = self.conv13(torch.cat([x10, x11, x12, self.pad(x10, self.up(x22))], 1))
         
-        x04 = self.conv04(torch.cat([x00, x01, x02, x03, self.up(x13)], 1))
+        x04 = self.conv04(torch.cat([x00, x01, x02, x03, self.pad(x00, self.up(x13))], 1))
         
         if self.deep_supervise:
             out1 = self.final1(x01)
@@ -84,3 +87,11 @@ class Unet_plus2(nn.Module):
         else:
             out = self.final(x04)
             return out
+        
+    def pad(self, ori, x):
+        _, _, h, w = x.shape
+        _, _, h_ori, w_ori = ori.shape
+        pad_h = h_ori - h
+        pad_w = w_ori - w
+        res_x = F.pad(x, (0, pad_w, 0, pad_h))
+        return res_x
