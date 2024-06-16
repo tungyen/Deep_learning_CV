@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: tungyen-test
+  name: tungyen-test1
   namespace: ucsd-haosulab
   annotations:
     yunikorn.apache.org/allow-preemption: "true"
@@ -20,12 +20,12 @@ spec:
         requests:
           cpu: "4"
           memory: "32Gi"
-          nvidia.com/gpu: "1"
+          nvidia.com/gpu: "2"
           ephemeral-storage: "30Gi"
         limits:
           cpu: "4"
           memory: "32Gi"
-          nvidia.com/gpu: "1"
+          nvidia.com/gpu: "2"
           ephemeral-storage: "30Gi"
       volumeMounts:
         - name: dshm

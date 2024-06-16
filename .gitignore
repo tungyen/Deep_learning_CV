@@ -39,4 +39,5 @@ Cityscapes
 *.json
 *.bin
 *.pts
-.history
+*.history
+*.zip
