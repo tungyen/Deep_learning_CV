@@ -11,6 +11,5 @@ RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/
 WORKDIR /project
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-RUN git clone https://github.com/tungyen/Pytorch_deepLearning.git
 
 
