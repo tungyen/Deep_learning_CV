@@ -70,5 +70,8 @@ if __name__ == '__main__':
     B = 2
     nw = 0
     trainDataloader = DataLoader(dataset, batch_size=B, shuffle=True, pin_memory=True, num_workers=nw)
-        
+
+    for img, label in trainDataloader:
+        print(img.shape)
+        print(label.shape)
         
