@@ -20,7 +20,7 @@ VOCdevkit
 flowerDataset
 shapenet
 ModelNet40
-Cityscapes
+cityscapes
 *.tiff
 *.csv
 *.asc

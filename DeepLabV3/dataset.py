@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 import numpy as np
 import cv2
 import os
+import transforms as T
 
 
 train_dirs = ["jena/", "zurich/", "weimar/", "ulm/", "tubingen/", "stuttgart/",
@@ -17,7 +18,7 @@ mode_to_loc = {"train": 0, "val": 1, "test": 2}
 
 class CityScapes(Dataset):
     def __init__(self, root='./Dataset/cityscapes', mode='train', transform=None):
-        self.img_path = os.path.join(root, 'leftImg8bit', mode)
+        self.img_path = os.path.join(root, 'leftImg8bit_trainvaltest', 'leftImg8bit', mode)
         self.label_path = os.path.join(root, 'gtFine_trainvaltest', 'gtFine', mode)
         
         self.img_h = 1024
@@ -49,5 +50,25 @@ class CityScapes(Dataset):
         label = cv2.imread(data['label_path'], -1)
         
         img, label = self.transform(img, label)
+        
+if __name__ == '__main__':
+    mean = (0.485, 0.456, 0.406)
+    std = (0.229, 0.224, 0.225)
+    
+    trans = [T.Resize((512, 1024))]
+    if hflip_prob > 0:
+        trans.append(T.RandomHorizontalFlip(hflip_prob))
+    trans.extend([
+        T.RandomCrop(crop_size),
+        T.ToTensor(),
+        T.Normalize(mean=mean, std=std),
+    ])
+    self.transforms = T.Compose(trans)
+
+    
+    dataset = CityScapes(transform=self.transforms)
+    B = 2
+    nw = 0
+    trainDataloader = DataLoader(dataset, batch_size=B, shuffle=True, pin_memory=True, num_workers=nw)
         
         
