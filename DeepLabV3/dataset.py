@@ -3,14 +3,15 @@ from torch.utils.data import Dataset
 import numpy as np
 import cv2
 import os
+from PIL import Image
 import transforms as T
 
 
-train_dirs = ["jena/", "zurich/", "weimar/", "ulm/", "tubingen/", "stuttgart/",
-              "strasbourg/", "monchengladbach/", "krefeld/", "hanover/",
-              "hamburg/", "erfurt/", "dusseldorf/", "darmstadt/", "cologne/",
-              "bremen/", "bochum/", "aachen/"]
-val_dirs = ["frankfurt/", "munster/", "lindau/"]
+train_dirs = ["jena", "zurich", "weimar", "ulm", "tubingen", "stuttgart",
+              "strasbourg", "monchengladbach", "krefeld", "hanover",
+              "hamburg", "erfurt", "dusseldorf", "darmstadt", "cologne",
+              "bremen", "bochum", "aachen"]
+val_dirs = ["frankfurt", "munster", "lindau"]
 test_dirs = ["berlin", "bielefeld", "bonn", "leverkusen", "mainz", "munich"]
 loc_list = [train_dirs, val_dirs, test_dirs]
 
@@ -37,7 +38,7 @@ class CityScapes(Dataset):
                 
                 data = {}
                 data['img_path'] = os.path.join(img_loc_dir, img_loc_file)
-                data['label_path'] = os.path.join(self.label_path, loc, loc+'_'+img_id+'_gtFine_labelIds.png')
+                data['label_path'] = os.path.join(self.label_path, loc, img_id+'_gtFine_labelIds.png')
                 data['img_id'] = img_id
                 self.datas.append(data)
                 
@@ -46,9 +47,10 @@ class CityScapes(Dataset):
     
     def __getitem__(self, index):
         data = self.datas[index]
-        img = cv2.imread(data['img_path'], -1)
-        label = cv2.imread(data['label_path'], -1)
-        
+        img = Image.open(data['img_path']).convert('RGB')
+        label = Image.open(data['label_path']).convert('RGB')
+        if img is None:
+            print(data['mg_path'])
         img, label = self.transform(img, label)
         
 if __name__ == '__main__':
