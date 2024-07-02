@@ -6,8 +6,6 @@ import torch.nn as nn
 import numpy as np
 
 def add_weight_decay(net, l2_value, skip_list=()):
-    # https://raberrytv.wordpress.com/2017/10/29/pytorch-weight-decay-made-easy/
-
     decay, no_decay = [], []
     for name, param in net.named_parameters():
         if not param.requires_grad:

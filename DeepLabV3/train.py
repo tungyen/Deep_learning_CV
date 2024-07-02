@@ -12,42 +12,24 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import cv2
 import time
+from tqdm import tqdm
 
-import transforms as T
-from dataset import CityScapes
+from dataset import DatasetTrain, DatasetVal
 from model.deeplabv3 import DeepLabV3
 from utils.utils import add_weight_decay
 
 model_id = "1"
 
-num_epochs = 1000
-batch_size = 3
+num_epochs = 50
+batch_size = 8
 learning_rate = 0.0001
 
-mean = (0.485, 0.456, 0.406)
-std = (0.229, 0.224, 0.225)
+network = DeepLabV3(model_id, project_dir=".").cuda()
 
-train_trans = [T.Resize((512, 1024))]
-val_trans = [T.Resize((512, 1024))]
-hflip_prob = 0.5
-crop_size = 256
-if hflip_prob > 0:
-    train_trans.append(T.RandomHorizontalFlip(hflip_prob))
-train_trans.extend([
-    T.randomCrop(crop_size),
-    T.ToTensor(),
-    T.Normalize(mean=mean, std=std),
-])
-val_trans.extend([
-    T.ToTensor(),
-    T.Normalize(mean=mean, std=std),
-])
-train_trans = T.Compose(train_trans)
-val_trans = T.Compose(val_trans)
-
-network = DeepLabV3(model_id, project_dir="/root/deeplabv3").cuda()
-train_dataset = CityScapes(root="../Dataset/cityscapes", mode='train', transform=train_trans)
-val_dataset = CityScapes(root="../Dataset/cityscapes", mode='val', transform=val_trans)
+train_dataset = DatasetTrain(cityscapes_data_path="../Dataset/cityscapes/",
+                             cityscapes_meta_path="../Dataset/cityscapes/meta")
+val_dataset = DatasetVal(cityscapes_data_path="../Dataset/cityscapes/",
+                         cityscapes_meta_path="../Dataset/cityscapes/meta")
 
 num_train_batches = int(len(train_dataset)/batch_size)
 num_val_batches = int(len(val_dataset)/batch_size)
@@ -62,10 +44,10 @@ val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
 params = add_weight_decay(network, l2_value=0.0001)
 optimizer = torch.optim.Adam(params, lr=learning_rate)
 
-# with open("/root/deeplabv3/data/cityscapes/meta/class_weights.pkl", "rb") as file: # (needed for python3)
-#     class_weights = np.array(pickle.load(file))
-# class_weights = torch.from_numpy(class_weights)
-# class_weights = Variable(class_weights.type(torch.FloatTensor)).cuda()
+with open("../Dataset/cityscapes/meta/class_weights.pkl", "rb") as file: # (needed for python3)
+    class_weights = np.array(pickle.load(file))
+class_weights = torch.from_numpy(class_weights)
+class_weights = Variable(class_weights.type(torch.FloatTensor)).cuda()
 
 loss_fn = nn.CrossEntropyLoss()
 epoch_losses_train = []
@@ -81,11 +63,10 @@ for epoch in range(num_epochs):
     ############################################################################
     network.train() # (set in training mode, this affects BatchNorm and dropout)
     batch_losses = []
-    for step, (imgs, label_imgs) in enumerate(train_loader):
+    for step, (imgs, label_imgs) in enumerate(tqdm(train_loader)):
 
         imgs = Variable(imgs).cuda() # (shape: (batch_size, 3, img_h, img_w))
         label_imgs = Variable(label_imgs.type(torch.LongTensor)).cuda() # (shape: (batch_size, img_h, img_w))
-
         outputs = network(imgs) # (shape: (batch_size, num_classes, img_h, img_w))
 
         # compute the loss:
