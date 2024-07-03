@@ -92,7 +92,7 @@ class ResNet_Bottleneck_OS16(nn.Module):
         if num_layers == 50:
             resnet = models.resnet50()
             # load pretrained model:
-            resnet.load_state_dict(torch.load("/root/deeplabv3/pretrained_models/resnet/resnet50-19c8e357.pth"))
+            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet50-19c8e357.pth"))
             # remove fully connected layer, avg pool and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-3])
 
@@ -100,7 +100,7 @@ class ResNet_Bottleneck_OS16(nn.Module):
         elif num_layers == 101:
             resnet = models.resnet101()
             # load pretrained model:
-            resnet.load_state_dict(torch.load("/root/deeplabv3/pretrained_models/resnet/resnet101-5d3b4d8f.pth"))
+            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet101-5d3b4d8f.pth"))
             # remove fully connected layer, avg pool and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-3])
 
@@ -108,7 +108,7 @@ class ResNet_Bottleneck_OS16(nn.Module):
         elif num_layers == 152:
             resnet = models.resnet152()
             # load pretrained model:
-            resnet.load_state_dict(torch.load("/root/deeplabv3/pretrained_models/resnet/resnet152-b121ed2d.pth"))
+            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet152-b121ed2d.pth"))
             # remove fully connected layer, avg pool and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-3])
 
@@ -120,8 +120,6 @@ class ResNet_Bottleneck_OS16(nn.Module):
 
     def forward(self, x):
         # (x has shape (batch_size, 3, h, w))
-
-        # pass x through (parts of) the pretrained ResNet:
         c4 = self.resnet(x) # (shape: (batch_size, 4*256, h/16, w/16)) (it's called c4 since 16 == 2^4)
 
         output = self.layer5(c4) # (shape: (batch_size, 4*512, h/16, w/16))
@@ -135,7 +133,7 @@ class ResNet_BasicBlock_OS16(nn.Module):
         if num_layers == 18:
             resnet = models.resnet18()
             # load pretrained model:
-            resnet.load_state_dict(torch.load("/root/deeplabv3/pretrained_models/resnet/resnet18-5c106cde.pth"))
+            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet18-5c106cde.pth"))
             # remove fully connected layer, avg pool and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-3])
 
@@ -144,7 +142,7 @@ class ResNet_BasicBlock_OS16(nn.Module):
         elif num_layers == 34:
             resnet = models.resnet34()
             # load pretrained model:
-            resnet.load_state_dict(torch.load("/root/deeplabv3/pretrained_models/resnet/resnet34-333f7ec4.pth"))
+            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet34-333f7ec4.pth"))
             # remove fully connected layer, avg pool and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-3])
 
@@ -182,7 +180,7 @@ class ResNet_BasicBlock_OS8(nn.Module):
         elif num_layers == 34:
             resnet = models.resnet34()
             # load pretrained model:
-            resnet.load_state_dict(torch.load("/root/deeplabv3/pretrained_models/resnet/resnet34-333f7ec4.pth"))
+            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet34-333f7ec4.pth"))
             # remove fully connected layer, avg pool, layer4 and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-4])
 
@@ -198,8 +196,6 @@ class ResNet_BasicBlock_OS8(nn.Module):
 
     def forward(self, x):
         # (x has shape (batch_size, 3, h, w))
-
-        # pass x through (parts of) the pretrained ResNet:
         c3 = self.resnet(x) # (shape: (batch_size, 128, h/8, w/8)) (it's called c3 since 8 == 2^3)
 
         output = self.layer4(c3) # (shape: (batch_size, 256, h/8, w/8))

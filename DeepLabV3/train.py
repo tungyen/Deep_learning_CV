@@ -61,7 +61,7 @@ for epoch in range(num_epochs):
     ############################################################################
     # train:
     ############################################################################
-    network.train() # (set in training mode, this affects BatchNorm and dropout)
+    network.train()
     batch_losses = []
     for step, (imgs, label_imgs) in enumerate(tqdm(train_loader)):
 
@@ -75,9 +75,9 @@ for epoch in range(num_epochs):
         batch_losses.append(loss_value)
 
         # optimization step:
-        optimizer.zero_grad() # (reset gradients)
-        loss.backward() # (compute gradients)
-        optimizer.step() # (perform optimization step)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
     epoch_loss = np.mean(batch_losses)
     epoch_losses_train.append(epoch_loss)
@@ -101,7 +101,7 @@ for epoch in range(num_epochs):
     network.eval() # (set in evaluation mode, this affects BatchNorm and dropout)
     batch_losses = []
     for step, (imgs, label_imgs, img_ids) in enumerate(val_loader):
-        with torch.no_grad(): # (corresponds to setting volatile=True in all variables, this is done during inference to reduce memory consumption)
+        with torch.no_grad():
             imgs = Variable(imgs).cuda() # (shape: (batch_size, 3, img_h, img_w))
             label_imgs = Variable(label_imgs.type(torch.LongTensor)).cuda() # (shape: (batch_size, img_h, img_w))
 

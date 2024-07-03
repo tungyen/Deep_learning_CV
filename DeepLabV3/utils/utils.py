@@ -1,5 +1,3 @@
-# camera-ready
-
 import torch
 import torch.nn as nn
 
@@ -9,7 +7,7 @@ def add_weight_decay(net, l2_value, skip_list=()):
     decay, no_decay = [], []
     for name, param in net.named_parameters():
         if not param.requires_grad:
-            continue # frozen weights
+            continue
         if len(param.shape) == 1 or name.endswith(".bias") or name in skip_list:
             no_decay.append(param)
         else:

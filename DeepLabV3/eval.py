@@ -33,7 +33,7 @@ val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
                                          batch_size=batch_size, shuffle=False,
                                          num_workers=1)
 
-with open("../Dataset/cityscapes/meta/class_weights.pkl", "rb") as file: # (needed for python3)
+with open("../Dataset/cityscapes/meta/class_weights.pkl", "rb") as file:
     class_weights = np.array(pickle.load(file))
 class_weights = torch.from_numpy(class_weights)
 class_weights = Variable(class_weights.type(torch.FloatTensor)).cuda()
@@ -41,10 +41,10 @@ class_weights = Variable(class_weights.type(torch.FloatTensor)).cuda()
 # loss function
 loss_fn = nn.CrossEntropyLoss(weight=class_weights)
 
-network.eval() # (set in evaluation mode, this affects BatchNorm and dropout)
+network.eval()
 batch_losses = []
 for step, (imgs, label_imgs, img_ids) in enumerate(tqdm(val_loader)):
-    with torch.no_grad(): # (corresponds to setting volatile=True in all variables, this is done during inference to reduce memory consumption)
+    with torch.no_grad():
         imgs = Variable(imgs).cuda() # (shape: (batch_size, 3, img_h, img_w))
         label_imgs = Variable(label_imgs.type(torch.LongTensor)).cuda() # (shape: (batch_size, img_h, img_w))
 

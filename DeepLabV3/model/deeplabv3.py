@@ -17,12 +17,11 @@ class DeepLabV3(nn.Module):
         self.project_dir = project_dir
         self.create_model_dirs()
 
-        self.resnet = ResNet18_OS8() # NOTE! specify the type of ResNet here
-        self.aspp = ASPP(num_classes=self.num_classes) # NOTE! if you use ResNet50-152, set self.aspp = ASPP_Bottleneck(num_classes=self.num_classes) instead
+        self.resnet = ResNet18_OS8()
+        self.aspp = ASPP(num_classes=self.num_classes) # using ResNet50-152, set self.aspp = ASPP_Bottleneck(num_classes=self.num_classes) instead
 
     def forward(self, x):
         # (x has shape (batch_size, 3, h, w))
-
         h = x.size()[2]
         w = x.size()[3]
 
