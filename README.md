@@ -17,5 +17,8 @@ Model with task category:
 # _3D Semantic Segmentation_ #
 1. PointNet
 
+# _2D Object Detection_ #
+1. Faster-RCNN(In progress)
+
 # _6D Pose Estimation_ #
 1. PoseCNN
