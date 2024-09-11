@@ -18,7 +18,7 @@ Model with task category:
 1. PointNet
 
 # _2D Object Detection_ #
-1. Faster-RCNN(In progress)
+1. Faster-RCNN(**In progress**)
 
 # _6D Pose Estimation_ #
 1. PoseCNN
