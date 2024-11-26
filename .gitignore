@@ -22,6 +22,8 @@ flowerDataset
 shapenet
 ModelNet40
 cityscapes
+training_logs
+pretrained_models
 *.tiff
 *.csv
 *.asc
