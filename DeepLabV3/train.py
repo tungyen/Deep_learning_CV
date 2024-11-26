@@ -20,7 +20,7 @@ from utils.utils import add_weight_decay
 
 model_id = "1"
 
-num_epochs = 50
+num_epochs = 100
 batch_size = 8
 learning_rate = 0.0001
 

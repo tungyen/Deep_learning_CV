@@ -21,7 +21,7 @@ import cv2
 batch_size = 2
 
 network = DeepLabV3("eval_val", project_dir=".").cuda()
-network.load_state_dict(torch.load("training_logs/model_1/checkpoints/model_1_epoch_50.pth"))
+network.load_state_dict(torch.load("training_logs/model_1/checkpoints/model_1_epoch_100.pth"))
 
 val_dataset = DatasetVal(cityscapes_data_path="../Dataset/cityscapes/",
                          cityscapes_meta_path="../Dataset/cityscapes/meta")
