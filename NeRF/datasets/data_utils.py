@@ -43,5 +43,24 @@ def getRaysNDC(H, W, f, near, raysOri, raysNorm):
     # Outputs:
     #     raysOri - (nRays, 3) origin of rays in NDC
     #     raysNorm - (nRays, 3) normalized direction of rays in NDC
+    t = -(near + raysOri[...,2]) / raysNorm[...,2]
+    raysOri = raysOri + t[..., None] * raysNorm
     
+    # Store some intermediate homogeneous results
+    ox_oz = raysOri[...,0] / raysOri[...,2]
+    oy_oz = raysOri[...,1] / raysOri[...,2]
+    
+    # Projection
+    o0 = -1./(W/(2.*f)) * ox_oz
+    o1 = -1./(H/(2.*f)) * oy_oz
+    o2 = 1. + 2. * near / raysOri[...,2]
+
+    d0 = -1./(W/(2.*f)) * (raysNorm[...,0]/raysNorm[...,2] - ox_oz)
+    d1 = -1./(H/(2.*f)) * (raysNorm[...,1]/raysNorm[...,2] - oy_oz)
+    d2 = 1 - o2
+    
+    raysOri = torch.stack([o0, o1, o2], -1) # (B, 3)
+    raysNorm = torch.stack([d0, d1, d2], -1) # (B, 3)
+    
+    return raysOri, raysNorm
     
