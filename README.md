@@ -22,3 +22,7 @@ Model with task category:
 
 # _6D Pose Estimation_ #
 1. PoseCNN
+
+# _GenAI_ #
+1. Denoising Diffusion Probability Model (DDPM)
+2. Classifier-Free Diffusion Guidance (CFDG)

@@ -147,13 +147,12 @@ class Unet(nn.Module):
         
     def pos_encoding(self, t, channels):
         inv_freq = 1.0 / (10000 ** (torch.arange(0, channels, 2, device=self.device).float() / channels))
-        print("Shape of inverse frequency: ", inv_freq.shape)
         pos_enc_sin = torch.sin(t.repeat(1, channels // 2) * inv_freq)
         pos_enc_cos = torch.cos(t.repeat(1, channels // 2) * inv_freq)
         return torch.cat([pos_enc_sin, pos_enc_cos], dim=-1)
     
     def forward(self, x, t):
-        t = t.unqueeze(-1).type(torch.float)
+        t = t.unsqueeze(-1).type(torch.float)
         t = self.pos_encoding(t, self.time_emb_dim)
         
         x1 = self.input(x)
@@ -208,7 +207,6 @@ class Conditional_Unet(nn.Module):
             
     def pos_encoding(self, t, channels):
         inv_freq = 1.0 / (10000 ** (torch.arange(0, channels, 2, device=self.device).float() / channels))
-        print("Shape of inverse frequency: ", inv_freq.shape)
         pos_enc_sin = torch.sin(t.repeat(1, channels // 2) * inv_freq)
         pos_enc_cos = torch.cos(t.repeat(1, channels // 2) * inv_freq)
         return torch.cat([pos_enc_sin, pos_enc_cos], dim=-1)
