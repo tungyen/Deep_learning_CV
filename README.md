@@ -4,25 +4,25 @@ This is the repo including multiple Computer Vision Model Implementation with fu
 
 Model with task category:
 # _Image Classification_ #
-1. AlexNet
-2. ResNet
-3. VGG
-4. ViT
+1. **AlexNet**
+2. **ResNet**
+3. **VGG**
+4. **ViT**
 
 # _2D Semantic Segmentation_ #
-1. Unet++
-2. DeepLabV3
-3. FCN
+1. **Unet++**
+2. **DeepLabV3**
+3. **FCN**
 
 # _3D Semantic Segmentation_ #
-1. PointNet
+1. **PointNet**
 
 # _2D Object Detection_ #
-1. Faster-RCNN **(In progress)**
+1. **Faster-RCNN (In progress)**
 
 # _6D Pose Estimation_ #
-1. PoseCNN
+1. **PoseCNN**
 
 # _GenAI_ #
-1. Denoising Diffusion Probability Model (DDPM)
-2. Classifier-Free Diffusion Guidance (CFDG)
+1. **Denoising Diffusion Probability Model (DDPM)**
+2. **Classifier-Free Diffusion Guidance (CFDG)**
