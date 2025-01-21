@@ -137,7 +137,7 @@ def parse_args():
     parse.add_argument('--epochs', type=int, default=500)
     parse.add_argument('--batch_size', type=int, default=12)
     parse.add_argument('--img_size', type=int, default=64)
-    parse.add_argument('--data_path', type=str, default="./datasets")
+    parse.add_argument('--data_path', type=str, default="../../Dataset")
     parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--lr', type=float, default=3e-4)
     args = parse.parse_args()

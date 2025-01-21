@@ -11,4 +11,4 @@ if __name__ == '__main__':
     model.load_state_dict(ckpt)
     diffusion = Diffusion(img_size=64, device=device)
     x = diffusion.sample(model, n=16)
-    saveImg(x, path="images/test.png")
+    saveImg(x, path="images/ddpm_res.png")
