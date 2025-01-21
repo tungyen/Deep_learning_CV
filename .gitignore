@@ -1,6 +1,10 @@
 venv
-Dataset
 training_logs
+cifar10
+cityscapes
+ModelNet40
+landscape
+shapenet
 __pycache__
 results
 *.eps
