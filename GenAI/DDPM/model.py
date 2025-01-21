@@ -88,14 +88,14 @@ class Down(nn.Module):
             DoubleConv(inputC, outputC)
         )
         
-        self.embLayer = nn.Sequential(
+        self.emb_layer = nn.Sequential(
             nn.SiLU(),
             nn.Linear(emb_dim, outputC)
         )
         
     def forward(self, x, t):
         x = self.maxpool_conv(x)
-        emb = self.embLayer(t)[:, :, None, None].repeat(1, 1, x.shape[-2], x.shape[-1]) # To copy size of x
+        emb = self.emb_layer(t)[:, :, None, None].repeat(1, 1, x.shape[-2], x.shape[-1]) # To copy size of x
         return x + emb
     
 class Up(nn.Module):
@@ -108,7 +108,7 @@ class Up(nn.Module):
             DoubleConv(inputC, outputC, inputC // 2)
         )
         
-        self.embLayer = nn.Sequential(
+        self.emb_layer = nn.Sequential(
             nn.SiLU(),
             nn.Linear(emb_dim, outputC)
         )
@@ -117,7 +117,7 @@ class Up(nn.Module):
         x = self.up(x)
         x = torch.cat([skip_x, x], dim=1)
         x = self.conv(x)
-        emb = self.embLayer(t)[:, :, None, None].repeat(1, 1, x.shape[-2], x.shape[-1])
+        emb = self.emb_layer(t)[:, :, None, None].repeat(1, 1, x.shape[-2], x.shape[-1])
         return emb + x
     
 class Unet(nn.Module):
@@ -125,7 +125,7 @@ class Unet(nn.Module):
         super().__init__()
         self.device = device
         self.time_emb_dim = time_emb_dim
-        self.input = DoubleConv(inputC, 64)
+        self.inc = DoubleConv(inputC, 64)
         self.down1 = Down(64, 128)
         self.sa1 = SelfAttention(128, 32)
         self.down2 = Down(128, 256)
@@ -133,9 +133,9 @@ class Unet(nn.Module):
         self.down3 = Down(256, 256)
         self.sa3 = SelfAttention(256, 8)
         
-        self.bottleneck1 = DoubleConv(256, 512)
-        self.bottleneck2 = DoubleConv(512, 512)
-        self.bottleneck3 = DoubleConv(512, 256)
+        self.bot1 = DoubleConv(256, 512)
+        self.bot2 = DoubleConv(512, 512)
+        self.bot3 = DoubleConv(512, 256)
         
         self.up1 = Up(512, 128)
         self.sa4 = SelfAttention(128, 16)
@@ -143,7 +143,7 @@ class Unet(nn.Module):
         self.sa5 = SelfAttention(64, 32)
         self.up3 = Up(128, 64)
         self.sa6 = SelfAttention(64, 64)
-        self.output = nn.Conv2d(64, outputC, kernel_size=1)
+        self.outc = nn.Conv2d(64, outputC, kernel_size=1)
         
     def pos_encoding(self, t, channels):
         inv_freq = 1.0 / (10000 ** (torch.arange(0, channels, 2, device=self.device).float() / channels))
@@ -155,7 +155,7 @@ class Unet(nn.Module):
         t = t.unsqueeze(-1).type(torch.float)
         t = self.pos_encoding(t, self.time_emb_dim)
         
-        x1 = self.input(x)
+        x1 = self.inc(x)
         x2 = self.down1(x1, t)
         x2 = self.sa1(x2)
         x3 = self.down2(x2, t)
@@ -163,9 +163,9 @@ class Unet(nn.Module):
         x4 = self.down3(x3, t)
         x4 = self.sa3(x4)
         
-        x4 = self.bottleneck1(x4)
-        x4 = self.bottleneck2(x4)
-        x4 = self.bottleneck3(x4)
+        x4 = self.bot1(x4)
+        x4 = self.bot2(x4)
+        x4 = self.bot3(x4)
         
         x = self.up1(x4, x3, t)
         x = self.sa4(x)
@@ -173,7 +173,7 @@ class Unet(nn.Module):
         x = self.sa5(x)
         x = self.up3(x, x1, t)
         x = self.sa6(x)
-        return self.output(x)
+        return self.outc(x)
     
 
 class Conditional_Unet(nn.Module):
@@ -182,7 +182,7 @@ class Conditional_Unet(nn.Module):
         self.device = device
         self.time_emb_dim = time_emb_dim
         
-        self.input = DoubleConv(inputC, 64)
+        self.inc = DoubleConv(inputC, 64)
         self.down1 = Down(64, 128)
         self.sa1 = SelfAttention(128, 32)
         self.down2 = Down(128, 256)
@@ -190,9 +190,9 @@ class Conditional_Unet(nn.Module):
         self.down3 = Down(256, 256)
         self.sa3 = SelfAttention(256, 8)
         
-        self.bottleneck1 = DoubleConv(256, 512)
-        self.bottleneck2 = DoubleConv(512, 512)
-        self.bottleneck3 = DoubleConv(512, 256)
+        self.bot1 = DoubleConv(256, 512)
+        self.bot2 = DoubleConv(512, 512)
+        self.bot3 = DoubleConv(512, 256)
         
         self.up1 = Up(512, 128)
         self.sa4 = SelfAttention(128, 16)
@@ -200,7 +200,7 @@ class Conditional_Unet(nn.Module):
         self.sa5 = SelfAttention(64, 32)
         self.up3 = Up(128, 64)
         self.sa6 = SelfAttention(64, 64)
-        self.output = nn.Conv2d(64, outputC, kernel_size=1)
+        self.outc = nn.Conv2d(64, outputC, kernel_size=1)
         
         if classNum is not None:
             self.label_emb = nn.Embedding(classNum, time_emb_dim)
@@ -218,7 +218,7 @@ class Conditional_Unet(nn.Module):
         if y is not None:
             t += self.label_emb(y)
         
-        x1 = self.input(x)
+        x1 = self.inc(x)
         x2 = self.down1(x1, t)
         x2 = self.sa1(x2)
         x3 = self.down2(x2, t)
@@ -226,9 +226,9 @@ class Conditional_Unet(nn.Module):
         x4 = self.down3(x3, t)
         x4 = self.sa3(x4)
         
-        x4 = self.bottleneck1(x4)
-        x4 = self.bottleneck2(x4)
-        x4 = self.bottleneck3(x4)
+        x4 = self.bot1(x4)
+        x4 = self.bot2(x4)
+        x4 = self.bot3(x4)
         
         x = self.up1(x4, x3, t)
         x = self.sa4(x)
@@ -236,7 +236,7 @@ class Conditional_Unet(nn.Module):
         x = self.sa5(x)
         x = self.up3(x, x1, t)
         x = self.sa6(x)
-        return self.output(x)
+        return self.outc(x)
     
 if __name__ == '__main__':
     # net = UNet(device="cpu")
