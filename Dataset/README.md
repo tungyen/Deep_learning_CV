@@ -31,7 +31,7 @@ wget -c http://images.cocodataset.org/zips/train2014.zip # Train2014 for example
 ```
 
 # _FlowerDataset_ #
-Go to the my drive for [FlowerDataset](https://drive.google.com/file/d/1PVqNgHBQUudlIJdOcxSbq9FPTMnenDYg/view?usp=sharing). Unzip under this folder as `Dataset/flower_data`.
+Go to the my drive for [FlowerDataset](https://drive.google.com/file/d/1PVqNgHBQUudlIJdOcxSbq9FPTMnenDYg/view?usp=sharing). Unzip under this folder as `Dataset/flower_data`. `classIndex.json` includes the index for each flower category. And `split_data.py` is used to process the original dataset in to train/val dataset. You could directly use the pre-process train/val dataset including in the downloading folder!
 
 
 # _VOCdevkit_ #

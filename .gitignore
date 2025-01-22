@@ -1,5 +1,6 @@
 venv
 training_logs
+flower_data
 cifar10
 cityscapes
 ModelNet40

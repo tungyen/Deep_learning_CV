@@ -28,7 +28,7 @@ def ViT_predict():
     img = torch.unsqueeze(img, dim=0)
 
     # read class_indict
-    json_path = 'classIndex.json'
+    json_path = '../../Dataset/flower_data/classIndex.json'
     assert os.path.exists(json_path), "file: '{}' dose not exist.".format(json_path)
 
     with open(json_path, "r") as f:
@@ -38,7 +38,7 @@ def ViT_predict():
     model = ViT(classNum=5).to(device)
 
     # load model weights
-    weights_path = "ViT.pth"
+    weights_path = "ckpts/ViT.pth"
     assert os.path.exists(weights_path), "file: '{}' dose not exist.".format(weights_path)
     model.load_state_dict(torch.load(weights_path, map_location=device))
 

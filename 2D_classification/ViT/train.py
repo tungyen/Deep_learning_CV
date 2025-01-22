@@ -9,11 +9,17 @@ import math
 from dataset import *
 from ViT import *
 
+import os
+
 
 def ViT_train():
+    ckpts_path = "ckpts"
+    if not os.path.exists(ckpts_path):
+        os.mkdir(ckpts_path)
+        
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    path = os.path.join("..", "Dataset", "flowerDataset", "flower_data", "flower_photos")
-    weightPath = 'ViT.pth'
+    path = os.path.join("..", "..", "Dataset", "flower_data", "flower_photos")
+    weightPath = os.path.join(ckpts_path, 'ViT.pth')
     trainImgPaths, trainLabels, valImgPaths, valLabels = dataLoading(path)
     batchSize=4
     
