@@ -84,7 +84,7 @@ class Diffusion:
             for i in tqdm(reversed(range(1, self.noise_steps)), position=0):
                 t = (torch.ones(n) * i).long().to(self.device)
                 x = x.float()
-                pred_noise = model(x, t)
+                pred_noise = model(x, t, labels)
                 if scale > 0:
                     unconditional_pred_noise = model(x, t, None)
                     pred_noise = torch.lerp(unconditional_pred_noise, pred_noise, scale)
@@ -107,7 +107,7 @@ def train_model(args):
     setup_logging(args.run_name)
     device = args.device
     dataloader = getData(args)
-    model = Conditional_Unet().to(device)
+    model = Conditional_Unet(classNum=args.num_classes).to(device)
     opt = optim.AdamW(model.parameters(), lr=args.lr)
     mse = nn.MSELoss()
     diffusion = Diffusion(img_size=args.img_size, device=device)

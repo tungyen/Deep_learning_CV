@@ -8,6 +8,7 @@ landscape
 shapenet
 __pycache__
 .DS_Store
+ckpts
 results
 *.eps
 *.aux

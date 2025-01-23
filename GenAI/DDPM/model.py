@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 class EMA:
     def __init__(self, alpha):
-        super.__init__()
+        super().__init__()
         self.alpha = alpha
         self.step = 0
         
@@ -27,7 +27,7 @@ class EMA:
         self.step += 1
         
     def reset(self, EMA_model: nn.Module, cur_model: nn.Module):
-        EMA_model.load_state_dict(cur_model.state_dict)
+        EMA_model.load_state_dict(cur_model.state_dict())
         
         
 class SelfAttention(nn.Module):
