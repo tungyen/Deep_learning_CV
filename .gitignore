@@ -7,6 +7,7 @@ ModelNet40
 landscape
 shapenet
 __pycache__
+.DS_Store
 results
 *.eps
 *.aux
