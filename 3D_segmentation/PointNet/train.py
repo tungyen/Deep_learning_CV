@@ -22,11 +22,12 @@ class FocalLoss(nn.Module):
         return focalLoss
 
 def pointNet_train():
+    os.makedirs("ckpts", exist_ok=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    trainningPath = "Dataset/train"
+    trainningPath = "../../Dataset/Chair_dataset/train"
     dataset = chairDataset(trainningPath)
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
-    weightPath = 'pointNet.pth'
+    weightPath = 'ckpts/pointNet.pth'
     
     numClasses = 4
     model = PointNetSegmentation(numClasses).to(device)
@@ -37,6 +38,8 @@ def pointNet_train():
     numEpoch = 10
     for epoch in tqdm(range(numEpoch)):
         for i, (pcd, annotation) in enumerate(dataloader):
+            pcd = pcd.to(device).float()
+            annotation = annotation.to(device)
             output = model(pcd)
             # output = output.transpose(2, 1)
             trainLoss = criterion(output, annotation)

@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import open3d as o3d
 import numpy as np
 import os
@@ -18,8 +18,8 @@ class chairDataset(Dataset):
     
     def __getitem__(self, idx):
         pcdFile = self.pcdFiles[idx]
-        annotationFile = self.annotationFiles[idx]
-        
+        annotationFile = pcdFile[:-3] + "txt"
+
         pointcloud, indices = self.loadPCD(os.path.join(self.dataPath, "pts", pcdFile))
         annotation = self.loadAnnotation(indices, os.path.join(self.dataPath, "label", annotationFile))
         if self.transform is not None:
@@ -34,7 +34,6 @@ class chairDataset(Dataset):
         #     indices - The sampling index of the point cloud with shape (self.pcdSize, )
         pcd = o3d.io.read_point_cloud(pcdFile, format='xyz')
         points = np.asarray(pcd.points)
-        
         # Sampling
         indices = random.sample(list(range(points.shape[0])), self.pcdSize)
         points = points[indices, :]
@@ -42,7 +41,7 @@ class chairDataset(Dataset):
         mu = np.mean(points, axis=0)
         var = np.mean(np.square(points-mu))
         points = (points-mu) / np.sqrt(var)
-        points = torch.tensor(points, dtype=torch.float32).transpose(1, 0)
+        points = torch.tensor(points, dtype=torch.float64).transpose(1, 0)
         return points, indices
     
     def loadAnnotation(self, indices, annotationFile):
@@ -65,10 +64,10 @@ class chairDataset(Dataset):
         return images, labels
     
     
-# if __name__ == '__main__':
-#     dataPath = 'Dataset/train'
-#     data = chairDataset(dataPath)
+if __name__ == '__main__':
+    dataPath = '../../Dataset/Chair_dataset/train'
+    data = chairDataset(dataPath)
+    dataloader = DataLoader(data, batch_size=4, shuffle=True)
     
-#     for d in data:
-#         pcd, label = d
-#         print(label.shape[0])
+    for pcd, label in dataloader:
+        print(label.shape[0])

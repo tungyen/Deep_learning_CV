@@ -15,12 +15,13 @@ color_map = {
 
 def pointNet_predict():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    testPath = os.path.join('Dataset', 'test')
+    testPath = os.path.join("../..", 'Dataset', "Chair_dataset", 'test')
     testFiles = os.listdir(testPath)
     
     model = PointNetSegmentation()
-    weightPath = "PointNet.pth"
+    weightPath = "ckpts/pointNet.pth"
     model.load_state_dict(torch.load(weightPath, map_location=device))
+    model = model.to(device)
     
     for testFile in testFiles:
         pcdPath = os.path.join(testPath, testFile)
@@ -31,13 +32,14 @@ def pointNet_predict():
         mu = np.mean(points, axis=0)
         var = np.mean(np.square(points-mu))
         points = (points-mu) / np.sqrt(var)
-        points = torch.tensor(points, dtype=torch.float32).transpose(1, 0)
-        points = points.view(1, points.shape[0], points.shape[1])
+        points = torch.tensor(points, dtype=torch.float64).transpose(1, 0)
+        points = torch.unsqueeze(points, 0)
         
         
         model.eval()
         with torch.no_grad():
-            output = torch.squeeze(model(points.to(device)))
+            points = points.to(device).float()
+            output = torch.squeeze(model(points))
             predict = torch.softmax(output, dim=0).cpu()
             predict_cla = torch.argmax(predict, dim=0).numpy()
             

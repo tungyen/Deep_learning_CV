@@ -24,20 +24,11 @@ def VGG_train():
                                    transforms.ToTensor(),
                                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])}
 
-    data_root = os.path.abspath(os.path.join(os.getcwd(), "../.."))  # get data root path
-    image_path = os.path.join(data_root, "Dataset/data_set", "flower_data")  # flower data set path
+    image_path = os.path.join("../..", "Dataset", "flower_data")  # flower data set path
     assert os.path.exists(image_path), "{} path does not exist.".format(image_path)
     train_dataset = datasets.ImageFolder(root=os.path.join(image_path, "train"),
                                          transform=data_transform["train"])
     train_num = len(train_dataset)
-
-    # {'daisy':0, 'dandelion':1, 'roses':2, 'sunflower':3, 'tulips':4}
-    flower_list = train_dataset.class_to_idx
-    cla_dict = dict((val, key) for key, val in flower_list.items())
-    # write dict into json file
-    json_str = json.dumps(cla_dict, indent=4)
-    with open('class_indices.json', 'w') as json_file:
-        json_file.write(json_str)
 
     batch_size = 32
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
@@ -65,16 +56,18 @@ def VGG_train():
     loss_function = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=0.0001)
 
+    if not os.path.exists("ckpts"):
+        os.mkdir("ckpts")
     epochs = 30
     best_acc = 0.0
-    save_path = './{}Net.pth'.format(model_name)
+    save_path = 'ckpts/{}Net.pth'.format(model_name)
     train_steps = len(train_loader)
     for epoch in range(epochs):
         # train
         net.train()
         running_loss = 0.0
         train_bar = tqdm(train_loader, file=sys.stdout)
-        for step, data in enumerate(train_bar):
+        for _, data in enumerate(train_bar):
             images, labels = data
             optimizer.zero_grad()
             outputs = net(images.to(device))
