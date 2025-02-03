@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%I:%M:%S")
 
-class Diffusion:
+class DDPM:
     def __init__(self, noise_steps=1000, beta_s=1e-4, beta_e=0.02, img_size=256, device="cuda", beta_scheduler='linear'):
         self.noise_steps = noise_steps
         self.beta_s = beta_s
@@ -105,7 +105,7 @@ def train_model(args):
     model = Unet().to(device)
     opt = optim.AdamW(model.parameters(), lr=args.lr)
     mse = nn.MSELoss()
-    diffusion = Diffusion(img_size=args.img_size, device=device)
+    diffusion = DDPM(img_size=args.img_size, device=device)
     logger = SummaryWriter(os.path.join("runs", args.run_name))
     l = len(dataloader)
     
