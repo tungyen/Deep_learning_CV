@@ -30,7 +30,7 @@ python cfdg_sampling.py # for Classifier Free Guidance Diffusion
 # _Result of ddpm_ #
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/DDPM/images/ddpm_res.png)
 
-# _Result of ddpm_ #
+# _Result of ddim_ #
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/DDPM/images/ddim_res.png)
 
 # _Result of cfdg_ #

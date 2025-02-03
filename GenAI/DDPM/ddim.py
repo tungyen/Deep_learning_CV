@@ -11,7 +11,6 @@ import math
 from torch.utils.tensorboard import SummaryWriter
 
 logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%I:%M:%S")
-
 class DDIM:
     def __init__(self, noise_steps=1000, beta_s=1e-4, beta_e=0.02, img_size=256, sample_steps=20, device="cuda", beta_scheduler='linear'):
         self.noise_steps = noise_steps
