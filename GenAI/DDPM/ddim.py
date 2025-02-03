@@ -23,7 +23,7 @@ class DDIM:
         self.beta = self.noiseSchedule(beta_scheduler).to(device)
         self.alpha = 1 - self.beta
         self.alpha_hat = torch.cumprod(self.alpha, dim=0)
-        self.timeSteps = torch.linspace(noise_steps-1, 0, sample_steps).long().to(device)
+        self.timeSteps = torch.linspace(noise_steps-1, 0, sample_steps).long()
         
         
     def linear_beta_schedule(self, timesteps):
@@ -80,19 +80,26 @@ class DDIM:
         with torch.no_grad():
             x = torch.randn((n, 3, self.img_size, self.img_size)).to(self.device)
             for t, s in tqdm(list(zip(self.timeSteps[:-1], self.timeSteps[1:])), desc='Sampling'):
+                t = (torch.ones(n) * t).long().to(self.device)
+                s = (torch.ones(n) * s).long().to(self.device)
+                x = x.float()
                 pred_noise = model(x, t)
                 
+                alpha_t = self.alpha[t][:, None, None, None]
+                alpha_hat_t = self.alpha_hat[t][:, None, None, None]
+                alpha_hat_s = self.alpha_hat[s][:, None, None, None]
+                
                 if not math.isclose(eta, 0.0):
-                    sigma_t = eta * ((1.0-self.alpha_hat[s]) * (1.0-self.alpha[t]) / (1.0-self.alpha_hat[t])) ** 0.5
+                    sigma_t = eta * torch.sqrt((1-alpha_hat_s) * (1-alpha_t) / (1-alpha_hat_t))
                 else:
-                    sigma_t = torch.zeros_like(self.alpha[0])
+                    sigma_t = torch.zeros_like(alpha_t)
                     
                 # Compute x_0 and first term
-                x_0 = (x - ((1.0-self.alpha_hat[t]) ** 0.5) * pred_noise) / ((self.alpha_hat[t]) ** 0.5)
-                first_term = ((self.alpha_hat[s]) ** 0.5) * x_0
+                x_0 = (x - torch.sqrt(1-alpha_hat_t) * pred_noise) / torch.sqrt(alpha_hat_t)
+                first_term = torch.sqrt(alpha_hat_s) * x_0
                 
                 # Compute second term
-                coff = (1.0 - self.alpha_hat[s]-sigma_t**2) ** 0.5
+                coff = torch.sqrt(1 - alpha_hat_s - (sigma_t**2))
                 second_term = coff * pred_noise
                 eps = torch.randn_like(x)
                 x = first_term + second_term + sigma_t * eps

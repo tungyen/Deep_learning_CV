@@ -16,7 +16,7 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=log
 
 
 class CFDG:
-    def __init__(self, noise_steps=1000, beta_s=1e-4, beta_e=0.02, img_size=256, device="cuda", beta_scheduler='linear'):
+    def __init__(self, noise_steps=1000, beta_s=1e-4, beta_e=0.02, img_size=256, sample_steps=20, device="cuda", beta_scheduler='linear'):
         self.noise_steps = noise_steps
         self.beta_s = beta_s
         self.beta_e = beta_e
@@ -26,6 +26,7 @@ class CFDG:
         self.beta = self.noiseSchedule(beta_scheduler).to(device)
         self.alpha = 1 - self.beta
         self.alpha_hat = torch.cumprod(self.alpha, dim=0)
+        self.timeSteps = torch.linspace(noise_steps-1, 0, sample_steps).long()
         
         
     def linear_beta_schedule(self, timesteps):
@@ -97,6 +98,44 @@ class CFDG:
                     noise = torch.zeros_like(x)
                     
                 x = 1 / torch.sqrt(alpha) * (x - ((1-alpha) / (torch.sqrt(1-alpha_hat))) * pred_noise) + torch.sqrt(beta) * noise
+        
+        model.train()
+        x = (x.clamp(-1, 1) + 1) / 2
+        x = (x * 255).type(torch.uint8)
+        return x
+    
+    def sample2(self, model: nn.Module, n, labels, scale=3, eta: float = 0.0):
+        logging.info(f"Sampling {n} new images....")
+        model.eval()
+        with torch.no_grad():
+            x = torch.randn((n, 3, self.img_size, self.img_size)).to(self.device)
+            for t, s in tqdm(list(zip(self.timeSteps[:-1], self.timeSteps[1:])), desc='Sampling'):
+                t = (torch.ones(n) * t).long().to(self.device)
+                s = (torch.ones(n) * s).long().to(self.device)
+                x = x.float()
+                pred_noise = model(x, t, labels)
+                if scale > 0:
+                    unconditional_pred_noise = model(x, t, None)
+                    pred_noise = torch.lerp(unconditional_pred_noise, pred_noise, scale)
+                
+                alpha_t = self.alpha[t][:, None, None, None]
+                alpha_hat_t = self.alpha_hat[t][:, None, None, None]
+                alpha_hat_s = self.alpha_hat[s][:, None, None, None]
+                
+                if not math.isclose(eta, 0.0):
+                    sigma_t = eta * ((1.0-alpha_hat_s) * (1.0-alpha_t) / (1.0-alpha_hat_t)) ** 0.5
+                else:
+                    sigma_t = torch.zeros_like(alpha_t)
+                    
+                # Compute x_0 and first term
+                x_0 = (x - ((1.0-alpha_hat_t) ** 0.5) * pred_noise) / ((alpha_hat_t) ** 0.5)
+                first_term = ((alpha_hat_s) ** 0.5) * x_0
+                
+                # Compute second term
+                coff = (1.0 - alpha_hat_s-sigma_t**2) ** 0.5
+                second_term = coff * pred_noise
+                eps = torch.randn_like(x)
+                x = first_term + second_term + sigma_t * eps
         
         model.train()
         x = (x.clamp(-1, 1) + 1) / 2
