@@ -10,6 +10,11 @@ import argparse
 import math
 from torch.utils.tensorboard import SummaryWriter
 
+from datasets import load_dataset
+from torchvision import transforms
+from torch.utils.data import DataLoader
+from diffusers.optimization import get_cosine_schedule_with_warmup
+
 logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%I:%M:%S")
 
 class DDPM:
@@ -86,24 +91,48 @@ class DDPM:
                 alpha_hat = self.alpha_hat[t][:, None, None, None]
                 beta = self.beta[t][:, None, None, None]
                 if i > 1:
+                    one_minus_alpha_cumprod_t_minus_one = 1.0 - self.alpha_hat[t-1][:, None, None, None]
+                    one_divided_by_sigma_square = alpha / beta + 1.0 / one_minus_alpha_cumprod_t_minus_one
+                    variance = (1.0 / one_divided_by_sigma_square) ** 0.5
                     noise = torch.randn_like(x)
                 else:
+                    variance = torch.zeros_like(beta)
                     noise = torch.zeros_like(x)
-                    
-                x = 1 / torch.sqrt(alpha) * (x - ((1-alpha) / (torch.sqrt(1-alpha_hat))) * pred_noise) + torch.sqrt(beta) * noise
+                x = 1 / torch.sqrt(alpha) * (x - ((1-alpha) / (torch.sqrt(1-alpha_hat))) * pred_noise) + variance * noise
         
         model.train()
         x = (x.clamp(-1, 1) + 1) / 2
         x = (x * 255).type(torch.uint8)
         return x
-    
+
+def get_transform(args):
+    preprocess = transforms.Compose([
+        transforms.Resize((args.img_size, args.img_size)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5], [0.5]),
+    ])
+    def transform(samples):
+        images = [preprocess(img.convert("RGB")) for img in samples["image"]]
+        return dict(images=images)
+    return transform
     
 def train_model(args):
     setup_logging(args.run_name)
     device = args.device
-    dataloader = getData(args)
+    # dataloader = getData(args)
+    
+    dataset = load_dataset("huggan/smithsonian_butterflies_subset", split="train")
+    # dataset = dataset.select(range(21551))
+    dataset.set_transform(get_transform(args))
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+    
     model = Unet().to(device)
     opt = optim.AdamW(model.parameters(), lr=args.lr)
+    lr_scheduler = get_cosine_schedule_with_warmup(
+        optimizer=opt,
+        num_warmup_steps=args.lr_warmup_steps,
+        num_training_steps=(len(dataloader) * args.epochs),
+    )
     mse = nn.MSELoss()
     diffusion = DDPM(img_size=args.img_size, device=device)
     logger = SummaryWriter(os.path.join("runs", args.run_name))
@@ -112,7 +141,9 @@ def train_model(args):
     for epoch in range(args.epochs):
         logging.info(f"Starting epoch {epoch}: ")
         pbar = tqdm(dataloader)
-        for i, (imgs, _) in enumerate(pbar):
+        # for i, (imgs, _) in enumerate(pbar):
+        for i, batch in enumerate(pbar):
+            imgs = batch["images"]
             imgs = imgs.to(device)
             t = diffusion.sample_timesteps(imgs.shape[0]).to(device)
             xt, noise = diffusion.noise_imgs(imgs, t)
@@ -122,6 +153,7 @@ def train_model(args):
             opt.zero_grad()
             loss.backward()
             opt.step()
+            lr_scheduler.step()
             
             pbar.set_postfix(MSE=loss.item())
             logger.add_scalar("MSE", loss.item(), global_step=epoch * l + i)
@@ -133,13 +165,14 @@ def train_model(args):
 
 def parse_args():
     parse = argparse.ArgumentParser()
-    parse.add_argument('--run_name', type=str, default="DDPM_Unconditional", help='Model Type')
-    parse.add_argument('--epochs', type=int, default=500)
-    parse.add_argument('--batch_size', type=int, default=12)
+    parse.add_argument('--run_name', type=str, default="DDPM_butterfly", help='Model Type')
+    parse.add_argument('--epochs', type=int, default=75)
+    parse.add_argument('--batch_size', type=int, default=16)
     parse.add_argument('--img_size', type=int, default=64)
-    parse.add_argument('--data_path', type=str, default="../../Dataset")
+    parse.add_argument('--data_path', type=str, default="../../Dataset/Landscape")
     parse.add_argument('--device', type=str, default="cuda")
-    parse.add_argument('--lr', type=float, default=3e-4)
+    parse.add_argument('--lr', type=float, default=1e-4)
+    parse.add_argument('--lr_warmup_steps', type=int, default=500)
     args = parse.parse_args()
     return args
 

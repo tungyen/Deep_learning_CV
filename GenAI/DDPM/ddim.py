@@ -105,8 +105,7 @@ class DDIM:
                 x = first_term + second_term + sigma_t * eps
         
         model.train()
-        x = (x.clamp(-1, 1) + 1) / 2
-        x = (x * 255).type(torch.uint8)
+        x = (x / 2.0 + 0.5).clamp(0, 1).cpu().permute(0, 2, 3, 1).numpy()
         return x
     
     
