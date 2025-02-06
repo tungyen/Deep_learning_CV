@@ -10,7 +10,7 @@ In this part, I implement four different diffusion schedules:
 4. Sigmoid
 
 
-# _Training_ #
+# _Training_ #s
 To train the model, just use the following command for both models:
 
 ```bash
@@ -28,6 +28,8 @@ python ddim_sampling.py # for DDIM
 python iddpm_sampling.py # for iDDPM
 python cfdg_sampling.py # for Classifier Free Guidance Diffusion
 ```
+
+Note that IDDPM is still in progress.....s
 
 # _Result of ddpm_ #
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/DDPM/images/ddpm_res_butterfly.png)

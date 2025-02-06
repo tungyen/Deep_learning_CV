@@ -6,6 +6,9 @@ cityscapes
 ModelNet40
 landscape
 shapenet
+results
+ddpm-animefaces-64
+iddpm-animefaces-64
 __pycache__
 .DS_Store
 ckpts
