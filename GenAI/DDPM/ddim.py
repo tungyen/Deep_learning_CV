@@ -4,7 +4,7 @@ import torch.nn as nn
 from tqdm import tqdm
 from torch import optim
 from utils import *
-from model import Unet
+from unet import UNet
 import logging
 import argparse
 import math
@@ -105,7 +105,8 @@ class DDIM:
                 x = first_term + second_term + sigma_t * eps
         
         model.train()
-        x = (x / 2.0 + 0.5).clamp(0, 1).cpu().permute(0, 2, 3, 1).numpy()
+        x = (x.clamp(-1, 1) + 1) / 2
+        x = (x * 255).type(torch.uint8)
         return x
     
     
@@ -113,7 +114,7 @@ def train_model(args):
     setup_logging(args.run_name)
     device = args.device
     dataloader = getData(args)
-    model = Unet().to(device)
+    model = UNet().to(device)
     opt = optim.AdamW(model.parameters(), lr=args.lr)
     mse = nn.MSELoss()
     diffusion = DDIM(img_size=args.img_size, device=device)
@@ -123,7 +124,13 @@ def train_model(args):
     for epoch in range(args.epochs):
         logging.info(f"Starting epoch {epoch}: ")
         pbar = tqdm(dataloader)
-        for i, (imgs, _) in enumerate(pbar):
+        for i, batch in enumerate(pbar):
+            if args.dataset == "butterfly":
+                imgs = batch["images"]
+            elif args.dataset == "landscape":
+                imgs = batch[0]
+            else:
+                raise ValueError(f'unknown dataset {args.dataset}')
             imgs = imgs.to(device)
             t = diffusion.sample_timesteps(imgs.shape[0]).to(device)
             xt, noise = diffusion.noise_imgs(imgs, t)
@@ -144,6 +151,7 @@ def train_model(args):
 
 def parse_args():
     parse = argparse.ArgumentParser()
+    parse.add_argument('--dataset', type=str, default="butterfly", help='Dataset Type')
     parse.add_argument('--run_name', type=str, default="DDIM_Unconditional", help='Model Type')
     parse.add_argument('--epochs', type=int, default=500)
     parse.add_argument('--batch_size', type=int, default=12)

@@ -32,10 +32,12 @@ python cfdg_sampling.py # for Classifier Free Guidance Diffusion
 Note that IDDPM is still in progress.....
 
 # _Result of ddpm_ #
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/DDPM/images/ddpm_res_butterfly.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/DDPM/images/DDPM_butterfly.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/DDPM/images/DDPM_landscape.png)
 
 # _Result of ddim_ #
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/DDPM/images/ddim_res_butterfly.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/DDPM/images/DDIM_butterfly.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/DDPM/images/DDIM_landscape.png)
 
 # _Result of cfdg_ #
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/DDPM/images/cfdg_res.png)

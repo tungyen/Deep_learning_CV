@@ -4,15 +4,11 @@ import torch.nn as nn
 from tqdm import tqdm
 from torch import optim
 from utils import *
-from model import Variance_Unet
+from unet import Variance_UNet
 import logging
 import argparse
 import math
 from torch.utils.tensorboard import SummaryWriter
-
-from datasets import load_dataset
-from torchvision import transforms
-from torch.utils.data import DataLoader
 from diffusers.optimization import get_cosine_schedule_with_warmup
 
 import numpy as np
@@ -256,29 +252,13 @@ class ImportanceSampler:
                 self.loss_history[t, self.loss_cnt[t]] = loss
                 self.loss_cnt[t] += 1
 
-def get_transform(args):
-    preprocess = transforms.Compose([
-        transforms.Resize(args.img_size),
-        transforms.ToTensor(),
-        transforms.Normalize([0.5], [0.5]),
-    ])
-    def transform(samples):
-        images = [preprocess(img.convert("RGB")) for img in samples["image"]]
-        return dict(images=images)
-    return transform 
-    
 def train_model(args):
     setup_logging(args.run_name)
     device = args.device
-    # dataloader = getData(args)
-    
-    dataset = load_dataset("huggan/few-shot-anime-face", split="train")
-    # dataset = dataset.select(range(21551))
-    dataset.set_transform(get_transform(args))
-    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+    dataloader = getData(args)
     
     iddpm = IDDPM()
-    model = Variance_Unet().to(device)
+    model = Variance_UNet().to(device)
     opt = optim.AdamW(model.parameters(), lr=args.lr)
     lr_scheduler = get_cosine_schedule_with_warmup(
         optimizer=opt,
@@ -293,19 +273,18 @@ def train_model(args):
     for epoch in range(args.epochs):
         logging.info(f"Starting epoch {epoch}: ")
         pbar = tqdm(dataloader)
-        # for i, (imgs, _) in enumerate(pbar):
         for i, batch in enumerate(pbar):
-            imgs = batch["images"]
+            if args.dataset == "butterfly":
+                imgs = batch["images"]
+            elif args.dataset == "landscape":
+                imgs = batch[0]
+            else:
+                raise ValueError(f'unknown dataset {args.dataset}')
             imgs = imgs.to(device)
-            # t = diffusion.sample_timesteps(imgs.shape[0]).to(device)
             t, weights = importance_sampler.sample(imgs.shape[0])
             t = t.to(device)
             weights = weights.to(device)
             xt, noise = diffusion.noise_imgs(imgs, t)
-            
-            # xt = xt.float()
-            # pred_noise = model(xt, t)
-            # loss = mse(noise, pred_noise)
             losses = training_losses(iddpm, model, imgs, noise, xt, t)
             importance_sampler.update(t, losses)
             loss = (losses * weights).mean()
@@ -325,8 +304,9 @@ def train_model(args):
 
 def parse_args():
     parse = argparse.ArgumentParser()
+    parse.add_argument('--dataset', type=str, default="butterfly", help='Dataset Type')
     parse.add_argument('--run_name', type=str, default="IDDPM_butterfly", help='Model Type')
-    parse.add_argument('--epochs', type=int, default=100)
+    parse.add_argument('--epochs', type=int, default=500)
     parse.add_argument('--batch_size', type=int, default=16)
     parse.add_argument('--img_size', type=int, default=64)
     parse.add_argument('--data_path', type=str, default="../../Dataset")

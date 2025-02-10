@@ -8,9 +8,11 @@ import torch.nn as nn
 from tqdm import tqdm
 from torch import optim
 from utils import *
-from model import Conditional_Unet, EMA
+from model import EMA
+from unet import Conditional_UNet
 import logging
 from torch.utils.tensorboard import SummaryWriter
+from diffusers.optimization import get_cosine_schedule_with_warmup
 
 logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%I:%M:%S")
 
@@ -146,8 +148,13 @@ def train_model(args):
     setup_logging(args.run_name)
     device = args.device
     dataloader = getData(args)
-    model = Conditional_Unet(classNum=args.num_classes).to(device)
+    model = Conditional_UNet(class_num=args.num_classes).to(device)
     opt = optim.AdamW(model.parameters(), lr=args.lr)
+    lr_scheduler = get_cosine_schedule_with_warmup(
+        optimizer=opt,
+        num_warmup_steps=args.lr_warmup_steps,
+        num_training_steps=(len(dataloader) * args.epochs),
+    )
     mse = nn.MSELoss()
     diffusion = CFDG(img_size=args.img_size, device=device)
     logger = SummaryWriter(os.path.join("runs", args.run_name))
@@ -172,6 +179,7 @@ def train_model(args):
             opt.zero_grad()
             loss.backward()
             opt.step()
+            lr_scheduler.step()
             
             ema.EMA_step(ema_model, model)
             
@@ -190,14 +198,16 @@ def train_model(args):
 
 def parse_args():
     parse = argparse.ArgumentParser()
-    parse.add_argument('--run_name', type=str, default="DDPM_conditional", help='Model Type')
-    parse.add_argument('--epochs', type=int, default=300)
-    parse.add_argument('--batch_size', type=int, default=14)
+    parse.add_argument('--dataset', type=str, default="cifar-10", help='Dataset Type')
+    parse.add_argument('--run_name', type=str, default="CFDG_cifar", help='Model Type')
+    parse.add_argument('--epochs', type=int, default=500)
+    parse.add_argument('--batch_size', type=int, default=16)
     parse.add_argument('--img_size', type=int, default=64)
     parse.add_argument('--num_classes', type=int, default=10)
     parse.add_argument('--data_path', type=str, default="../../Dataset/cifar10/cifar10-64/train")
     parse.add_argument('--device', type=str, default="cuda")
-    parse.add_argument('--lr', type=float, default=3e-4)
+    parse.add_argument('--lr', type=float, default=1e-4)
+    parse.add_argument('--lr_warmup_steps', type=int, default=500)
     args = parse.parse_args()
     return args
 
