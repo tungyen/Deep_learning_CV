@@ -149,6 +149,8 @@ def train_model(args):
     device = args.device
     dataloader = getData(args)
     model = Conditional_UNet(class_num=args.num_classes).to(device)
+    ckpt = torch.load("ckpts/CFDG_cifar/ema_ckpt.pt")
+    model.load_state_dict(ckpt)
     opt = optim.AdamW(model.parameters(), lr=args.lr)
     lr_scheduler = get_cosine_schedule_with_warmup(
         optimizer=opt,
@@ -163,7 +165,7 @@ def train_model(args):
     ema = EMA(0.995)
     ema_model = copy.deepcopy(model).eval().requires_grad_(False)
     
-    for epoch in range(args.epochs):
+    for epoch in range(81, args.epochs):
         logging.info(f"Starting epoch {epoch}: ")
         pbar = tqdm(dataloader)
         for i, (imgs, labels) in enumerate(pbar):

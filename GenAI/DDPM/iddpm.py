@@ -149,8 +149,8 @@ def true_mean_var(iddpm: IDDPM, x_0, x_t, t):
     alpha_hat_prev = iddpm.alpha_hat_prev[t][:, None, None, None]
     log_variance = iddpm.posterior_log_variance[t][:, None, None, None]
     
-    mean_coef1 = beta * alpha_hat_prev ** 0.5 / (1.0 - alpha_hat)
-    mean_coef2 = (1.0 - alpha_hat_prev) * alpha ** 0.5 / (1.0 - alpha_hat)
+    mean_coef1 = beta * torch.sqrt(alpha_hat_prev) / (1.0 - alpha_hat)
+    mean_coef2 = (1.0 - alpha_hat_prev) * torch.sqrt(alpha) / (1.0 - alpha_hat)
     
     mean = mean_coef1 * x_0 + mean_coef2 * x_t
     return mean, log_variance
@@ -193,15 +193,16 @@ def training_losses(iddpm: IDDPM, model: nn.Module, x_0: torch.Tensor, noise: to
     x_t = x_t.float()
     pred = model(x_t, t)
     pred_noise, pred_var = torch.split(pred, 3, dim=1)
-    mse = nn.MSELoss()
-    loss_simple = mse(noise, pred_noise)
+    # mse = nn.MSELoss()
+    # loss_simple = mse(noise, pred_noise)
+    loss_simple = (pred_noise - noise) ** 2
+    loss_simple = loss_simple.mean(dim=list(range(1, len(loss_simple.shape))))
     loss_vlb = vlb_loss(iddpm, pred_noise.detach(), pred_var, x_0, x_t, t)
     return loss_simple + vlb_lambda * loss_vlb
 
 
 # Importance Sampler
 class ImportanceSampler:
-    
     def __init__(self, diffusion_steps: int = 1000, history_per_term: int = 10):
         self.diffusion_steps = diffusion_steps
         self.history_per_term = history_per_term
@@ -229,11 +230,9 @@ class ImportanceSampler:
     def update(self, t: torch.Tensor, losses: torch.Tensor):
         if dist.is_initialized():
             world_size = dist.get_world_size()
-            # get batch sizes for padding to the maximum bs
             batch_sizes = [torch.tensor([0], dtype=torch.int32, device=t.device) for _ in range(world_size)]
             dist.all_gather(batch_sizes, torch.full_like(batch_sizes[0], t.size(0)))
             max_batch_size = max([bs.item() for bs in batch_sizes])
-            # gather all timesteps and losses
             timestep_batches: List[torch.Tensor] = [torch.zeros(max_batch_size).to(t) for _ in range(world_size)]
             loss_batches: List[torch.Tensor] = [torch.zeros(max_batch_size).to(losses) for _ in range(world_size)]
             dist.all_gather(timestep_batches, t)
