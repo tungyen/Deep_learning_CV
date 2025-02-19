@@ -4,6 +4,33 @@ from torch import nn
 from torch.nn import functional as F
 from abc import abstractmethod
 
+class EMA:
+    def __init__(self, alpha):
+        super().__init__()
+        self.alpha = alpha
+        self.step = 0
+        
+    def update_model_average(self, EMA_model: nn.Module, cur_model: nn.Module):
+        for cur_param, EMA_param in zip(cur_model.parameters(), EMA_model.parameters()):
+            prev, cur = EMA_param.data, cur_param.data
+            EMA_param.data = self.update_average(prev, cur)
+            
+    def update_average(self, prev, cur):
+        if prev is None:
+            return cur
+        return prev * self.alpha + (1-self.alpha) * cur
+    
+    def EMA_step(self, EMA_model, cur_model, EMA_start_step=2000):
+        if self.step < EMA_start_step:
+            self.reset(EMA_model, cur_model)
+            self.step += 1
+            return
+        self.update_model_average(EMA_model, cur_model)
+        self.step += 1
+        
+    def reset(self, EMA_model: nn.Module, cur_model: nn.Module):
+        EMA_model.load_state_dict(cur_model.state_dict())
+
 def timestep_embedding(timesteps, dim, max_period=10000):
     """
     :param timesteps: a 1-D Tensor of N indices, one per batch element.

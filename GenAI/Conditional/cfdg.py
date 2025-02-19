@@ -8,8 +8,7 @@ import torch.nn as nn
 from tqdm import tqdm
 from torch import optim
 from utils import *
-from model import EMA
-from unet import Conditional_UNet
+from unet import Conditional_UNet, EMA
 import logging
 from torch.utils.tensorboard import SummaryWriter
 from diffusers.optimization import get_cosine_schedule_with_warmup
