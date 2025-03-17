@@ -1,8 +1,12 @@
 import torch
+import sys
+import argparse
+
+sys.path.append("..")
 from utils import *
 from unet import Conditional_UNet
 from cfdg import *
-import argparse
+
 
 def parse_args():
     parse = argparse.ArgumentParser()
@@ -24,7 +28,7 @@ if __name__ == '__main__':
     if args.sampler == "DDPM":
         x = diffusion.sample(model, args.img_num, y, scale=3)
     elif args.sampler == "DDIM":
-        x = diffusion.sample2(model, args.img_num, y, scale=3)
+        x = diffusion.sample_ddim(model, args.img_num, y, scale=3)
     else:
         raise ValueError(f'unknown diffusion sampler {args.sampler}')
         

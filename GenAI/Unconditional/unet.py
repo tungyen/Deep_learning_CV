@@ -31,19 +31,18 @@ class EMA:
     def reset(self, EMA_model: nn.Module, cur_model: nn.Module):
         EMA_model.load_state_dict(cur_model.state_dict())
 
-def timestep_embedding(timesteps, dim, max_period=10000):
-    """
-    :param timesteps: a 1-D Tensor of N indices, one per batch element.
-                      These may be fractional.
-    :param dim: the dimension of the output.
-    :param max_period: controls the minimum frequency of the embeddings.
-    :return: an [N x dim] Tensor of positional embeddings.
-    """
+def timestep_embedding(ts, dim, max_period=10000):
+    # Inputs:
+    #     ts - The timestep of each batch with shape (batch_size, )
+    #     dim - The dimension of the output embedding
+    #     max_period - The minimum frequency of the embeddings
+    # Outputs:
+    #     embedding - The positional embeddings with shape (batch_size, dim)
     half = dim // 2
     freqs = torch.exp(
         -math.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half
-    ).to(device=timesteps.device)
-    args = timesteps[:, None].float() * freqs[None]
+    ).to(device=ts.device)
+    args = ts[:, None].float() * freqs[None]
     embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
     if dim % 2:
         embedding = torch.cat([embedding, torch.zeros_like(embedding[:, :1])], dim=-1)
@@ -52,23 +51,13 @@ def timestep_embedding(timesteps, dim, max_period=10000):
 
 # define TimestepEmbedSequential to support `time_emb` as extra input
 class TimestepBlock(nn.Module):
-    """
-    Any module where forward() takes timestep embeddings as a second argument.
-    """
-
     @abstractmethod
     def forward(self, x, emb):
-        """
-        Apply the module to `x` given `emb` timestep embeddings.
-        """
+        # Apply the module to `x` given `emb` timestep embeddings.
+        pass
 
 
 class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
-    """
-    A sequential module that passes timestep embeddings to the children that
-    support it as an extra input.
-    """
-
     def forward(self, x, emb):
         for layer in self:
             if isinstance(layer, TimestepBlock):
@@ -110,18 +99,15 @@ class ResidualBlock(TimestepBlock):
             self.shortcut = nn.Identity()
 
     def forward(self, x, t):
-        """
-        `x` has shape `[batch_size, in_dim, height, width]`
-        `t` has shape `[batch_size, time_dim]`
-        """
+        # Inputs:
+        #     x - feature with shape (batch_size, input_dim, h, w)
+        #     t - Positional embedding of timesteps with shape (batch_size, time_dim)
         h = self.conv1(x)
-        # Add time step embeddings
         h += self.time_emb(t)[:, :, None, None]
         h = self.conv2(h)
         return h + self.shortcut(x)
 
 
-# Attention block with shortcut
 class AttentionBlock(nn.Module):
     def __init__(self, channels, num_heads=1):
         super().__init__()
@@ -256,16 +242,14 @@ class UNet(nn.Module):
             nn.Conv2d(model_channels, out_channels, kernel_size=3, padding=1),
         )
 
-    def forward(self, x, timesteps):
-        """
-        Apply the model to an input batch.
-        :param x: an [N x C x H x W] Tensor of inputs.
-        :param timesteps: a 1-D batch of timesteps.
-        :return: an [N x C x ...] Tensor of outputs.
-        """
+    def forward(self, x, ts):
+        # Inputs:
+        #     x - Batch of images with shape (batch_size, 3, h, w)
+        #     ts - Batch of timesteps with shape (batch_size, )
+        # Outputs:
+        #     noise - Batch of prediction noise for each channel with shape (batch_size, 3, h, w)
         hs = []
-        # time step embedding
-        emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
+        emb = self.time_embed(timestep_embedding(ts, self.model_channels))
 
         # down stage
         h = x
@@ -278,7 +262,8 @@ class UNet(nn.Module):
         for module in self.up_blocks:
             cat_in = torch.cat([h, hs.pop()], dim=1)
             h = module(cat_in, emb)
-        return self.out(h)
+        noise = self.out(h)
+        return noise
     
     
 class Variance_UNet(nn.Module):
@@ -365,16 +350,14 @@ class Variance_UNet(nn.Module):
             nn.Conv2d(model_channels, out_channels, kernel_size=3, padding=1),
         )
 
-    def forward(self, x, timesteps):
-        """
-        Apply the model to an input batch.
-        :param x: an [N x C x H x W] Tensor of inputs.
-        :param timesteps: a 1-D batch of timesteps.
-        :return: an [N x C x ...] Tensor of outputs.
-        """
+    def forward(self, x, ts):
+        # Inputs:
+        #     x - Batch of images with shape (batch_size, 3, h, w)
+        #     ts - Batch of timesteps with shape (batch_size, )
+        # Outputs:
+        #     noise - Batch of prediction noise for each channel with shape (batch_size, 6, h, w)
         hs = []
-        # time step embedding
-        emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
+        emb = self.time_embed(timestep_embedding(ts, self.model_channels))
 
         # down stage
         h = x
@@ -387,7 +370,8 @@ class Variance_UNet(nn.Module):
         for module in self.up_blocks:
             cat_in = torch.cat([h, hs.pop()], dim=1)
             h = module(cat_in, emb)
-        return self.out(h)
+        noise = self.out(h)
+        return noise
     
     
     

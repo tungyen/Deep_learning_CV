@@ -53,3 +53,9 @@ def setup_logging(run_name):
     os.makedirs("results", exist_ok=True)
     os.makedirs(os.path.join("ckpts", run_name), exist_ok=True)
     os.makedirs(os.path.join("results", run_name), exist_ok=True)
+    
+def norm(imgs):
+    return (imgs-0.5) * 2.0
+
+def denorm(imgs):
+    return (imgs / 2.0) + 0.5
