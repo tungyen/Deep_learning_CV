@@ -30,9 +30,9 @@ python iddpm_sampling.py # for iDDPM
 Currently, IDDPM is still in progress due to some unknown problem.....
 
 # _Result of ddpm_ #
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Unconditional/images/DDPM_butterfly.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Unconditional/images/DDPM_landscape.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Diffusion_model/Unconditional/images/DDPM_butterfly.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Diffusion_model/Unconditional/images/DDPM_landscape.png)
 
 # _Result of ddim_ #
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Unconditional/images/DDIM_butterfly.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Unconditional/images/DDIM_landscape.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Diffusion_model/Unconditional/images/DDIM_butterfly.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Diffusion_model/Unconditional/images/DDIM_landscape.png)

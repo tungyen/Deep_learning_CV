@@ -24,5 +24,5 @@ python cfdg_sampling.py --img_num 10 --sampler "DDIM" --label 5 --img_size 64 # 
 ```
 
 # _Result of cfdg_ #
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Conditional/images/CFDG_DDIM_cifar_0.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Conditional/images/CFDG_DDIM_cifar_3.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Diffusion_model/Conditional/images/CFDG_DDIM_cifar_0.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Diffusion_model/Conditional/images/CFDG_DDIM_cifar_3.png)

@@ -1,7 +1,7 @@
 from torch import nn
 from torch.nn import functional as F
 import torch
-from typing import List, Callable, Union, Any, TypeVar, Tuple
+from typing import List
 
 class VAE_PI(nn.Module):
     def __init__(self, inputC, latent_dim, hidden_dim: List = None):

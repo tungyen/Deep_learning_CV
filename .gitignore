@@ -1,10 +1,12 @@
 venv
 training_logs
 flower_data
+MNIST
 cifar10
 cityscapes
 ModelNet40
-landscape
+img_align_celeba
+Landscape
 shapenet
 DIV2K
 Flickr2K
