@@ -21,14 +21,18 @@ python Gated_PixelCNN/test.py
 
 # _Result of PixelCNN_ #
 With color level 4:
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/PixelCNN/Vanila_PixelCNN/img/pixelCnn_MNIST_4.png)
 
 With color level 256:
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/PixelCNN/Vanila_PixelCNN/img/pixelCnn_MNIST_256.png)
 
 # _Result of Gate PixelCNN_ #
 With color level 4:
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/PixelCNN/Gated_PixelCNN/img/gated_pixelCnn_MNIST_4.png)
 
 With color level 256:
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/PixelCNN/Gated_PixelCNN/img/gated_pixelCnn_MNIST_256.png)
