@@ -1,8 +1,9 @@
-from model import *
+from model2 import *
 import torch
 from torchvision.utils import save_image
 import argparse
 import math
+import torch.nn.functional as F
 
 
 def test_model(args):
@@ -15,14 +16,15 @@ def test_model(args):
     else:
         raise ValueError(f'unknown dataset {args.datasets}')
     
-    ckpts_path = 'ckpts/pixelCnn_{}_{}.pt'.format(args.datasets ,args.color_level)
+    ckpts_path = 'ckpts/pixelCnn2_{}_{}.pt'.format(args.datasets ,args.color_level)
     device = args.device
     n_block = args.n_block
     h_dim = args.h_dim
     B = args.batch_size
     color_level = args.color_level
     
-    model = PixelCNN(C, n_block, h_dim).to(device)
+    # model = PixelCNN(C, n_block, h_dim).to(device)
+    model = PixelCNN(C, color_level, n_block, h_dim).to(device)
     ckpts = torch.load(ckpts_path)
     model.load_state_dict(ckpts)
     

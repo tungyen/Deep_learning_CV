@@ -9,7 +9,8 @@ import os
 import argparse
 import numpy as np
 
-from model import *
+# from model import *
+from model2 import *
 
 def discretize_imgs(img_tensor, nlevels):
     xnp=img_tensor.numpy()
@@ -28,7 +29,8 @@ def train_model(args):
         C = 3
         
     device = args.device
-    model = PixelCNN(C, args.n_block, args.h_dim).to(device)
+    # model = PixelCNN(C, args.n_block, args.h_dim).to(device)
+    model = PixelCNN(C, args.color_level, args.n_block, args.h_dim).to(device)
     opt = optim.RMSprop(model.parameters(), lr=args.lr)
     criterion = nn.CrossEntropyLoss()
 
@@ -47,7 +49,7 @@ def train_model(args):
             opt.step()
             pbar.set_postfix(Cross_Entropy_loss=loss.item())
             
-        torch.save(model.state_dict(), os.path.join("ckpts", "pixelCnn_{}_{}.pt".format(args.datasets, args.color_level)))
+        torch.save(model.state_dict(), os.path.join("ckpts", "pixelCnn2_{}_{}.pt".format(args.datasets, args.color_level)))
     
 
 def parse_args():

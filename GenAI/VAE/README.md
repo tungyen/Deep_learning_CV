@@ -27,9 +27,9 @@ python VQVAE/test.py --task reconstruct # Reconstruct the dataset
 
 
 # _Result of Vanila VAE_ #
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/Vanila_VAE/img/reconst_res.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/Vanila_VAE/img/gen_res.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/Vanila_VAE/img/VAE_reconst.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/Vanila_VAE/img/VAE_gen.png)
 
 # _Result of VQVAE_ #
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/VQVAE/img/reconst_res.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/VQVAE/img/gen_res.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/VQVAE/img/VQVAE_reconst.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/VQVAE/img/VQVAE_gen.png)

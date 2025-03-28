@@ -19,19 +19,19 @@ def test_model(args):
     model.load_state_dict(ckpts)
     dataset = CelebA_dataset(args.root)
     dataloader = DataLoader(dataset, batch_size=args.sample_batch_size, shuffle=True)
-    
+    model_name = "VAE"
     if task == 'reconstruct':
         model.eval()
         batch = next(iter(dataloader)).to(device)
         [reconstruct, _, _] = model(batch)
         reconstruct = reconstruct.view(-1, 3, args.img_size, args.img_size)
         combined = torch.cat((batch, reconstruct)).detach().cpu()
-        save_image(combined, "img/reconst_res.png", nrow=args.sample_batch_size)
+        save_image(combined, "img/{}_reconst.png".format(model_name), nrow=args.sample_batch_size)
         
     elif task == 'generate':
         model.eval()
         x = sample(model, args).detach().cpu()
-        save_image(x, "img/gen_res.png", nrow=int(math.sqrt(args.sample_batch_size)))
+        save_image(x, "img/{}_gen.png".format(model_name), nrow=int(math.sqrt(args.sample_batch_size)))
 
     else:
         raise ValueError(f'unknown test task {task}')
@@ -46,7 +46,7 @@ def parse_args():
     parse.add_argument('--img_size', type=int, default=64)
     parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--root', type=str, default="../../../Dataset/img_align_celeba")
-    parse.add_argument('--ckpts_path', type=str, default="ckpts/vae2.pt")
+    parse.add_argument('--ckpts_path', type=str, default="ckpts/vae.pt")
     args = parse.parse_args()
     return args
 

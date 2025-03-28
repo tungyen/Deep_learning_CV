@@ -31,5 +31,5 @@ if __name__ == '__main__':
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
     
     for img in dataloader:
-        print(img.shape)
+        print(torch.max(img))
         break

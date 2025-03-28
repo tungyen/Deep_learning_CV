@@ -4,6 +4,8 @@ from torch.nn import functional as F
 from typing import List
 from torchvision import transforms
 
+from prior import *
+
 
 class VectorQuantizer(nn.Module):
     def __init__(self, emb_num: int, emb_dim: int, beta: float = 0.25):
@@ -38,7 +40,8 @@ class VectorQuantizer(nn.Module):
         
         VQ_loss = commitment_loss * self.beta + emb_loss
         quantized_latents = latents + (quantized_latents - latents).detach()
-        return quantized_latents.permute(0, 3, 1, 2).contiguous(), VQ_loss
+        idxes = idxes.long().view(B, H, W)
+        return idxes, quantized_latents.permute(0, 3, 1, 2).contiguous(), VQ_loss
     
 class ResidualBlock(nn.Module):
     def __init__(self, inputC: int, outputC: int):
@@ -54,13 +57,15 @@ class ResidualBlock(nn.Module):
 
 
 class VQVAE(nn.Module):
-    def __init__(self, inputC: int, emb_num: int, emb_dim: int, hidden_dims: List = None, beta=0.25, img_size=64):
+    def __init__(self, inputC, emb_num, emb_dim, n_block, prior_dim, hidden_dims: List = None, beta=0.25, img_size=64):
         super(VQVAE, self).__init__()
         
         self.emb_num = emb_num
         self.emb_dim = emb_dim
         self.img_size = img_size
         self.beta = beta
+        
+        self.pixelcnn_prior = GatedPixelCNN(K=emb_num, inputC=emb_dim, n_block=n_block, dim=prior_dim)
 
         modules = []
         if hidden_dims is None:
@@ -88,6 +93,7 @@ class VQVAE(nn.Module):
         )
         self.encoder = nn.Sequential(*modules)
         self.vq_layer = VectorQuantizer(emb_num, emb_dim, beta)
+        self.pixelcnn_loss_fct = nn.CrossEntropyLoss()
         
         # Decoder
         modules = []
@@ -134,11 +140,28 @@ class VQVAE(nn.Module):
         return x
     
     
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, prior_only=False):
         encoding = self.encode(x)
-        print("Shape of encoding: ", encoding.shape)
-        quantized_x, VQ_loss = self.vq_layer(encoding)
-        print("Shape of quantized encoding: ", quantized_x.shape)
+        idxes, quantized_x, VQ_loss = self.vq_layer(encoding)
+        
+        if prior_only:
+            return idxes, self.pixelcnn_prior(idxes)
+        
         return [self.decode(quantized_x), VQ_loss]
+    
+    
+    def prior_loss(self, x, output: torch.Tensor):
+        q, logit_probs = output
+        return self.pixelcnn_loss_fct(logit_probs, q)
+    
+    def VQVAE_loss(self, input, output):
+        B = input.shape[0]
+        input = input.view(B, -1)
+        reconstruct, VQ_loss = output
+        recons_loss = F.mse_loss(reconstruct, input)
+        loss = recons_loss + VQ_loss
+        # return {'loss': loss, 'Reconstruction_loss': recons_loss, 'VQ_loss': VQ_loss}
+        return loss
+    
     
     

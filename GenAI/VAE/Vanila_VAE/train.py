@@ -34,7 +34,7 @@ def train_model(args):
             opt.step()
             pbar.set_postfix(Loss=loss['loss'].item())
             
-        torch.save(model.state_dict(), os.path.join("ckpts", "vae2.pt"))
+        torch.save(model.state_dict(), os.path.join("ckpts", "vae.pt"))
 
 def parse_args():
     parse = argparse.ArgumentParser()
