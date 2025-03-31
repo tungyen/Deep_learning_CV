@@ -17,12 +17,20 @@ Model with task category:
 # _3D Semantic Segmentation_ #
 1. **PointNet**
 
-# _2D Object Detection_ #
-1. **Faster-RCNN (In progress)**
-
 # _6D Pose Estimation_ #
 1. **PoseCNN**
 
 # _GenAI_ #
+## _Diffusion Model_ ##
 1. **Denoising Diffusion Probability Model (DDPM)**
-2. **Classifier-Free Diffusion Guidance (CFDG)**
+2. **Denoising Diffusion Implicit Model (DDIM)**
+3. **Classifier-Free Diffusion Guidance (CFDG)**
+4. **Image Super-Resolution via Iterative Refinement (SR3) - In progress**
+
+## _Auto Encoder_ ##
+1. **Variational Autoencoder (VAE)**
+2. **Vector Quantization Variational Autoencoder (VQVAE)**
+
+## _Pixel CNN_ ##
+1. **PixelCNN**
+2. **Gated PixelCNN**
