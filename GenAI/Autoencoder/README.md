@@ -27,7 +27,7 @@ python VQVAE/test.py --dataset celeba --task recon # Reconstruct the dataset
 ```
 
 
-# _Result of Vanila VAE_ #
+# _Result of VAE_ #
 ## _Celeba Dataset_ ##
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_celeba_recon.png)
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_celeba_gen.png)
