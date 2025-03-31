@@ -76,7 +76,7 @@ def train_model(args):
 
 def parse_args():
     parse = argparse.ArgumentParser()
-    parse.add_argument('--dataset', type=str, default="cifar")
+    parse.add_argument('--dataset', type=str, default="fashion")
     parse.add_argument('--epochs', type=int, default=20)
     parse.add_argument('--emb_num', type=int, default=512)
     parse.add_argument('--emb_dim', type=int, default=64)
