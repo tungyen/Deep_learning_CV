@@ -39,14 +39,20 @@ python VQVAE/test.py --dataset celeba --task recon # Reconstruct the dataset
 
 ## _MNIST Dataset_ ##
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/VQVAE/img/VQVAE_MNIST_recon.png)
+
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/VQVAE/img/VQVAE_MNIST_gen.png)
 
 
 ## _Fashion Dataset_ ##
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/VQVAE/img/VQVAE_fashion_recon.png)
+
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/VQVAE/img/VQVAE_fashion_gen.png)
 
 
 ## _CIFAR Dataset_ ##
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/VQVAE/img/VQVAE_cifar_recon.png)
+
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/VAE/VQVAE/img/VQVAE_cifar_gen.png)
