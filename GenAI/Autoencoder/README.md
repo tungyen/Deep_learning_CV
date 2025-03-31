@@ -34,14 +34,17 @@ python VQVAE/test.py --dataset celeba --task recon # Reconstruct the dataset
 
 ## _MNIST Dataset_ ##
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_MNIST_recon.png)
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_MNIST_gen.png)
 
 ## _Fashion MNIST Dataset_ ##
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_fashion_recon.png)
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_fashion_gen.png)
 
 ## _CIFAR Dataset_ ##
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_cifar_recon.png)
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_cifar_gen.png)
 
 
