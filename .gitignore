@@ -2,6 +2,8 @@ venv
 training_logs
 flower_data
 MNIST
+cifar
+FashionMNIST
 cifar10
 cityscapes
 ModelNet40

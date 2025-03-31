@@ -6,6 +6,14 @@ from torchvision import transforms
 
 from prior import *
 
+def weights_init(m):
+    className = m.__class__.__name__
+    if className.find('Conv') != -1:
+        try:
+            nn.init.xavier_uniform_(m.weight.data)
+            m.bias.data.fill_(0)
+        except AttributeError:
+            pass
 
 class VectorQuantizer(nn.Module):
     def __init__(self, emb_num: int, emb_dim: int, beta: float = 0.25):
@@ -57,15 +65,15 @@ class ResidualBlock(nn.Module):
 
 
 class VQVAE(nn.Module):
-    def __init__(self, inputC, emb_num, emb_dim, n_block, prior_dim, hidden_dims: List = None, beta=0.25, img_size=64):
+    def __init__(self, inputC, emb_num, emb_dim, n_block, class_num, prior_dim, hidden_dims: List = None, beta=0.25):
         super(VQVAE, self).__init__()
-        
         self.emb_num = emb_num
         self.emb_dim = emb_dim
-        self.img_size = img_size
         self.beta = beta
+        self.class_num = class_num
+        self.inputC = inputC
         
-        self.pixelcnn_prior = GatedPixelCNN(K=emb_num, inputC=emb_dim, n_block=n_block, dim=prior_dim)
+        self.pixelcnn_prior = GatedPixelCNN(K=emb_num, inputC=emb_dim, n_block=n_block, dim=prior_dim, class_num=class_num)
 
         modules = []
         if hidden_dims is None:
@@ -76,21 +84,17 @@ class VQVAE(nn.Module):
             modules.append(
                 nn.Sequential(
                     nn.Conv2d(inputC, h_dim, kernel_size=4, stride=2, padding=1),
-                    nn.LeakyReLU()
+                    nn.BatchNorm2d(h_dim),
+                    nn.ReLU(True)
                 )
             )
             inputC = h_dim
             
-        for _ in range(6):
+        for _ in range(2):
             modules.append(ResidualBlock(inputC, inputC))
-        modules.append(nn.LeakyReLU())
+            modules.append(nn.ReLU(True))
         
-        modules.append(
-            nn.Sequential(
-                nn.Conv2d(inputC, emb_dim, kernel_size=1, stride=1),
-                nn.LeakyReLU()
-            )
-        )
+        modules.append(nn.Conv2d(inputC, emb_dim, kernel_size=1, stride=1))
         self.encoder = nn.Sequential(*modules)
         self.vq_layer = VectorQuantizer(emb_num, emb_dim, beta)
         self.pixelcnn_loss_fct = nn.CrossEntropyLoss()
@@ -100,33 +104,32 @@ class VQVAE(nn.Module):
         modules.append(
             nn.Sequential(
                 nn.Conv2d(emb_dim, hidden_dims[-1], kernel_size=3, stride=1, padding=1),
-                nn.LeakyReLU()
+                nn.ReLU(True)
             )
         )
         
-        for _ in range(6):
+        for _ in range(2):
             modules.append(ResidualBlock(hidden_dims[-1], hidden_dims[-1]))
-        modules.append(nn.LeakyReLU())
+        modules.append(nn.ReLU(True))
         hidden_dims.reverse()
         
         for i in range(len(hidden_dims)-1):
             modules.append(
                 nn.Sequential(
                     nn.ConvTranspose2d(hidden_dims[i], hidden_dims[i+1], kernel_size=4, stride=2, padding=1),
-                    nn.LeakyReLU()
+                    nn.BatchNorm2d(hidden_dims[i+1]),
+                    nn.ReLU(True)
                 )
             )
             
         modules.append(
             nn.Sequential(
-                nn.ConvTranspose2d(hidden_dims[-1], 3, kernel_size=4, stride=2, padding=1),
-                nn.Sigmoid()
+                nn.ConvTranspose2d(hidden_dims[-1], self.inputC, kernel_size=4, stride=2, padding=1),
+                nn.Tanh()
             )
         )
         self.decoder = nn.Sequential(*modules)
-        self.celeb_T = transforms.Compose([
-            transforms.Resize(img_size, antialias=True),
-            transforms.CenterCrop(img_size)])
+        self.apply(weights_init)
         
     def encode(self, x: torch.Tensor):
         x = self.encoder(x)
@@ -134,19 +137,21 @@ class VQVAE(nn.Module):
     
     def decode(self, z: torch.Tensor):
         x = self.decoder(z)
-        x = self.celeb_T(x)
         x = torch.flatten(x, start_dim=1)
-        x = torch.nan_to_num(x)
         return x
     
     
-    def forward(self, x: torch.Tensor, prior_only=False):
-        encoding = self.encode(x)
-        idxes, quantized_x, VQ_loss = self.vq_layer(encoding)
+    def forward(self, x: torch.Tensor, label, prior_only=False):
         
         if prior_only:
-            return idxes, self.pixelcnn_prior(idxes)
-        
+            with torch.no_grad():
+                encoding = self.encode(x)
+                idxes, _, _ = self.vq_layer(encoding)
+                idxes = idxes.detach()
+            return idxes, self.pixelcnn_prior(idxes, label)
+                
+        encoding = self.encode(x)
+        idxes, quantized_x, VQ_loss = self.vq_layer(encoding)  
         return [self.decode(quantized_x), VQ_loss]
     
     
@@ -160,7 +165,6 @@ class VQVAE(nn.Module):
         reconstruct, VQ_loss = output
         recons_loss = F.mse_loss(reconstruct, input)
         loss = recons_loss + VQ_loss
-        # return {'loss': loss, 'Reconstruction_loss': recons_loss, 'VQ_loss': VQ_loss}
         return loss
     
     

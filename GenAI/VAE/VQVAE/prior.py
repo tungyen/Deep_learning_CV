@@ -81,7 +81,7 @@ class GatedConv2d(nn.Module):
         pad = nn.ZeroPad2d((0, 0, 1, 0))
         return pad(x)
     
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, label_emb):
         vx, hx = x.chunk(2, dim=1)
         self.vertical.weight.data *= self.v_mask
         self.horizontal.weight.data *= self.h_mask
@@ -91,10 +91,16 @@ class GatedConv2d(nn.Module):
         hx_new = hx_new + self.vh(self.down_shift(vx))
         
         vx1, vx2 = vx.chunk(2, dim=1)
-        vx = torch.tanh(vx1) + torch.sigmoid(vx2)
+        if label_emb is None:
+            vx = torch.tanh(vx1) + torch.sigmoid(vx2)
+        else:
+            vx = torch.tanh(vx1+label_emb) + torch.sigmoid(vx2+label_emb)
         
         hx1, hx2 = hx_new.chunk(2, dim=1)
-        hx_new = torch.tanh(hx1) + torch.sigmoid(hx2)
+        if label_emb is None:
+            hx_new = torch.tanh(hx1) + torch.sigmoid(hx2)
+        else:
+            hx_new = torch.tanh(hx1+label_emb) + torch.sigmoid(hx2+label_emb)
         hx_new = self.hh(hx_new)
         hx = hx + hx_new
         
@@ -102,7 +108,7 @@ class GatedConv2d(nn.Module):
     
     
 class GatedPixelCNN(nn.Module):
-    def __init__(self, K, inputC, n_block, dim):
+    def __init__(self, K, inputC, n_block, dim, class_num):
         super(GatedPixelCNN, self).__init__()
         self.embedding = nn.Embedding(num_embeddings=K, embedding_dim=inputC)
         self.input_layer = MaskedConv2d('A', inputC, dim, 7, 3)
@@ -114,12 +120,26 @@ class GatedPixelCNN(nn.Module):
             
         self.output_layer = MaskedConv2d('B', dim, K, 7, 3)
         self.net = nn.Sequential(*modules)
+        self.class_num = class_num
+        if class_num is not None:
+            self.label_embedding = nn.Embedding(class_num, dim)
         
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, label):
+        if label is not None and self.class_num is not None:
+            label_emb = self.label_embedding(label).unsqueeze(2).unsqueeze(3)
+        else:
+            label_emb = None
+            
         z = self.embedding(x).permute(0, 3, 1, 2).contiguous()
-        
         z = self.input_layer(z)
-        z = self.net(torch.cat((z, z), dim=1)).chunk(2, dim=1)[1]
+        z = torch.cat((z, z), dim=1)
+        for block in self.net:
+            if isinstance(block, GatedConv2d):
+                z = block(z, label_emb)
+            else:
+                z = block(z)
+        
+        z = z.chunk(2, dim=1)[1]
         z = self.output_layer(z)
         return z
         
