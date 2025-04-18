@@ -22,3 +22,11 @@ python CGAN/test.py # Randomly generate dataset from the latent space
 # _Result of CGAN_ #
 ## _MNIST Dataset_ ##
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/GAN/CGAN/img/Conditional_GAN_MNIST_gen.png)
+
+
+# _Result of DCGAN_ #
+## _MNIST Dataset_ ##
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/GAN/DCGAN/img/Deep_Convolutional_GAN_MNIST_gen.png)
+
+## _CIFAR Dataset_ ##
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/GAN/DCGAN/img/Deep_Convolutional_GAN_cifar_gen.png)
