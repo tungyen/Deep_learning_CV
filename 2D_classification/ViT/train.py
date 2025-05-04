@@ -7,52 +7,54 @@ from torchvision import transforms
 from tqdm import tqdm
 import math
 from dataset import *
-from ViT import *
+from model import *
 
 import os
+import argparse
 
-
-def ViT_train():
+def train_model(args):
     ckpts_path = "ckpts"
     if not os.path.exists(ckpts_path):
         os.mkdir(ckpts_path)
         
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    path = os.path.join("..", "..", "Dataset", "flower_data", "flower_photos")
-    weightPath = os.path.join(ckpts_path, 'ViT.pth')
-    trainImgPaths, trainLabels, valImgPaths, valLabels = dataLoading(path)
-    batchSize=4
+    device = args.device
+    path = args.data_path
+    weightPath = os.path.join(ckpts_path, 'vit2.pth')
+    batchSize = args.batch_size
+    numEpoch = args.epochs
+    lr = args.lr
+    m = args.momentum
+    weight_decay = args.weight_decay
+    lrf = args.lrf
     
-    data_transform = {
-        "train": transforms.Compose([transforms.RandomResizedCrop(224),
-                                     transforms.RandomHorizontalFlip(),
-                                     transforms.ToTensor(),
-                                     transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]),
-        "val": transforms.Compose([transforms.Resize(256),
-                                   transforms.CenterCrop(224),
-                                   transforms.ToTensor(),
-                                   transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])}
+    if args.dataset == "flower":
+        numClasses = 5
+        data_transform = {
+            "train": transforms.Compose([transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip(),
+                                        transforms.ToTensor(), transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]),
+            "val": transforms.Compose([transforms.Resize(256), transforms.CenterCrop(224),
+                                    transforms.ToTensor(), transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])}
+        train_path = os.path.join(path, "train")
+        val_path = os.path.join(path, "val")
+        
+        trainDataset = flowerDataset(train_path, data_transform["train"])
+        valDataset = flowerDataset(val_path, data_transform["val"])
+        nw = min([os.cpu_count(), batchSize if batchSize > 1 else 0, 8])
     
-    trainDataset = flowerDataset(trainImgPaths, trainLabels, data_transform["train"])
-    valDataset = flowerDataset(valImgPaths, valLabels, data_transform["val"])
-    nw = min([os.cpu_count(), batchSize if batchSize > 1 else 0, 8])
+        trainDataloader = DataLoader(trainDataset, batch_size=batchSize, shuffle=True,
+                                    pin_memory=True, num_workers=nw, 
+                                    collate_fn=trainDataset.collate_fn)
+        
+        valDataloader = DataLoader(valDataset, batch_size=batchSize, shuffle=False,
+                                    pin_memory=True, num_workers=nw, 
+                                    collate_fn=trainDataset.collate_fn)
     
-    trainDataloader = DataLoader(trainDataset, batch_size=batchSize, shuffle=True,
-                                 pin_memory=True, num_workers=nw, 
-                                 collate_fn=trainDataset.collate_fn)
     
-    valDataloader = DataLoader(valDataset, batch_size=batchSize, shuffle=False,
-                                 pin_memory=True, num_workers=nw, 
-                                 collate_fn=trainDataset.collate_fn)
-    
-    numEpoch = 10
     bestAcc = 0
-    lrf = 0.01
     valNum = len(valDataset)
     
-    numClasses = 5
     model = ViT(classNum=numClasses).to(device)
-    opt = optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=5E-5)
+    opt = optim.SGD(model.parameters(), lr=lr, momentum=m, weight_decay=weight_decay)
     lf = lambda x: ((1 + math.cos(x * math.pi / numEpoch)) / 2) * (1 - lrf) + lrf  # cosine
     scheduler = lr_scheduler.LambdaLR(opt, lr_lambda=lf)
     criterion = nn.CrossEntropyLoss()
@@ -82,6 +84,21 @@ def ViT_train():
         if valAcc > bestAcc:
             bestAcc = valAcc
             torch.save(model.state_dict(), weightPath)
+            
+def parse_args():
+    parse = argparse.ArgumentParser()
+    parse.add_argument('--dataset', type=str, default="flower")
+    parse.add_argument('--data_path', type=str, default="../../Dataset/flower_data")
+    parse.add_argument('--epochs', type=int, default=200)
+    parse.add_argument('--batch_size', type=int, default=4)
+    parse.add_argument('--device', type=str, default="cuda")
+    parse.add_argument('--lr', type=float, default=2e-4)
+    parse.add_argument('--lrf', type=float, default=0.01)
+    parse.add_argument('--momentum', type=float, default=0.9)
+    parse.add_argument('--weight_decay', type=float, default=5e-5)
+    args = parse.parse_args()
+    return args
         
 if __name__ =='__main__':
-    ViT_train()
+    args = parse_args()
+    train_model(args)

@@ -4,15 +4,12 @@ First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_le
 
 ## training ##
 ```bash
-python train.py
+python train.py --dataset flower
 ```
-
-## evaluation ##
-To be continue
 
 ## testing ##
 ```bash
-python predict.py
+python test.py --dataset flower
 ```
 
 Now the code only predict the result based on 1 single image. The code for predict a batch of image will be released soon.
@@ -20,4 +17,4 @@ Now the code only predict the result based on 1 single image. The code for predi
 
 Here is the simple test result of ViT for flower image classification.
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/2D_classification/ViT/res.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/2D_classification/ViT/img/vit_flower.png)

@@ -34,3 +34,7 @@ Model with task category:
 ## _Pixel CNN_ ##
 1. **PixelCNN**
 2. **Gated PixelCNN**
+
+## _GAN_ ##
+1. **CGAN**
+2. **DCGAN**
