@@ -13,16 +13,16 @@ python test.py --dataset flower --model vit_rope
 ```
 
 
-Flower image classification.
+## Flower image classification ##
 
-Sinusoidal Position Encoding
+### Sinusoidal Position Encoding ###
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/2D_classification/ViT/img/vit_sinusoidal_flower.png)
 
-Relative Distance Position Encoding
+### Relative Distance Position Encoding ###
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/2D_classification/ViT/img/vit_relative_flower.png)
 
-Rotatory Position Encoding
+### Rotatory Position Encoding ###
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/2D_classification/ViT/img/vit_rope_flower.png)
