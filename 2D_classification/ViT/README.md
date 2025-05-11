@@ -21,8 +21,8 @@ Sinusoidal Position Encoding
 
 Relative Distance Position Encoding
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/2D_classification/ViT/img/vit_sinusoidal_flower.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/2D_classification/ViT/img/vit_relative_flower.png)
 
 Rotatory Position Encoding
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/2D_classification/ViT/img/vit_sinusoidal_flower.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/2D_classification/ViT/img/vit_rope_flower.png)
