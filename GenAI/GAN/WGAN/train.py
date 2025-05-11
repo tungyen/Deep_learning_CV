@@ -8,8 +8,6 @@ from torchvision import datasets
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 from torch.autograd import Variable
-import sys
-import numpy as np
 
 def train_model(args):
     
@@ -28,17 +26,19 @@ def train_model(args):
                      batch_size=B, shuffle=True, pin_memory=True)
         class_num = 10
         C = 1
+        img_size = 32
     elif dataset_type == "cifar":
         T = transforms.Compose([transforms.Resize(32), transforms.ToTensor(), transforms.Normalize(mean=(0.5), std=(0.5))])
         dataloader = DataLoader(datasets.CIFAR10('cifar', train=True, download=True, transform=T),
                      batch_size=B, shuffle=True, pin_memory=True)
         class_num = 10
         C = 3
+        img_size = 32
         
-    model_name = "Deep_Convolutional_GAN"
+    model_name = "WGAN"
     print("Start training {} model on {} dataset!".format(model_name, dataset_type))
-    G = Generator(latent_dim, C, class_num).to(device)
-    D = Discriminator(C, class_num).to(device)
+    G = Generator(C, latent_dim, class_num, img_size).to(device)
+    D = Discriminator(C, class_num, img_size).to(device)
     
     G_opt = optim.Adam(G.parameters(), lr=args.g_lr, betas=(b1, b2))
     D_opt = optim.Adam(D.parameters(), lr=args.d_lr, betas=(b1, b2))
