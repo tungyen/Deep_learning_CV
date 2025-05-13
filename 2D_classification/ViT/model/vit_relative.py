@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import repeat
-from utils import *
+
+from model.model_utils import *
 
 
 class RelativePositionEmbedding2D(nn.Module):
@@ -37,16 +38,16 @@ class RelativePositionEmbedding2D(nn.Module):
     
 
 class PatchEmbedding(nn.Module):
-    def __init__(self, imgSize=224, patchSize=16, inputC=3, emb_dim=768):
+    def __init__(self, img_size=224, patch_size=16, input_channel=3, emb_dim=768):
         super(PatchEmbedding, self).__init__()
-        self.imgSize = imgSize
-        self.patchSize = patchSize
-        self.inputC = inputC
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.input_channel = input_channel
         self.emb_dim = emb_dim
         
 
-        self.embedding = nn.Conv2d(inputC, emb_dim, kernel_size=patchSize, stride=patchSize)
-        self.patchLength = self.imgSize // self.patchSize
+        self.embedding = nn.Conv2d(input_channel, emb_dim, kernel_size=patch_size, stride=patch_size)
+        self.patchLength = self.img_size // self.patch_size
         self.CLS = nn.Parameter(torch.randn(1, 1, self.emb_dim))
         
         self.seq_length = self.patchLength ** 2
@@ -173,10 +174,10 @@ class MLP_head(nn.Module):
         
         
 class ViT_relative(nn.Sequential):
-    def __init__(self, inputC=3, patchSize=16, emb_dim=768, imgSize=224, L=12, class_num=5):
-        seq_len = (imgSize // patchSize)**2+1
+    def __init__(self, input_channel=3, patch_size=16, emb_dim=768, img_size=224, L=12, class_num=5):
+        seq_len = (img_size // patch_size)**2+1
         super(ViT_relative, self).__init__(
-            PatchEmbedding(imgSize, patchSize, inputC, emb_dim),
+            PatchEmbedding(img_size, patch_size, input_channel, emb_dim),
             TransformerEncoder(seq_len=seq_len, L=L),
             MLP_head(emb_dim, class_num)
         )

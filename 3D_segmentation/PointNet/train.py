@@ -1,60 +1,84 @@
 import torch
-import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from tqdm import tqdm
+import argparse
 
 from dataset import *
-from pointNet import *
-from tqdm import tqdm
+from model import *
+from utils import *
 
-class FocalLoss(nn.Module):
-    def __init__(self, numClasses=4, alpha=0.25, gamma=2):
-        super(FocalLoss, self).__init__()
-        self.alpha = alpha
-        self.numClasses = numClasses
-        self.gamma = gamma
-        
-    def forward(self, prediction, annotation):
-        loss = nn.CrossEntropyLoss()
-        CE_loss = loss(prediction, annotation)
-        pt = torch.exp(-CE_loss)
-        focalLoss = self.alpha * (1-pt) ** self.gamma * CE_loss
-        return focalLoss
 
-def pointNet_train():
+def train_model(args):
     os.makedirs("ckpts", exist_ok=True)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    trainningPath = "../../Dataset/Chair_dataset/train"
-    dataset = chairDataset(trainningPath)
-    dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
-    weightPath = 'ckpts/pointNet.pth'
+    model_name = args.model
+    task = model_name[-3:]
+    dataset_type = args.dataset
+    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+    device = args.device
+    lr = args.lr
+    beta1= args.beta1
+    beta2 = args.beta2
+    eps = args.eps
+    epochs = args.epoch
     
-    numClasses = 4
-    model = PointNetSegmentation(numClasses).to(device)
+    train_dataloader, val_dataloader, _, val_num = get_dataset(args)
+    model = get_model(args)
     
-    opt = optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-8)
-    criterion = FocalLoss()
+    opt = optim.Adam(model.parameters(), lr=lr, betas=(beta1, beta2), eps=eps)
+    criterion = get_loss(args)
     
-    numEpoch = 10
-    for epoch in tqdm(range(numEpoch)):
-        for i, (pcd, annotation) in enumerate(dataloader):
-            pcd = pcd.to(device).float()
-            annotation = annotation.to(device)
-            output = model(pcd)
-            # output = output.transpose(2, 1)
-            trainLoss = criterion(output, annotation)
+    best_metric = 0.0
+    
+    for epoch in tqdm(range(epochs)):
+        for pcloud, label in train_dataloader:
+            pcloud = pcloud.to(device).float()
+            label = label.to(device)
+            output = model(pcloud)
+
+            loss = criterion(output, label)
             opt.zero_grad()
-            trainLoss.backward()
-            opt.step()
-                
-            if i % 50 == 0:
-                torch.save(model.state_dict(), weightPath)
-                
-        print("Epoch {}-training loss===>{}".format(epoch, trainLoss.item()))
+            loss.backward()
+            opt.step()      
+        print("Epoch {}-training loss===>{}".format(epoch, loss.item()))
+        
+        # Validation
+        if task == "cls":
+            with torch.no_grad():
+                for pcloud, label in tqdm(val_dataloader):
+                    output = model(pcloud.to(device))
+                    pred_class = torch.argmax(output, dim=1)
+                    acc += torch.eq(pred_class, label.to(device)).sum().item()
+            acc = acc / val_num
+            print("Epoch {}-validation Acc===>{}".format(epoch+1, acc))
+            if acc > best_metric:
+                best_metric = acc
+                torch.save(model.state_dict(), weight_path)
+        
+def parse_args():
+    parse = argparse.ArgumentParser()
+    # Dataset
+    parse.add_argument('--dataset', type=str, default="chair")
+    parse.add_argument('--data_path', type=str, default="../../Dataset/Chair_dataset")
+    
+    # Model
+    parse.add_argument('--model', type=str, default="pointnet_seg")
+    parse.add_argument('--class_num', type=int, default=4)
+    
+    # training
+    parse.add_argument('--epochs', type=int, default=50)
+    parse.add_argument('--batch_size', type=int, default=4)
+    parse.add_argument('--device', type=str, default="cuda")
+    parse.add_argument('--lr', type=float, default=1e-3)
+    parse.add_argument('--beta1', type=float, default=0.9)
+    parse.add_argument('--beta2', type=float, default=0.999)
+    parse.add_argument('--eps', type=float, default=1e-8)
+    args = parse.parse_args()
+    return args
                 
                 
 if __name__ =='__main__':
-    pointNet_train()
+    args = parse_args()
+    train_model(args)
     
     
     

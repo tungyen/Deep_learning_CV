@@ -2,71 +2,42 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
-from torch.utils.data import DataLoader
-from torchvision import transforms
 from tqdm import tqdm
 import math
-from dataset import *
-from model import *
-
 import os
 import argparse
 
+from dataset import *
+from model import *
+from utils import *
+
+
 def train_model(args):
-    ckpts_path = "ckpts"
-    if not os.path.exists(ckpts_path):
-        os.mkdir(ckpts_path)
-        
+    os.makedirs("ckpts", exist_ok=True)
     device = args.device
-    path = args.data_path
     dataset_type = args.dataset
     model_name = args.model
-    batchSize = args.batch_size
-    numEpoch = args.epochs
+    epochs = args.epochs
     lr = args.lr
     m = args.momentum
     weight_decay = args.weight_decay
     lrf = args.lrf
     
-    weightPath = os.path.join(ckpts_path, "{}_{}.pth".format(model_name, dataset_type))
+    weight_path = os.path.join("ckpts", "{}_{}.pth".format(model_name, dataset_type))
     print("Start training model {} on {} dataset!".format(model_name, dataset_type))
-    
-    if dataset_type == "flower":
-        class_num = 5
-        data_transform = {
-            "train": transforms.Compose([transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip(), transforms.ToTensor(), transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])]),
-            "val": transforms.Compose([transforms.Resize(256), transforms.CenterCrop(224), transforms.ToTensor(), transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])}
-        train_path = os.path.join(path, "train")
-        val_path = os.path.join(path, "val")
-        
-        trainDataset = flowerDataset(train_path, data_transform["train"])
-        valDataset = flowerDataset(val_path, data_transform["val"])
-        nw = min([os.cpu_count(), batchSize if batchSize > 1 else 0, 8])
-    
-        trainDataloader = DataLoader(trainDataset, batch_size=batchSize, shuffle=True, pin_memory=True, num_workers=nw, collate_fn=trainDataset.collate_fn)
-        valDataloader = DataLoader(valDataset, batch_size=batchSize, shuffle=False, pin_memory=True, num_workers=nw, collate_fn=valDataset.collate_fn)
-    else:
-        raise ValueError(f'unknown dataset {dataset_type}')
-    
-    bestAcc = 0
-    valNum = len(valDataset)
-    
-    if model_name == "vit_sinusoidal":
-        model = ViT_sinusoidal(class_num=class_num).to(device)
-    elif model_name == "vit_relative":
-        model = ViT_relative(class_num=class_num).to(device)
-    elif model_name == "vit_rope":
-        model = ViT_rope(class_num=class_num).to(device)
-    else:
-        raise ValueError(f'unknown model {model_name}')
-        
+
+    trainDataloader, valDataloader, _, _, val_num = get_dataset(args)
+    model = get_model(args)
+    # model.load_state_dict(torch.load(weight_path, map_location=device))
+    # model.eval()
         
     opt = optim.SGD(model.parameters(), lr=lr, momentum=m, weight_decay=weight_decay)
-    lf = lambda x: ((1 + math.cos(x * math.pi / numEpoch)) / 2) * (1 - lrf) + lrf  # cosine
+    lf = lambda x: ((1 + math.cos(x * math.pi / epochs)) / 2) * (1 - lrf) + lrf
     scheduler = lr_scheduler.LambdaLR(opt, lr_lambda=lf)
     criterion = nn.CrossEntropyLoss()
     
-    for epoch in range(numEpoch):
+    bestAcc = 0
+    for epoch in range(epochs):
         print("Epoch {} start now!".format(epoch+1))
         # train
         for img, label in tqdm(trainDataloader):
@@ -86,19 +57,28 @@ def train_model(args):
                 output = model(img.to(device))
                 predClass = torch.max(output, dim=1)[1]
                 acc += torch.eq(predClass, label.to(device)).sum().item()
-        valAcc = acc / valNum
+        valAcc = acc / val_num
         print("Epoch {}-validation Acc===>{}".format(epoch+1, valAcc))
         if valAcc > bestAcc:
             bestAcc = valAcc
-            torch.save(model.state_dict(), weightPath)
+            torch.save(model.state_dict(), weight_path)
             
 def parse_args():
     parse = argparse.ArgumentParser()
-    parse.add_argument('--dataset', type=str, default="flower")
-    parse.add_argument('--model', type=str, default="vit_rope")
+    # Dataset
+    parse.add_argument('--dataset', type=str, default="cifar10")
     parse.add_argument('--data_path', type=str, default="../../Dataset/flower_data")
-    parse.add_argument('--epochs', type=int, default=200)
-    parse.add_argument('--batch_size', type=int, default=4)
+    parse.add_argument('--n_points', type=int, default=1024)
+    
+    # Model
+    parse.add_argument('--model', type=str, default="vit_rope")
+    parse.add_argument('--img_size', type=int, default=32)
+    parse.add_argument('--patch_size', type=int, default=4)
+    parse.add_argument('--class_num', type=int, default=10)
+    
+    # training
+    parse.add_argument('--epochs', type=int, default=100)
+    parse.add_argument('--batch_size', type=int, default=128)
     parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--lr', type=float, default=2e-4)
     parse.add_argument('--lrf', type=float, default=0.01)

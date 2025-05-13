@@ -3,10 +3,6 @@
 This is the introduction for every dataset used in this repo, and the guideline for downloading the dataset. Note that different models require different datasets. This page is only the basic guidance of downloading. You should check readme file of each model to decide which dataset is used.
 
 
-# _CIFAR10_ #
-Go to the [CIFAR-10 64x64](https://www.kaggle.com/datasets/joaopauloschuler/cifar10-64x64-resized-via-cai-super-resolution) for downloading, and the structure is like:
-`Dataset/cifar10/cifar10-32` and `Dataset/cifar10/cifar10-64`
-
 
 # _Cityscapes_ #
 Go to the official website [CityScapes](https://www.cityscapes-dataset.com/downloads/) for downloading. Unzip it under `Dataset/cityscapes`.
@@ -17,7 +13,13 @@ Go to the [Landscape Dataset](https://www.kaggle.com/datasets/arnaud58/landscape
 
 
 # _ModelNet40_ #
-Go to the [ModelNet-40](https://www.kaggle.com/datasets/balraj98/modelnet40-princeton-3d-object-dataset) for downloading and unzip as `Dataset/ModelNet40`.
+Go to the [ModelNet-40](https://www.kaggle.com/datasets/balraj98/modelnet40-princeton-3d-object-dataset) for downloading and unzip as `Dataset/ModelNet40`. And then run the following command:
+
+```bash
+python prepare_modelnet40.py
+```
+
+After this command, we use ModelNet40_npz as our dataset folder.
 
 
 # _ShapeNet_ #

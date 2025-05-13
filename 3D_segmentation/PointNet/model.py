@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
 
 # define the model structure
@@ -78,9 +76,9 @@ class STNkd(nn.Module):
         return x
     
     
-class PointNetEncoder(nn.Module):
+class encoder(nn.Module):
     def __init__(self, dimension=3):
-        super(PointNetEncoder, self).__init__()
+        super(encoder, self).__init__()
         self.pointCloudSTN = STN3d()
         self.featureSTN = STNkd()
         self.conv1 = nn.Conv1d(dimension, 64, 1).float()
@@ -111,54 +109,71 @@ class PointNetEncoder(nn.Module):
         x = self.bn3(self.conv3(x))
         x = torch.max(x, 2, keepdim=True)[0]
         x = x.view(-1, 1024)
-        xCLS = x
+        x_cls = x
         x = x.view(-1, 1024, 1).repeat(1, 1, n)
-        xSEG = torch.cat([x, feat], 1)
-        return xCLS, xSEG, trans1, trans2
+        x_seg = torch.cat([x, feat], 1)
+        return x_cls, x_seg, trans1, trans2
     
-class SegmentationTask(nn.Module):
-    def __init__(self, numClasses):
-        super(SegmentationTask, self).__init__()
-        self.numClasses = numClasses
+class seg_head(nn.Module):
+    def __init__(self, class_num):
+        super(seg_head, self).__init__()
+        self.numClasses = class_num
         self.conv1 = nn.Conv1d(1088, 512, 1).float()
         self.conv2 = nn.Conv1d(512, 256, 1).float()
         self.conv3 = nn.Conv1d(256, 128, 1).float()
-        self.conv4 = nn.Conv1d(128, numClasses, 1).float()
+        self.conv4 = nn.Conv1d(128, class_num, 1).float()
         self.bn1 = nn.BatchNorm1d(512)
         self.bn2 = nn.BatchNorm1d(256)
         self.bn3 = nn.BatchNorm1d(128)
         self.relu = nn.ReLU(inplace=True)
     
     def forward(self, x):
-        batchNumber = x.shape[0]
-        n = x.shape[2]
         x = self.relu(self.bn1(self.conv1(x)))
         x = self.relu(self.bn2(self.conv2(x)))
         x = self.relu(self.bn3(self.conv3(x)))
         x = self.conv4(x)
-        
-        # x = x.transpose(2,1).contiguous()
-        # x = F.log_softmax(x.view(-1,self.numClasses), dim=-1)
-        # x = x.view(batchNumber, n, self.numClasses)
         return x
     
     
-class PointNetSegmentation(nn.Module):
-    def __init__(self, numClasses=4):
-        super(PointNetSegmentation, self).__init__()
-        self.numClasses = numClasses
-        self.encoder = PointNetEncoder()
-        self.segmentationTask = SegmentationTask(self.numClasses)
+class cls_head(nn.Module):
+    def __init__(self, class_num):
+        super(cls_head, self).__init__()
+        self.class_num = class_num
+        
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, class_num)
+
+        self.bn1 = nn.BatchNorm1d(512)
+        self.bn2 = nn.BatchNorm1d(256)
         
     def forward(self, x):
-        xCLS, xSEG, trans1, trans2 = self.encoder(x)
-        segmentationOuput = self.segmentationTask(xSEG)
-        return segmentationOuput
+        x = F.relu(self.bn1(self.fc1(x)))
+        x = F.relu(self.bn2(self.fc2(x)))
+        x = self.fc3(x)
+        return x
     
-# if __name__ == '__main__':
     
-#     model = PointNetSegmentation()
-#     x = torch.randn(5, 3, 1500)
-#     print(x.shape)
-#     output = model(x)
-#     print(output.shape)
+class pointnet_seg(nn.Module):
+    def __init__(self, class_num):
+        super(pointnet_seg, self).__init__()
+        self.class_num = class_num
+        self.encoder = encoder()
+        self.seg_head = seg_head(self.class_num)
+        
+    def forward(self, x):
+        _, x_seg, _, _ = self.encoder(x)
+        seg_out = self.seg_head(x_seg)
+        return seg_out
+    
+class pointnet_cls(nn.Module):
+    def __init__(self, class_num):
+        super(pointnet_cls, self).__init__()
+        self.class_num = class_num
+        self.encoder = encoder()
+        self.cls_head = cls_head(self.class_num)
+        
+    def forward(self, x):
+        x_cls, _, _, _ = self.encoder(x)
+        cls_out = self.cls_head(x_cls)
+        return cls_out

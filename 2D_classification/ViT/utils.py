@@ -1,17 +1,23 @@
-import torch
+import torch.nn as nn
+from model import *
 
-def get_xpos(n_patches, start_idx=0):
-    n_patches_ = int(n_patches ** 0.5)
-    x_positions = torch.arange(start_idx, n_patches_ + start_idx)
-    x_positions = x_positions.unsqueeze(0)
-    x_positions = torch.repeat_interleave(x_positions, n_patches_, 0)
-    x_positions = x_positions.reshape(-1)
+def get_model(args) -> nn.Module:
+    model_name = args.model
+    device = args.device
+    class_num = args.class_num
+    img_size = args.img_size
+    patch_size = args.patch_size
+    
+    if model_name == "vit_sinusoidal":
+        model = ViT_sinusoidal(class_num=class_num, img_size=img_size, patch_size=patch_size).to(device)
+    elif model_name == "vit_relative":
+        model = ViT_relative(class_num=class_num, img_size=img_size, patch_size=patch_size).to(device)
+    elif model_name == "vit_rope":
+        model = ViT_rope(class_num=class_num, img_size=img_size, patch_size=patch_size).to(device)
+    else:
+        raise ValueError(f'unknown model {model_name}')
+    
+    return model
 
-    return x_positions
 
-def get_ypos(n_patches, start_idx=0):
-    n_patches_ = int(n_patches ** 0.5)
-    y_positions = torch.arange(start_idx, n_patches_+start_idx)
-    y_positions = torch.repeat_interleave(y_positions, n_patches_, 0)
-
-    return y_positions
+    
