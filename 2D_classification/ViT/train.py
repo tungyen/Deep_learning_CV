@@ -28,15 +28,15 @@ def train_model(args):
 
     trainDataloader, valDataloader, _, _, val_num = get_dataset(args)
     model = get_model(args)
-    # model.load_state_dict(torch.load(weight_path, map_location=device))
-    # model.eval()
+    model.load_state_dict(torch.load(weight_path, map_location=device))
+    model.eval()
         
     opt = optim.SGD(model.parameters(), lr=lr, momentum=m, weight_decay=weight_decay)
     lf = lambda x: ((1 + math.cos(x * math.pi / epochs)) / 2) * (1 - lrf) + lrf
     scheduler = lr_scheduler.LambdaLR(opt, lr_lambda=lf)
     criterion = nn.CrossEntropyLoss()
     
-    bestAcc = 0
+    best_acc = 0
     for epoch in range(epochs):
         print("Epoch {} start now!".format(epoch+1))
         # train
@@ -57,27 +57,26 @@ def train_model(args):
                 output = model(img.to(device))
                 predClass = torch.max(output, dim=1)[1]
                 acc += torch.eq(predClass, label.to(device)).sum().item()
-        valAcc = acc / val_num
-        print("Epoch {}-validation Acc===>{}".format(epoch+1, valAcc))
-        if valAcc > bestAcc:
-            bestAcc = valAcc
+        acc = acc / val_num
+        print("Epoch {}-validation Acc===>{}".format(epoch+1, acc))
+        if acc > best_acc:
+            best_acc = acc
             torch.save(model.state_dict(), weight_path)
             
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="cifar10")
+    parse.add_argument('--dataset', type=str, default="cifar100")
     parse.add_argument('--data_path', type=str, default="../../Dataset/flower_data")
-    parse.add_argument('--n_points', type=int, default=1024)
     
     # Model
     parse.add_argument('--model', type=str, default="vit_rope")
     parse.add_argument('--img_size', type=int, default=32)
     parse.add_argument('--patch_size', type=int, default=4)
-    parse.add_argument('--class_num', type=int, default=10)
+    parse.add_argument('--class_num', type=int, default=100)
     
     # training
-    parse.add_argument('--epochs', type=int, default=100)
+    parse.add_argument('--epochs', type=int, default=50)
     parse.add_argument('--batch_size', type=int, default=128)
     parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--lr', type=float, default=2e-4)

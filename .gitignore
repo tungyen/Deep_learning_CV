@@ -5,8 +5,10 @@ MNIST
 cifar
 FashionMNIST
 cifar10
+cifar100
 cityscapes
 ModelNet40
+ModelNet40_npz
 img_align_celeba
 Landscape
 shapenet
