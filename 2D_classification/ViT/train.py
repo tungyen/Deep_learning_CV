@@ -28,8 +28,8 @@ def train_model(args):
 
     trainDataloader, valDataloader, _, _, val_num = get_dataset(args)
     model = get_model(args)
-    model.load_state_dict(torch.load(weight_path, map_location=device))
-    model.eval()
+    # model.load_state_dict(torch.load(weight_path, map_location=device))
+    # model.eval()
         
     opt = optim.SGD(model.parameters(), lr=lr, momentum=m, weight_decay=weight_decay)
     lf = lambda x: ((1 + math.cos(x * math.pi / epochs)) / 2) * (1 - lrf) + lrf
@@ -70,13 +70,13 @@ def parse_args():
     parse.add_argument('--data_path', type=str, default="../../Dataset/flower_data")
     
     # Model
-    parse.add_argument('--model', type=str, default="vit_rope")
+    parse.add_argument('--model', type=str, default="vit_relative")
     parse.add_argument('--img_size', type=int, default=32)
     parse.add_argument('--patch_size', type=int, default=4)
     parse.add_argument('--class_num', type=int, default=10)
     
     # training
-    parse.add_argument('--epochs', type=int, default=70)
+    parse.add_argument('--epochs', type=int, default=200)
     parse.add_argument('--batch_size', type=int, default=128)
     parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--lr', type=float, default=2e-4)
