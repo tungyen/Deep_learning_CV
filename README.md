@@ -9,7 +9,7 @@ Model with task category:
 3. **VGG**
 4. **ViT**
 
-## 2D Semantic Segmentation_ ##
+## 2D Semantic Segmentation ##
 1. **Unet++**
 2. **DeepLabV3**
 3. **FCN**

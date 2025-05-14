@@ -184,25 +184,123 @@ class S3DIS_static(Dataset):
 
         return block_data.astype(np.float32), block_gt.astype(np.int64)
     
+
+class S3DIS_dynamic(Dataset):
+    def __init__(self, dataset_path, area_ids, n_points, max_dropout, block_size=1.0, sample_aug=1):
+        super(S3DIS_dynamic, self).__init__()
+        self.n_points = n_points
+        self.max_dropout = max_dropout
+        self.block_size = block_size
+        self.rooms, self.indices = [], []
+        
+        for area_id in area_ids:
+            area_path = os.path.join(dataset_path, 'Area_{}'.format(area_id))
+            for room_path in glob.glob(os.path.join(area_path, '*_resampled.npz')):
+                room_data = np.load(room_path)
+                self.indices.extend([len(self.rooms)] * math.ceil(room_data['n_points'] / self.n_points) * sample_aug)
+                self.rooms.append({
+                    'xyz': room_data['xyz'],
+                    'rgb': room_data['rgb'],
+                    'gt': room_data['gt'],
+                    'xyz_max': np.amax(room_data['xyz'], axis=0)
+                })
+                
+    def __len__(self):
+        return len(self.indices)
+    
+    def __getitem__(self, index):
+        room = self.rooms[self.indices[index]]
+        room_xyz, room_rgb, room_gt, room_xyz_max = room['xyz'], room['rgb'], room['gt'], room['xyz_max']
+
+        xcenter, ycenter = room_xyz[np.random.choice(room_xyz.shape[0])][:2]
+        indices = self.get_block_indices(room_xyz, xcenter, ycenter)
+        indices = random_dropout(indices, self.max_dropout)
+
+        block_xyz, block_rgb, block_gt = room_xyz[indices], room_rgb[indices], room_gt[indices]
+        block_data = prepare_input(block_xyz, block_rgb, xcenter, ycenter, room_xyz_max)
+        block_data = np.transpose(block_data)  # [n_channels, n_points]
+
+        return block_data.astype(np.float32), block_gt.astype(np.int64)
+    
+    def get_block_indices(self, room_xyz, xcenter, ycenter):
+        xmin, xmax = xcenter - self.block_size / 2, xcenter + self.block_size / 2,
+        ymin, ymax = ycenter - self.block_size / 2, ycenter + self.block_size / 2
+        l, r = np.searchsorted(room_xyz[:, 0], [xmin, xmax])
+        indices = np.where((room_xyz[l:r, 1] > ymin) & (room_xyz[l:r, 1] < ymax))[0] + l
+        if len(indices) == 0:
+            return indices, np.zeros([0, 9], dtype=np.float32), np.zeros([0, ], dtype=np.int64)
+        if self.n_points != 'all':
+            indices = np.random.choice(indices, self.n_points, indices.size < self.n_points)
+        return indices
+    
+
+class S3DIS(torch.utils.data.Dataset):
+    def __init__(self, dataset_dir, split, test_area, n_points, max_dropout, block_type='dynamic', block_size=1.0):
+        super().__init__()
+
+        assert os.path.isdir(dataset_dir)
+        assert split == 'train' or split == 'test'
+        assert type(test_area) == int and 1 <= test_area <= 6
+        assert 0 <= max_dropout <= 1
+
+        area_ids = []
+        for area_id in range(1, 7):
+            if split == 'train' and area_id == test_area:
+                continue
+            if split == 'test' and area_id != test_area:
+                continue
+            area_ids.append(area_id)
+
+        if block_type == 'static':
+            offset_name = 'zero' if split == 'test' else ''
+            self.dataset = S3DIS_static(dataset_dir, area_ids, n_points, max_dropout, offset_name)
+        elif block_type == 'dynamic':
+            sample_aug = 1 if split == 'test' else 2
+            self.dataset = S3DIS_dynamic(dataset_dir, area_ids, n_points, max_dropout, block_size, sample_aug)
+        else:
+            raise NotImplementedError('Unknown block type: %s' % block_type)
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        return self.dataset[index]
+    
+    
 def get_dataset(args):
     dataset_type = args.dataset
     batch_size = args.batch_size
     n_points = args.n_points
     
     if dataset_type == "chair":
-        path = args.data_path
+        path = os.path.join("../..", "Dataset", "Chair_dataset")
         train_dataset = chairDataset(path, n_points=n_points)
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         test_dataset = chairDataset(path, train=False, n_points=n_points)
+        class_dict = None
+        
     elif dataset_type == "modelnet40":
         path = os.path.join("../..", "Dataset", "ModelNet40_npz")
         train_dataset = ModelNet40(path, n_points, "train")
+        class_dict = train_dataset.class_dict
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         test_dataset = ModelNet40(path, n_points, "test")
+        
+    elif dataset_type == 's3dis':
+        path = os.path.join("../..", "Dataset", "S3DIS_npz")
+        test_area = args.test_area
+        max_dropout = args.max_dropout
+        block_type = args.block_type
+        block_size = args.block_size
+        
+        train_dataset = S3DIS(path, "train", test_area, n_points, max_dropout, block_type, block_size)
+        train_dataset, val_dataset = split_dataset_train_val(train_dataset)
+        test_dataset = S3DIS(path, "test", test_area, n_points, max_dropout, block_type, block_size)
+        class_dict = None
     else:
         raise ValueError(f'unknown dataset {dataset_type}')
         
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    return train_dataloader, val_dataloader, test_dataloader
+    return train_dataloader, val_dataloader, test_dataloader, class_dict
