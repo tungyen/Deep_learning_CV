@@ -2,15 +2,16 @@
 First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the flower dataset.
 
 Before training, you should download the resnet pretrained weight from PyTorch in a pre-defined folder `pre_model` from [this website](https://download.pytorch.org/models/resnet34-333f7ec4.pth)
-## training ##
+
+## Training ##
 ```bash
 python train.py
 ```
 
-## evaluation ##
+## Evaluation ##
 To be continue
 
-## testing ##
+## Testing ##
 ```bash
 python predict.py
 ```

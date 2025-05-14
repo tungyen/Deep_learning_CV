@@ -55,7 +55,7 @@ def train_model(args):
         with torch.no_grad():
             for img, label in tqdm(valDataloader):
                 output = model(img.to(device))
-                predClass = torch.max(output, dim=1)[1]
+                predClass = torch.argmax(output, dim=1)
                 acc += torch.eq(predClass, label.to(device)).sum().item()
         acc = acc / val_num
         print("Epoch {}-validation Acc===>{}".format(epoch+1, acc))

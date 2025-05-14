@@ -1,11 +1,11 @@
-# Variational Autoencoder
+# Variational Autoencoder #
 
 In this folder, I implemented `Variational Autoencoder` and `Vector Quantization Variational Autoencoder`. And `Vector Quantization Variational Autoencoder` applies `Gated PixelCNN` as the prior generation model for sampling. All models could be trained on the [CelebA Dataset](https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html), MNIST, Fashion MNIST, and CIFAR dataset.
 
 Note that VAE_pi is a project from an company online assessment. The goal is specifically for generating a 5D vector from an image.
 
 
-# _Training_ #
+## Training ##
 To train the model, just use the following command for both models:
 
 ```bash
@@ -15,7 +15,7 @@ python VQVAE/train.py --dataset celeba --prior_only True # This is for training 
 python VAE_pi/train.py
 ```
 
-# _Sampling_ #
+## Sampling ##
 To generate reconstrcuted/synthesis images, using the following command for both models:
 ```bash
 python VAE_pi/test_img.py # VAE_pi for generating an image with PI
@@ -27,47 +27,47 @@ python VQVAE/test.py --dataset celeba --task recon # Reconstruct the dataset
 ```
 
 
-# _Result of VAE_ #
-## _Celeba Dataset_ ##
+## Result of VAE ##
+### Celeba Dataset ###
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_celeba_recon.png)
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_celeba_gen.png)
 
-## _MNIST Dataset_ ##
+### MNIST Dataset ###
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_MNIST_recon.png)
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_MNIST_gen.png)
 
-## _Fashion MNIST Dataset_ ##
+### Fashion MNIST Dataset ###
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_fashion_recon.png)
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_fashion_gen.png)
 
-## _CIFAR Dataset_ ##
+### CIFAR Dataset ###
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_cifar_recon.png)
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_cifar_gen.png)
 
 
-# _Result of VQVAE_ #
-## _Celeba Dataset_ ##
+## Result of VQVAE ##
+### Celeba Dataset ###
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_celeba_recon.png)
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_celeba_gen.png)
 
-## _MNIST Dataset_ ##
+### MNIST Dataset ###
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_MNIST_recon.png)
 
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_MNIST_gen.png)
 
 
-## _Fashion Dataset_ ##
+### Fashion Dataset ###
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_fashion_recon.png)
 
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_fashion_gen.png)
 
 
-## _CIFAR Dataset_ ##
+### CIFAR Dataset ###
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_cifar_recon.png)
 
 
