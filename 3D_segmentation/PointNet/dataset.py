@@ -48,17 +48,19 @@ def random_dropout(indices, max_dropout=0.95):
     return indices
 
 
-class chairDataset(Dataset):
-    def __init__(self, dataPath, train=True, n_points=1500):
-        super(chairDataset, self).__init__()
-        self.dataPath = dataPath
+class ChairDataset(Dataset):
+    def __init__(self, data_path, train=True, n_points=1500):
+        super(ChairDataset, self).__init__()
+        self.data_path = data_path
         self.train = train
         
         if self.train:
-            self.pcd_paths = os.listdir(os.path.join(dataPath, "pts"))
-            self.label_paths = os.listdir(os.path.join(dataPath, "label"))
+            self.data_path = os.path.join(self.data_path, "train")
+            self.pcd_paths = os.listdir(os.path.join(self.data_path, "pts"))
+            self.label_paths = os.listdir(os.path.join(self.data_path, "label"))
         else:
-            self.pcd_paths = os.listdir(dataPath)
+            self.data_path = os.path.join(self.data_path, "test")
+            self.pcd_paths = os.listdir(self.data_path)
             self.label_paths = None
         self.n_points = n_points
         
@@ -70,20 +72,21 @@ class chairDataset(Dataset):
         label_path = pcd_path[:-3] + "txt"
 
         if self.train:
-            pcloud, indices = self.load_pcloud(os.path.join(self.dataPath, "pts", pcd_path))
-            label = self.load_label(indices, os.path.join(self.dataPath, "label", label_path))
+            pcloud, indices = self.load_pcloud(os.path.join(self.data_path, "pts", pcd_path))
+            label = self.load_label(indices, os.path.join(self.data_path, "label", label_path))
+            return pcloud, label
         else:
-            pcloud, indices = self.load_pcloud(os.path.join(self.dataPath, pcd_path))
-            label = None
+            pcloud, _ = self.load_pcloud(os.path.join(self.data_path, pcd_path))
+            return pcloud
             
-        return pcloud, label
+        
     
     def load_pcloud(self, pcdFile):
         pcd = o3d.io.read_point_cloud(pcdFile, format='xyz')
         points = np.asarray(pcd.points)
-
         indices = random.sample(list(range(points.shape[0])), self.n_points)
         points = points[indices, :]
+
         points = normalize_pcloud(points)
         points = torch.tensor(points, dtype=torch.float64).transpose(1, 0)
         return points, indices
@@ -274,9 +277,9 @@ def get_dataset(args):
     
     if dataset_type == "chair":
         path = os.path.join("../..", "Dataset", "Chair_dataset")
-        train_dataset = chairDataset(path, n_points=n_points)
+        train_dataset = ChairDataset(path, n_points=n_points)
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
-        test_dataset = chairDataset(path, train=False, n_points=n_points)
+        test_dataset = ChairDataset(path, train=False, n_points=n_points)
         class_dict = None
         
     elif dataset_type == "modelnet40":

@@ -19,7 +19,7 @@ def train_model(args):
     beta1= args.beta1
     beta2 = args.beta2
     eps = args.eps
-    epochs = args.epoch
+    epochs = args.epochs
     
     train_dataloader, val_dataloader, _, val_num = get_dataset(args)
     model = get_model(args)
@@ -29,8 +29,9 @@ def train_model(args):
     
     best_metric = 0.0
     
-    for epoch in tqdm(range(epochs)):
-        for pcloud, label in train_dataloader:
+    for epoch in range(epochs):
+        print("Epoch {} start now!".format(epoch+1))
+        for pcloud, label in tqdm(train_dataloader):
             pcloud = pcloud.to(device).float()
             label = label.to(device)
             output = model(pcloud)
@@ -53,12 +54,14 @@ def train_model(args):
             if acc > best_metric:
                 best_metric = acc
                 torch.save(model.state_dict(), weight_path)
+        torch.save(model.state_dict(), weight_path)
         
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="chair")
     parse.add_argument('--data_path', type=str, default="../../Dataset/Chair_dataset")
+    parse.add_argument('--n_points', type=int, default=1500)
     
     # Model
     parse.add_argument('--model', type=str, default="pointnet_seg")
