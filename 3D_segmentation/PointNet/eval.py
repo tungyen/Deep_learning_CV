@@ -16,7 +16,7 @@ def eval_model(args):
     
     print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
     
-    _, valDataloader, _, _, _ = get_dataset(args)
+    _, valDataloader, _, _ = get_dataset(args)
     val_num = len(valDataloader.dataset)
     model = get_model(args)
     model.load_state_dict(torch.load(weight_path, map_location=device))
@@ -45,6 +45,7 @@ def parse_args():
     # Eval
     parse.add_argument('--batch_size', type=int, default=16)
     parse.add_argument('--device', type=str, default="cuda")
+    args = parse.parse_args()
     return args
         
 if __name__ =='__main__':
