@@ -1,18 +1,40 @@
 # PointNet #
 First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the chair dataset.
 
-## Training ##
+## Classification ##
+
+### Training ###
 ```bash
-python train.py
+python train.py --dataset modelnet40 --model pointnet_cls --class_num 40
 ```
 
-## Evaluation ##
+### Evaluation ###
+```bash
+python eval.py --dataset modelnet40 --model pointnet_cls --class_num 40
+```
+
+### Testing ###
+```bash
+python test.py --dataset modelnet40 --model pointnet_cls --class_num 40
+```
+
+### Result of Chair Dataset ###
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/3D_segmentation/PointNet/img/pointnet_seg_chair.png)
+
+## Part Segmentation ##
+
+### Training ###
+```bash
+python train.py --dataset chair --model pointnet_seg --class_num 4
+```
+
+### Evaluation ###
 To be continue
 
-## Testing ##
+### Testing ###
 ```bash
-python test.py
+python test.py --dataset chair --model pointnet_seg --class_num 4
 ```
 
-Here is the demo picture of chair dataset point cloud part segmentation
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/3D_segmentation/PointNet/res.png)
+### Result of Chair Dataset ###
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/3D_segmentation/PointNet/img/pointnet_seg_chair.png)

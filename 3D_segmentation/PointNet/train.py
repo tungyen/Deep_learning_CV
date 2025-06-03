@@ -20,11 +20,13 @@ def train_model(args):
     beta2 = args.beta2
     eps = args.eps
     epochs = args.epochs
+    weight_decay = args.weight_decay
     
-    train_dataloader, val_dataloader, _, val_num = get_dataset(args)
+    train_dataloader, val_dataloader, _, _ = get_dataset(args)
+    val_num = len(val_dataloader.dataset)
     model = get_model(args)
     
-    opt = optim.Adam(model.parameters(), lr=lr, betas=(beta1, beta2), eps=eps)
+    opt = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay, betas=(beta1, beta2), eps=eps)
     criterion = get_loss(args)
     
     best_metric = 0.0
@@ -44,37 +46,42 @@ def train_model(args):
         
         # Validation
         if task == "cls":
+            acc = 0.0
             with torch.no_grad():
                 for pcloud, label in tqdm(val_dataloader):
                     output = model(pcloud.to(device))
                     pred_class = torch.argmax(output, dim=1)
-                    acc += torch.eq(pred_class, label.to(device)).sum().item()
+                    correct = torch.eq(pred_class, label.to(device)).sum().item()
+                    acc += correct
             acc = acc / val_num
             print("Epoch {}-validation Acc===>{}".format(epoch+1, acc))
             if acc > best_metric:
                 best_metric = acc
                 torch.save(model.state_dict(), weight_path)
-        torch.save(model.state_dict(), weight_path)
+        elif task == "seg":
+            torch.save(model.state_dict(), weight_path)
+        else:
+            raise ValueError(f'unknown task {task}')
         
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="chair")
-    parse.add_argument('--data_path', type=str, default="../../Dataset/Chair_dataset")
+    parse.add_argument('--dataset', type=str, default="modelnet40")
     parse.add_argument('--n_points', type=int, default=1500)
     
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_seg")
-    parse.add_argument('--class_num', type=int, default=4)
+    parse.add_argument('--model', type=str, default="pointnet_cls")
+    parse.add_argument('--class_num', type=int, default=40)
     
     # training
-    parse.add_argument('--epochs', type=int, default=50)
-    parse.add_argument('--batch_size', type=int, default=4)
+    parse.add_argument('--epochs', type=int, default=200)
+    parse.add_argument('--batch_size', type=int, default=16)
     parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--lr', type=float, default=1e-3)
     parse.add_argument('--beta1', type=float, default=0.9)
     parse.add_argument('--beta2', type=float, default=0.999)
     parse.add_argument('--eps', type=float, default=1e-8)
+    parse.add_argument('--weight_decay', type=float, default=1e-4)
     args = parse.parse_args()
     return args
                 
