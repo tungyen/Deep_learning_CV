@@ -109,6 +109,7 @@ class ModelNet40(Dataset):
         self.random_jitter = random_jitter
         
         self.class_dict = self.load_class_dict()
+        self.id2name = list(self.class_dict.keys())
         self.model_indices = self.load_model_indices()
         
     def __len__(self):
@@ -118,7 +119,7 @@ class ModelNet40(Dataset):
         return self.load_model(self.model_indices[index])
     
     def class_id2name(self, class_id):
-        return list(self.class_dict.keys())[class_id]
+        return self.id2name[class_id]
     
     def class_name2id(self, class_name):
         return self.class_dict[class_name]
@@ -285,7 +286,7 @@ def get_dataset(args):
     elif dataset_type == "modelnet40":
         path = os.path.join("../..", "Dataset", "ModelNet40_npz")
         train_dataset = ModelNet40(path, n_points, "train")
-        class_dict = train_dataset.class_dict
+        class_dict = train_dataset.id2name
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         test_dataset = ModelNet40(path, n_points, "test")
         
@@ -305,5 +306,5 @@ def get_dataset(args):
         
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
     return train_dataloader, val_dataloader, test_dataloader, class_dict

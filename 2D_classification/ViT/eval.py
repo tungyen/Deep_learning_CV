@@ -16,14 +16,15 @@ def eval_model(args):
     
     print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
     
-    _, valDataloader, _, _, val_num = get_dataset(args)
+    _, val_dataloader, _, _ = get_dataset(args)
+    val_num = len(val_dataloader.dataset)
     model = get_model(args)
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model.eval()
     
     acc = 0.0
     with torch.no_grad():
-        for img, label in tqdm(valDataloader):
+        for img, label in tqdm(val_dataloader):
             output = model(img.to(device))
             pred_class = torch.argmax(output, dim=1)
             acc += torch.eq(pred_class, label.to(device)).sum().item()

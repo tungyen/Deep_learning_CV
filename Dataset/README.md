@@ -49,9 +49,10 @@ To be continue.
 
 
 ### S3DIS ###
-To download S3DIS dataset, please follow [this link](https://github.com/open-mmlab/mmdetection3d/blob/1.0/data/s3dis/README.md). And then run the following command:
-```bash
+To download S3DIS dataset, please follow [this link](https://github.com/open-mmlab/mmdetection3d/blob/1.0/data/s3dis/README.md). After unzip the folder, run the following command:
 
+```bash
+python prepare_s3dis.py
 ```
 
 ## 6D Pose ##

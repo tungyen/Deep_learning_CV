@@ -24,8 +24,8 @@ def eval_model(args):
     
     acc = 0.0
     with torch.no_grad():
-        for img, label in tqdm(valDataloader):
-            output = model(img.to(device))
+        for pcloud, label in tqdm(valDataloader):
+            output = model(pcloud.to(device))
             pred_class = torch.argmax(output, dim=1)
             acc += torch.eq(pred_class, label.to(device)).sum().item()
     acc = acc / val_num

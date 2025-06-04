@@ -26,10 +26,9 @@ def train_model(args):
     weight_path = os.path.join("ckpts", "{}_{}.pth".format(model_name, dataset_type))
     print("Start training model {} on {} dataset!".format(model_name, dataset_type))
 
-    trainDataloader, valDataloader, _, _, val_num = get_dataset(args)
+    train_dataloader, val_dataloader, _, _ = get_dataset(args)
+    val_num = len(val_dataloader.dataset)
     model = get_model(args)
-    # model.load_state_dict(torch.load(weight_path, map_location=device))
-    # model.eval()
         
     opt = optim.SGD(model.parameters(), lr=lr, momentum=m, weight_decay=weight_decay)
     lf = lambda x: ((1 + math.cos(x * math.pi / epochs)) / 2) * (1 - lrf) + lrf
@@ -39,8 +38,8 @@ def train_model(args):
     best_acc = 0
     for epoch in range(epochs):
         print("Epoch {} start now!".format(epoch+1))
-        # train
-        for img, label in tqdm(trainDataloader):
+        # Train
+        for img, label in tqdm(train_dataloader):
             img, label = img.to(device), label.to(device)
             output = model(img)
             trainLoss = criterion(output, label)
@@ -53,7 +52,7 @@ def train_model(args):
         # Validation
         acc = 0.0
         with torch.no_grad():
-            for img, label in tqdm(valDataloader):
+            for img, label in tqdm(val_dataloader):
                 output = model(img.to(device))
                 predClass = torch.argmax(output, dim=1)
                 acc += torch.eq(predClass, label.to(device)).sum().item()

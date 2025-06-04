@@ -26,13 +26,13 @@ def test_model(args):
         mean = torch.tensor([0.5, 0.5, 0.5]).view(1, 3, 1, 1)
         std = torch.tensor([0.5, 0.5, 0.5]).view(1, 3, 1, 1)
     
-    _, _, testDataloader, class_dict, _ = get_dataset(args)
+    _, _, test_dataloader, class_dict = get_dataset(args)
     model = get_model(args)
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model.eval()
     
     plt.figure(figsize=(4, 4))
-    for imgs, _ in testDataloader:
+    for imgs, _ in test_dataloader:
         imgs_denorm = imgs * std + mean
         with torch.no_grad():
             output = torch.squeeze(model(imgs.to(device))).cpu()

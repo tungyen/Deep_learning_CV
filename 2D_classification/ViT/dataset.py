@@ -113,12 +113,12 @@ def get_dataset(args):
         
         
     if dataset_type == "flower":
-        trainDataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, collate_fn=train_dataset.collate_fn)
-        valDataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, collate_fn=val_dataset.collate_fn)
-        testDataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, collate_fn=test_dataset.collate_fn)
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, collate_fn=train_dataset.collate_fn)
+        val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, collate_fn=val_dataset.collate_fn)
+        test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, collate_fn=test_dataset.collate_fn)
     else:
-        trainDataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
-        valDataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
-        testDataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
+        val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
+        test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
         
-    return trainDataloader, valDataloader, testDataloader, class_dict, val_num
+    return train_dataloader, val_dataloader, test_dataloader, class_dict
