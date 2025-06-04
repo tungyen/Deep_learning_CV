@@ -59,6 +59,8 @@ def visualize_pcloud(args, pcloud, color_map, predict_class,
             colors = np.array([color_map[label] for label in predict_class[i]])
         elif task == "cls":
             colors = np.array([color_map[predict_class[i]] for _ in range(args.n_points)])
+        else:
+            raise ValueError(f'Unknown task {task}')
         
         ax = fig.add_subplot(n_rows, n_cols, i + 1, projection='3d')
         ax.scatter(points_np[:, 0], points_np[:, 1], points_np[:, 2], c=colors, s=1)
@@ -72,7 +74,7 @@ def visualize_pcloud(args, pcloud, color_map, predict_class,
         legend_elements = []
         for class_id, color in color_map.items():
             legend_elements.append(Line2D([0], [0], marker='o', color='w',
-                            label=f'Class {class_id}',
+                            label=f'{class_dict[class_id]}',
                             markerfacecolor=rgb_to_hex(color),
                             markersize=10))
         fig.legend(handles=legend_elements, loc='lower center', ncol=len(color_map), fontsize='large')

@@ -1,46 +1,50 @@
 import torch
 from tqdm import tqdm
+import os
+import argparse
+
 from dataset import *
 from model import *
 from utils import *
+from metrics import *
 
-import os
-import argparse
 
 def eval_model(args):
     ckpts_path = "ckpts"
     device = args.device
     model_name = args.model
     dataset_type = args.dataset
+    class_num = args.class_num
     weight_path = os.path.join(ckpts_path, '{}_{}.pth'.format(model_name, dataset_type))
+    task = model_name[-3:]
     
     print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
     
-    _, valDataloader, _, _ = get_dataset(args)
-    val_num = len(valDataloader.dataset)
+    _, val_dataloader, _, class_dict = get_dataset(args)
     model = get_model(args)
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model.eval()
     
-    acc = 0.0
-    with torch.no_grad():
-        for pcloud, label in tqdm(valDataloader):
-            output = model(pcloud.to(device))
-            pred_class = torch.argmax(output, dim=1)
-            acc += torch.eq(pred_class, label.to(device)).sum().item()
-    acc = acc / val_num
-    print("Validation Acc===>{}".format(acc))
+    if task == "cls":
+        acc = compute_pcloud_classification_metrics(args, val_dataloader, model)
+        print("Validation Acc===>{}".format(acc))
+        
+    elif task == "seg":
+        class_ious, miou = compute_pcloud_seg_metrics(args, val_dataloader, model)
+        print("Validation mIoU===>{:.4f}".format(miou))
+        for cls in range(class_num):
+            print("{} IoU: {:.4f}".format(class_dict[cls], class_ious[cls]))
 
             
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="modelnet40")
+    parse.add_argument('--dataset', type=str, default="chair")
     parse.add_argument('--n_points', type=int, default=1500)
     
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_cls")
-    parse.add_argument('--class_num', type=int, default=40)
+    parse.add_argument('--model', type=str, default="pointnet_seg")
+    parse.add_argument('--class_num', type=int, default=4)
     
     # Eval
     parse.add_argument('--batch_size', type=int, default=16)

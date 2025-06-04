@@ -281,7 +281,12 @@ def get_dataset(args):
         train_dataset = ChairDataset(path, n_points=n_points)
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         test_dataset = ChairDataset(path, train=False, n_points=n_points)
-        class_dict = None
+        class_dict = {
+            0: "Armrest",
+            1: "Backrest",
+            2: "Chair legs",
+            3: "Cushion"
+        }
         
     elif dataset_type == "modelnet40":
         path = os.path.join("../..", "Dataset", "ModelNet40_npz")

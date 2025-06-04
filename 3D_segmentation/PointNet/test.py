@@ -15,6 +15,8 @@ def test_model(args):
     model = get_model(args)
     color_map = get_color_map(args)
     
+    print("Start testing model {} on {} dataset!".format(model_name, dataset_type))
+    
     weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model = model.to(device)
@@ -29,7 +31,7 @@ def test_model(args):
                 predict = torch.softmax(output, dim=1).cpu()
                 predict_class = torch.argmax(predict, dim=1).numpy()
                 
-            visualize_pcloud(args, pcloud, color_map, predict_class)
+            visualize_pcloud(args, pcloud, color_map, predict_class, class_dict)
         
     elif dataset_type == "modelnet40":
         for pcloud, _ in test_dataloader:
@@ -49,15 +51,15 @@ def test_model(args):
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="modelnet40")
+    parse.add_argument('--dataset', type=str, default="chair")
     parse.add_argument('--n_points', type=int, default=1500)
     
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_cls")
-    parse.add_argument('--class_num', type=int, default=40)
+    parse.add_argument('--model', type=str, default="pointnet_seg")
+    parse.add_argument('--class_num', type=int, default=4)
     
     # testing
-    parse.add_argument('--batch_size', type=int, default=4)
+    parse.add_argument('--batch_size', type=int, default=6)
     parse.add_argument('--device', type=str, default="cuda")
     args = parse.parse_args()
     return args
