@@ -29,7 +29,9 @@ python train.py --dataset chair --model pointnet_seg --class_num 4
 ```
 
 ### Evaluation ###
-To be continue
+```bash
+python eval.py --dataset chair --model pointnet_seg --class_num 4
+```
 
 ### Testing ###
 ```bash
