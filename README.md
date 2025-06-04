@@ -4,10 +4,8 @@ This is the repo including multiple Computer Vision Model Implementation with fu
 
 Model with task category:
 ## Image Classification ##
-1. **AlexNet**
-2. **ResNet**
-3. **VGG**
-4. **ViT**
+1. **ResNet**
+2. **ViT**
 
 ## 2D Semantic Segmentation ##
 1. **Unet++**
