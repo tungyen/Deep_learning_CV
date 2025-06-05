@@ -74,10 +74,10 @@ class ChairDataset(Dataset):
         if self.train:
             pcloud, indices = self.load_pcloud(os.path.join(self.data_path, "pts", pcd_path))
             label = self.load_label(indices, os.path.join(self.data_path, "label", label_path))
-            return pcloud, label
+            return pcloud.float(), label
         else:
             pcloud, _ = self.load_pcloud(os.path.join(self.data_path, pcd_path))
-            return pcloud
+            return pcloud.float()
             
         
     

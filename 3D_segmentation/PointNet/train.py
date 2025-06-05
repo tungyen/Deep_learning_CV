@@ -15,7 +15,7 @@ def train_model(args):
     task = model_name[-3:]
     dataset_type = args.dataset
     class_num = args.class_num
-    weight_path = "ckpts/{}_{}2.pth".format(model_name, dataset_type)
+    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
     
     device = args.device
     lr = args.lr
@@ -46,27 +46,42 @@ def train_model(args):
             opt.zero_grad()
             loss.backward()
             opt.step()      
-        print("Epoch {}-training loss===>{}".format(epoch, loss.item()))
+        print("Epoch {}-training loss===>{:.2f}".format(epoch, loss.item()))
         
         # Validation
+        all_preds = []
+        all_labels = []
+        
+        with torch.no_grad():
+            for pcloud, label in tqdm(val_dataloader):
+                output = model(pcloud.to(device))
+                pred_class = torch.argmax(output, dim=1)
+                
+                all_preds.append(pred_class.cpu())
+                all_labels.append(label)
+        
+        all_preds = torch.cat(all_preds).numpy()
+        all_labels = torch.cat(all_labels).numpy()
+        
         if task == "cls":
-            acc = compute_pcloud_classification_metrics(args, val_dataloader, model)
-            print("Epoch {}-validation Acc===>{}".format(epoch+1, acc))
+            accuracy, precision, recall = compute_pcloud_cls_metrics(args, all_preds, all_labels)
+            print("Epoch {}-validation Accuracy===>{:.4f}".format(epoch+1, accuracy))
+            print("Epoch {}-validation Precision===>{:.4f}".format(epoch+1, precision))
+            print("Epoch {}-validation Recall===>{:.4f}".format(epoch+1, recall))
             
-            if acc > best_metric:
-                best_metric = acc
+            if precision > best_metric:
+                best_metric = precision
                 torch.save(model.state_dict(), weight_path)
                 
         elif task == "seg":
-            class_ious, miou = compute_pcloud_seg_metrics(args, val_dataloader, model)
+            class_ious, miou = compute_pcloud_seg_metrics(args, all_preds, all_labels)
             print("Validation mIoU===>{:.4f}".format(miou))
             for cls in range(class_num):
                 print("{} IoU: {:.4f}".format(class_dict[cls], class_ious[cls]))
                 
             if miou > best_metric:
                 best_metric = miou
-                torch.save(model.state_dict(), weight_path)
-                
+                torch.save(model.state_dict(), weight_path)   
         else:
             raise ValueError(f'unknown task {task}')
         
