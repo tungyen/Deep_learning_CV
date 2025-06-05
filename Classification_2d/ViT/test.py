@@ -3,10 +3,13 @@ import torch
 import matplotlib.pyplot as plt
 import argparse
 import math
+import sys
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(root_dir)
 
-from model import *
-from dataset import *
-from utils import *
+from utils import get_model
+from Classification_2d.dataset import get_dataset
+
 
 def test_model(args):
     ckpts_path = "ckpts"

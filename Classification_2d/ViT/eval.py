@@ -1,11 +1,15 @@
 import torch
 from tqdm import tqdm
-from dataset import *
-from model import *
-from utils import *
-
 import os
 import argparse
+import sys
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(root_dir)
+
+
+from utils import get_model
+from Classification_2d.dataset import get_dataset
+from Classification_2d.metrics import compute_image_cls_metrics
 
 def eval_model(args):
     ckpts_path = "ckpts"
@@ -17,19 +21,28 @@ def eval_model(args):
     print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
     
     _, val_dataloader, _, _ = get_dataset(args)
-    val_num = len(val_dataloader.dataset)
     model = get_model(args)
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model.eval()
     
-    acc = 0.0
+    all_preds = []
+    all_labels = []
+    
     with torch.no_grad():
         for img, label in tqdm(val_dataloader):
             output = model(img.to(device))
             pred_class = torch.argmax(output, dim=1)
-            acc += torch.eq(pred_class, label.to(device)).sum().item()
-    acc = acc / val_num
-    print("Validation Acc===>{}".format(acc))
+            
+            all_preds.append(pred_class.cpu())
+            all_labels.append(label)
+    
+    all_preds = torch.cat(all_preds).numpy()
+    all_labels = torch.cat(all_labels).numpy()
+            
+    accuracy, precision, recall = compute_image_cls_metrics(args, all_preds, all_labels)
+    print("Validation Accuracy===>{:.4f}".format(accuracy))
+    print("Validation Precision===>{:.4f}".format(precision))
+    print("Validation Recall===>{:.4f}".format(recall))
 
             
 def parse_args():

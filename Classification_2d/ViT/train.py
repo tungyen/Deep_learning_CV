@@ -6,10 +6,14 @@ from tqdm import tqdm
 import math
 import os
 import argparse
+import sys
 
-from dataset import *
-from model import *
-from utils import *
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(root_dir)
+
+from utils import get_model
+from Classification_2d.dataset import get_dataset
+from Classification_2d.metrics import compute_image_cls_metrics
 
 
 def train_model(args):
@@ -27,7 +31,6 @@ def train_model(args):
     print("Start training model {} on {} dataset!".format(model_name, dataset_type))
 
     train_dataloader, val_dataloader, _, _ = get_dataset(args)
-    val_num = len(val_dataloader.dataset)
     model = get_model(args)
         
     opt = optim.SGD(model.parameters(), lr=lr, momentum=m, weight_decay=weight_decay)
@@ -47,19 +50,29 @@ def train_model(args):
             opt.step()  
             opt.zero_grad()
         scheduler.step()
-        print("Epoch {}-training loss===>{}".format(epoch+1, trainLoss.item()))
+        print("Epoch {}-training loss===>{:.4f}".format(epoch+1, trainLoss.item()))
         
         # Validation
-        acc = 0.0
+        all_preds = []
+        all_labels = []
+        
         with torch.no_grad():
             for img, label in tqdm(val_dataloader):
                 output = model(img.to(device))
-                predClass = torch.argmax(output, dim=1)
-                acc += torch.eq(predClass, label.to(device)).sum().item()
-        acc = acc / val_num
-        print("Epoch {}-validation Acc===>{}".format(epoch+1, acc))
-        if acc > best_acc:
-            best_acc = acc
+                pred_class = torch.argmax(output, dim=1)
+                
+                all_preds.append(pred_class.cpu())
+                all_labels.append(label)
+        
+        all_preds = torch.cat(all_preds).numpy()
+        all_labels = torch.cat(all_labels).numpy()
+                
+        accuracy, precision, recall = compute_image_cls_metrics(args, all_preds, all_labels)
+        print("Epoch {}-validation Accuracy===>{:.4f}".format(epoch+1, accuracy))
+        print("Epoch {}-validation Precision===>{:.4f}".format(epoch+1, precision))
+        print("Epoch {}-validation Recall===>{:.4f}".format(epoch+1, recall))
+        if precision > best_acc:
+            best_acc = precision
             torch.save(model.state_dict(), weight_path)
             
 def parse_args():

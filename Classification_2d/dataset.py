@@ -68,10 +68,12 @@ def get_dataset(args):
         test_path = os.path.join(path, "val")
         
         train_dataset = flowerDataset(train_path, data_transform["train"])
+        collate_fn = train_dataset.collate_fn
+        class_dict = train_dataset.class_indict
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         val_dataset.transform = data_transform["val"]
         test_dataset = flowerDataset(test_path, data_transform["val"])
-        class_dict = train_dataset.class_indict
+        
         
     elif dataset_type == "cifar10":
         train_transform = transforms.Compose([transforms.Resize([img_size, img_size]),
@@ -108,13 +110,11 @@ def get_dataset(args):
         test_dataset = datasets.CIFAR100(dataset_type, train=False, download=True, transform=val_transform)
     else:
         raise ValueError(f'unknown dataset {dataset_type}')
-    
-    val_num = len(val_dataset)
         
         
     if dataset_type == "flower":
-        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, collate_fn=train_dataset.collate_fn)
-        val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, collate_fn=val_dataset.collate_fn)
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, collate_fn=collate_fn)
+        val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, collate_fn=collate_fn)
         test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, collate_fn=test_dataset.collate_fn)
     else:
         train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
