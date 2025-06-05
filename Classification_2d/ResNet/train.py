@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 
 import torch
 import torch.nn as nn
@@ -12,7 +11,7 @@ from tqdm import tqdm
 from model import resnet34
 
 
-def ResNet_train():
+def train_model():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("using {} device.".format(device))
 
@@ -120,4 +119,4 @@ def ResNet_train():
 
 
 if __name__ == '__main__':
-    ResNet_train()
+    train_model()
