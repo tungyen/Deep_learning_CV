@@ -76,10 +76,10 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, blocks_num, class_num=1000, include_top=True, groups=1, width_per_group=64):
+    def __init__(self, block, blocks_num, channels=[64, 128, 256, 512], strides=[1, 2, 2, 2], class_num=1000, include_top=True, groups=1, width_per_group=64):
         super(ResNet, self).__init__()
         self.include_top = include_top
-        self.in_channel = 64
+        self.in_channel = channels[0]
 
         self.groups = groups
         self.width_per_group = width_per_group
@@ -88,6 +88,12 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(self.in_channel)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        
+        # modules = []
+        # for i in range(len(channels)):
+        #     modules.append(self._make_layer(block, channels[i], blocks_num[i], stride=strides[i]))
+        # self.layers = nn.Sequential(*modules)
+        
         self.layer1 = self._make_layer(block, 64, blocks_num[0])
         self.layer2 = self._make_layer(block, 128, blocks_num[1], stride=2)
         self.layer3 = self._make_layer(block, 256, blocks_num[2], stride=2)
@@ -134,6 +140,7 @@ class ResNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
+        # x = self.layers(x)
 
         if self.include_top:
             x = self.avgpool(x)
