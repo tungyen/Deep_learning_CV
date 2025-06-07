@@ -41,16 +41,13 @@ class Bottleneck(nn.Module):
 
         width = int(out_channel * (width_per_group / 64.)) * groups
 
-        self.conv1 = nn.Conv2d(in_channels=in_channel, out_channels=width,
-                                kernel_size=1, stride=1, bias=False)  # squeeze channels
+        self.conv1 = nn.Conv2d(in_channels=in_channel, out_channels=width, kernel_size=1, stride=1, bias=False)
         self.bn1 = nn.BatchNorm2d(width)
-        # -----------------------------------------
-        self.conv2 = nn.Conv2d(in_channels=width, out_channels=width, groups=groups,
-                                kernel_size=3, stride=stride, bias=False, padding=1)
+
+        self.conv2 = nn.Conv2d(in_channels=width, out_channels=width, groups=groups, kernel_size=3, stride=stride, bias=False, padding=1)
         self.bn2 = nn.BatchNorm2d(width)
-        # -----------------------------------------
-        self.conv3 = nn.Conv2d(in_channels=width, out_channels=out_channel*self.expansion,
-                                kernel_size=1, stride=1, bias=False)  # unsqueeze channels
+
+        self.conv3 = nn.Conv2d(in_channels=width, out_channels=out_channel*self.expansion, kernel_size=1, stride=1, bias=False)
         self.bn3 = nn.BatchNorm2d(out_channel*self.expansion)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -79,7 +76,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, blocks_num, num_classes=1000, include_top=True, groups=1, width_per_group=64):
+    def __init__(self, block, blocks_num, class_num=1000, include_top=True, groups=1, width_per_group=64):
         super(ResNet, self).__init__()
         self.include_top = include_top
         self.in_channel = 64
@@ -96,8 +93,8 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, blocks_num[2], stride=2)
         self.layer4 = self._make_layer(block, 512, blocks_num[3], stride=2)
         if self.include_top:
-            self.avgpool = nn.AdaptiveAvgPool2d((1, 1))  # output size = (1, 1)
-            self.fc = nn.Linear(512 * block.expansion, num_classes)
+            self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+            self.fc = nn.Linear(512 * block.expansion, class_num)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -146,33 +143,33 @@ class ResNet(nn.Module):
         return x
 
 
-def resnet34(num_classes=1000, include_top=True):
-    return ResNet(BasicBlock, [3, 4, 6, 3], num_classes=num_classes, include_top=include_top)
+def resnet34(class_num=1000, include_top=True):
+    return ResNet(BasicBlock, [3, 4, 6, 3], class_num=class_num, include_top=include_top)
 
 
-def resnet50(num_classes=1000, include_top=True):
-    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, include_top=include_top)
+def resnet50(class_num=1000, include_top=True):
+    return ResNet(Bottleneck, [3, 4, 6, 3], class_num=class_num, include_top=include_top)
 
 
-def resnet101(num_classes=1000, include_top=True):
-    return ResNet(Bottleneck, [3, 4, 23, 3], num_classes=num_classes, include_top=include_top)
+def resnet101(class_num=1000, include_top=True):
+    return ResNet(Bottleneck, [3, 4, 23, 3], class_num=class_num, include_top=include_top)
 
 
-def resnext50_32x4d(num_classes=1000, include_top=True):
+def resnext50_32x4d(class_num=1000, include_top=True):
     groups = 32
     width_per_group = 4
     return ResNet(Bottleneck, [3, 4, 6, 3],
-                num_classes=num_classes,
+                class_num=class_num,
                 include_top=include_top,
                 groups=groups,
                 width_per_group=width_per_group)
 
 
-def resnext101_32x8d(num_classes=1000, include_top=True):
+def resnext101_32x8d(class_num=1000, include_top=True):
     groups = 32
     width_per_group = 8
     return ResNet(Bottleneck, [3, 4, 23, 3],
-                num_classes=num_classes,
+                class_num=class_num,
                 include_top=include_top,
                 groups=groups,
                 width_per_group=width_per_group)

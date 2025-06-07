@@ -87,8 +87,8 @@ def get_dataset(args):
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         
         val_transform = transforms.Compose([transforms.Resize([img_size, img_size]), 
-                                             transforms.ToTensor(), 
-                                             transforms.Normalize([0.4914, 0.4822, 0.4465], [0.2470, 0.2435, 0.2616])])
+                                            transforms.ToTensor(), 
+                                            transforms.Normalize([0.4914, 0.4822, 0.4465], [0.2470, 0.2435, 0.2616])])
         val_dataset.transform = val_transform
         test_dataset = datasets.CIFAR10(dataset_type, train=False, download=True, transform=val_transform)
         
@@ -104,8 +104,8 @@ def get_dataset(args):
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         
         val_transform = transforms.Compose([transforms.Resize([img_size, img_size]), 
-                                             transforms.ToTensor(), 
-                                             transforms.Normalize([0.4914, 0.4822, 0.4465], [0.2470, 0.2435, 0.2616])])
+                                            transforms.ToTensor(), 
+                                            transforms.Normalize([0.4914, 0.4822, 0.4465], [0.2470, 0.2435, 0.2616])])
         val_dataset.transform = val_transform
         test_dataset = datasets.CIFAR100(dataset_type, train=False, download=True, transform=val_transform)
     else:
@@ -122,3 +122,13 @@ def get_dataset(args):
         test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
         
     return train_dataloader, val_dataloader, test_dataloader, class_dict
+
+def get_dataset_stat(args):
+    mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+    std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+    
+    if args.dataset == "flower":
+        mean = torch.tensor([0.5, 0.5, 0.5]).view(1, 3, 1, 1)
+        std = torch.tensor([0.5, 0.5, 0.5]).view(1, 3, 1, 1)
+    
+    return mean, std

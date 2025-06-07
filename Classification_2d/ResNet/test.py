@@ -53,14 +53,13 @@ def test_model(args):
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="cifar10")
+    parse.add_argument('--dataset', type=str, default="flower")
     parse.add_argument('--data_path', type=str, default="../../Dataset/flower_data")
     
     # Model
-    parse.add_argument('--model', type=str, default="vit_relative")
-    parse.add_argument('--img_size', type=int, default=32)
-    parse.add_argument('--patch_size', type=int, default=4)
-    parse.add_argument('--class_num', type=int, default=10)
+    parse.add_argument('--model', type=str, default="resnet34")
+    parse.add_argument('--img_size', type=int, default=224)
+    parse.add_argument('--class_num', type=int, default=5)
     
     # evaluating
     parse.add_argument('--batch_size', type=int, default=4)
