@@ -31,17 +31,17 @@ def test_model(args):
     for imgs, _ in test_dataloader:
         imgs_denorm = imgs * std + mean
         with torch.no_grad():
-            output = torch.squeeze(model(imgs.to(device))).cpu()
-            predict = torch.softmax(output, dim=1)
-            predict_cla = torch.argmax(predict, dim=1).numpy()
+            outputs = torch.squeeze(model(imgs.to(device))).cpu()
+            predicts = torch.softmax(outputs, dim=1)
+            predict_classes = torch.argmax(predicts, dim=1).numpy()
             
             for i in range(batch_size):
                 plt.subplot(rows, cols, i+1)
                 plt.imshow(imgs_denorm[i].permute(1, 2, 0).numpy())
                 plt.axis('off')
                 
-                class_name = class_dict[str(predict_cla[i])]
-                score = predict[i, predict_cla[i]].numpy()
+                class_name = class_dict[str(predict_classes[i])]
+                score = predicts[i, predict_classes[i]].numpy()
                 title = "{}, score: {:.2f}".format(class_name, score)
                 plt.title(title, fontsize=10)
             

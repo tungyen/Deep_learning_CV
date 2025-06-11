@@ -1,131 +1,102 @@
-import sys
+import os
 import torch
-import torch.utils.data
-import torch.nn as nn
-from torch.autograd import Variable
-import torch.optim as optim
-import torch.nn.functional as F
 import numpy as np
-import pickle
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import cv2
-import time
 from tqdm import tqdm
+import argparse
 
-from dataset import DatasetTrain, DatasetVal
-from model.deeplabv3 import DeepLabV3
-from utils.utils import add_weight_decay
+from dataset import get_dataset
+from utils import add_weight_decay, get_model, get_criterion
+from metrics import compute_image_seg_metrics
 
-model_id = "1"
 
-num_epochs = 100
-batch_size = 8
-learning_rate = 0.0001
+def train_model(args):
+    os.makedirs("ckpts", exist_ok=True)
+    model_name = args.model
+    dataset_type = args.dataset
+    class_num = args.class_num
+    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+    
+    device = args.device
+    lr = args.lr
+    epochs = args.epochs
+    weight_decay = args.weight_decay
+    
+    model = get_model(args)
+    train_dataloader, val_dataloader, _, class_dict = get_dataset(args)
+    params = add_weight_decay(model, weight_decay=weight_decay)
+    optimizer = torch.optim.Adam(params, lr=lr)
+    criterion = get_criterion(args)
+    
+    print("Start training model {} on {} dataset!".format(model_name, dataset_type))
 
-network = DeepLabV3(model_id, project_dir=".").cuda()
+    best_metric = 0.0
+    for epoch in range(epochs):
+        print("Epoch {} start now!".format(epoch+1))
+        model.train()
+        batch_losses = []
+        
+        # Train
+        for imgs, labels in tqdm(train_dataloader):
 
-train_dataset = DatasetTrain(cityscapes_data_path="../Dataset/cityscapes/",
-                             cityscapes_meta_path="../Dataset/cityscapes/meta")
-val_dataset = DatasetVal(cityscapes_data_path="../Dataset/cityscapes/",
-                         cityscapes_meta_path="../Dataset/cityscapes/meta")
+            imgs = imgs.to(device)
+            labels = labels.type(torch.LongTensor).to(device)
+            outputs = model(imgs)
 
-num_train_batches = int(len(train_dataset)/batch_size)
-num_val_batches = int(len(val_dataset)/batch_size)
-
-train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                           batch_size=batch_size, shuffle=True,
-                                           num_workers=1)
-val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
-                                         batch_size=batch_size, shuffle=False,
-                                         num_workers=1)
-
-params = add_weight_decay(network, l2_value=0.0001)
-optimizer = torch.optim.Adam(params, lr=learning_rate)
-
-with open("../Dataset/cityscapes/meta/class_weights.pkl", "rb") as file: # (needed for python3)
-    class_weights = np.array(pickle.load(file))
-class_weights = torch.from_numpy(class_weights)
-class_weights = Variable(class_weights.type(torch.FloatTensor)).cuda()
-
-loss_fn = nn.CrossEntropyLoss()
-epoch_losses_train = []
-epoch_losses_val = []
-for epoch in range(num_epochs):
-    print ("###########################")
-    print ("######## NEW EPOCH ########")
-    print ("###########################")
-    print ("epoch: %d/%d" % (epoch+1, num_epochs))
-
-    ############################################################################
-    # train:
-    ############################################################################
-    network.train()
-    batch_losses = []
-    for step, (imgs, label_imgs) in enumerate(tqdm(train_loader)):
-
-        imgs = Variable(imgs).cuda() # (shape: (batch_size, 3, img_h, img_w))
-        label_imgs = Variable(label_imgs.type(torch.LongTensor)).cuda() # (shape: (batch_size, img_h, img_w))
-        outputs = network(imgs) # (shape: (batch_size, num_classes, img_h, img_w))
-
-        # compute the loss:
-        loss = loss_fn(outputs, label_imgs)
-        loss_value = loss.data.cpu().numpy()
-        batch_losses.append(loss_value)
-
-        # optimization step:
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-    epoch_loss = np.mean(batch_losses)
-    epoch_losses_train.append(epoch_loss)
-    with open("%s/epoch_losses_train.pkl" % network.model_dir, "wb") as file:
-        pickle.dump(epoch_losses_train, file)
-    print ("train loss: %g" % epoch_loss)
-    plt.figure(1)
-    plt.plot(epoch_losses_train, "k^")
-    plt.plot(epoch_losses_train, "k")
-    plt.ylabel("loss")
-    plt.xlabel("epoch")
-    plt.title("train loss per epoch")
-    plt.savefig("%s/epoch_losses_train.png" % network.model_dir)
-    plt.close(1)
-
-    print ("####")
-
-    ############################################################################
-    # val:
-    ############################################################################
-    network.eval() # (set in evaluation mode, this affects BatchNorm and dropout)
-    batch_losses = []
-    for step, (imgs, label_imgs, img_ids) in enumerate(val_loader):
-        with torch.no_grad():
-            imgs = Variable(imgs).cuda() # (shape: (batch_size, 3, img_h, img_w))
-            label_imgs = Variable(label_imgs.type(torch.LongTensor)).cuda() # (shape: (batch_size, img_h, img_w))
-
-            outputs = network(imgs) # (shape: (batch_size, num_classes, img_h, img_w))
-
-            # compute the loss:
-            loss = loss_fn(outputs, label_imgs)
+            loss = criterion(outputs, labels)
             loss_value = loss.data.cpu().numpy()
             batch_losses.append(loss_value)
 
-    epoch_loss = np.mean(batch_losses)
-    epoch_losses_val.append(epoch_loss)
-    with open("%s/epoch_losses_val.pkl" % network.model_dir, "wb") as file:
-        pickle.dump(epoch_losses_val, file)
-    print ("val loss: %g" % epoch_loss)
-    plt.figure(1)
-    plt.plot(epoch_losses_val, "k^")
-    plt.plot(epoch_losses_val, "k")
-    plt.ylabel("loss")
-    plt.xlabel("epoch")
-    plt.title("val loss per epoch")
-    plt.savefig("%s/epoch_losses_val.png" % network.model_dir)
-    plt.close(1)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-    # save the model weights to disk:
-    checkpoint_path = network.checkpoints_dir + "/model_" + model_id +"_epoch_" + str(epoch+1) + ".pth"
-    torch.save(network.state_dict(), checkpoint_path)
+        epoch_loss = np.mean(batch_losses)
+        print("Epoch {}-training loss===>{:.4f}".format(epoch, epoch_loss))
+
+        # Validation
+        model.eval()
+        all_preds = []
+        all_labels = []
+        
+        for imgs, labels in val_dataloader:
+            with torch.no_grad():
+                outputs = model(imgs.to(device))
+                pred_class = torch.argmax(outputs, dim=1)
+                
+                all_preds.append(pred_class.cpu())
+                all_labels.append(labels)
+                
+        all_preds = torch.cat(all_preds).numpy()
+        all_labels = torch.cat(all_labels).numpy()
+
+        class_ious, miou = compute_image_seg_metrics(args, all_preds, all_labels)
+        print("Validation mIoU===>{:.4f}".format(miou))
+        for cls in range(class_num):
+            print("{} IoU: {:.4f}".format(class_dict[cls], class_ious[cls]))
+            
+        if miou > best_metric:
+            best_metric = miou
+            torch.save(model.state_dict(), weight_path)
+    
+    
+def parse_args():
+    parse = argparse.ArgumentParser()
+    # Dataset
+    parse.add_argument('--dataset', type=str, default="cityscapes")
+    
+    # Model
+    parse.add_argument('--model', type=str, default="deeplabv3")
+    parse.add_argument('--class_num', type=int, default=19)
+    
+    # Training
+    parse.add_argument('--epochs', type=int, default=100)
+    parse.add_argument('--batch_size', type=int, default=32)
+    parse.add_argument('--device', type=str, default="cuda")
+    parse.add_argument('--lr', type=float, default=1e-3)
+    parse.add_argument('--weight_decay', type=float, default=1e-4)
+    args = parse.parse_args()
+    return args
+
+if __name__ =='__main__':
+    args = parse_args()
+    train_model(args)

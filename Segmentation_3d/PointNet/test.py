@@ -25,21 +25,20 @@ def test_model(args):
     _, _, test_dataloader, class_dict = get_dataset(args)
     
     if dataset_type == "chair":
-        for pcloud in test_dataloader:
+        for pclouds in test_dataloader:
             with torch.no_grad():
-                output = torch.squeeze(model(pcloud.to(device).float()))
-                predict = torch.softmax(output, dim=1).cpu()
-                predict_class = torch.argmax(predict, dim=1).numpy()
+                outputs = torch.squeeze(model(pclouds.to(device).float()))
+                predict_classes = torch.argmax(outputs, dim=1).numpy()
                 
-            visualize_pcloud(args, pcloud, color_map, predict_class, class_dict)
+            visualize_pcloud(args, pclouds, color_map, predict_classes, class_dict)
         
     elif dataset_type == "modelnet40":
-        for pcloud, _ in test_dataloader:
+        for pclouds, _ in test_dataloader:
             with torch.no_grad():
-                output = model(pcloud.to(device))
-                predict_class = torch.argmax(output, dim=1).cpu().numpy()
+                outputs = model(pclouds.to(device))
+                predict_classes = torch.argmax(outputs, dim=1).cpu().numpy()
                 
-            visualize_pcloud(args, pcloud, color_map, predict_class, class_dict)
+            visualize_pcloud(args, pclouds, color_map, predict_classes, class_dict)
             break
         
     elif dataset_type == "s3dis":

@@ -37,12 +37,12 @@ def train_model(args):
     
     for epoch in range(epochs):
         print("Epoch {} start now!".format(epoch+1))
-        for pcloud, label in tqdm(train_dataloader):
-            pcloud = pcloud.to(device).float()
-            label = label.to(device)
-            output = model(pcloud)
+        for pclouds, labels in tqdm(train_dataloader):
+            pcloud = pclouds.to(device).float()
+            labels = labels.to(device)
+            outputs = model(pclouds)
 
-            loss = criterion(output, label)
+            loss = criterion(outputs, labels)
             opt.zero_grad()
             loss.backward()
             opt.step()      
@@ -53,12 +53,12 @@ def train_model(args):
         all_labels = []
         
         with torch.no_grad():
-            for pcloud, label in tqdm(val_dataloader):
-                output = model(pcloud.to(device))
-                pred_class = torch.argmax(output, dim=1)
+            for pclouds, labels in tqdm(val_dataloader):
+                outputs = model(pclouds.to(device))
+                pred_classes = torch.argmax(outputs, dim=1)
                 
-                all_preds.append(pred_class.cpu())
-                all_labels.append(label)
+                all_preds.append(pred_classes.cpu())
+                all_labels.append(labels)
         
         all_preds = torch.cat(all_preds).numpy()
         all_labels = torch.cat(all_labels).numpy()

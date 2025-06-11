@@ -29,12 +29,12 @@ def eval_model(args):
     all_labels = []
     
     with torch.no_grad():
-        for pcloud, label in tqdm(val_dataloader):
-            output = model(pcloud.to(device))
-            pred_class = torch.argmax(output, dim=1)
+        for pclouds, labels in tqdm(val_dataloader):
+            outputs = model(pclouds.to(device))
+            pred_classes = torch.argmax(outputs, dim=1)
             
-            all_preds.append(pred_class.cpu())
-            all_labels.append(label)
+            all_preds.append(pred_classes.cpu())
+            all_labels.append(labels)
         
         all_preds = torch.cat(all_preds).numpy()
         all_labels = torch.cat(all_labels).numpy()

@@ -4,15 +4,13 @@ import torch.nn.functional as F
 import torchvision.models as models
 
 def make_layer(block, in_channels, channels, num_blocks, stride=1, dilation=1):
-    strides = [stride] + [1]*(num_blocks - 1) # (stride == 2, num_blocks == 4 --> strides == [2, 1, 1, 1])
-
+    strides = [stride] + [1]*(num_blocks - 1)
     blocks = []
     for stride in strides:
         blocks.append(block(in_channels=in_channels, channels=channels, stride=stride, dilation=dilation))
         in_channels = block.expansion*channels
 
-    layer = nn.Sequential(*blocks) # (*blocks: call with unpacked list entires as arguments)
-
+    layer = nn.Sequential(*blocks)
     return layer
 
 class BasicBlock(nn.Module):
@@ -37,15 +35,10 @@ class BasicBlock(nn.Module):
             self.downsample = nn.Sequential()
 
     def forward(self, x):
-        # (x has shape: (batch_size, in_channels, h, w))
-
-        out = F.relu(self.bn1(self.conv1(x))) # (shape: (batch_size, channels, h, w) if stride == 1, (batch_size, channels, h/2, w/2) if stride == 2)
-        out = self.bn2(self.conv2(out)) # (shape: (batch_size, channels, h, w) if stride == 1, (batch_size, channels, h/2, w/2) if stride == 2)
-
-        out = out + self.downsample(x) # (shape: (batch_size, channels, h, w) if stride == 1, (batch_size, channels, h/2, w/2) if stride == 2)
-
-        out = F.relu(out) # (shape: (batch_size, channels, h, w) if stride == 1, (batch_size, channels, h/2, w/2) if stride == 2)
-
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out = out + self.downsample(x)
+        out = F.relu(out)
         return out
 
 class Bottleneck(nn.Module):
@@ -73,15 +66,11 @@ class Bottleneck(nn.Module):
             self.downsample = nn.Sequential()
 
     def forward(self, x):
-        # (x has shape: (batch_size, in_channels, h, w))
-
-        out = F.relu(self.bn1(self.conv1(x))) # (shape: (batch_size, channels, h, w))
-        out = F.relu(self.bn2(self.conv2(out))) # (shape: (batch_size, channels, h, w) if stride == 1, (batch_size, channels, h/2, w/2) if stride == 2)
-        out = self.bn3(self.conv3(out)) # (shape: (batch_size, out_channels, h, w) if stride == 1, (batch_size, out_channels, h/2, w/2) if stride == 2)
-
-        out = out + self.downsample(x) # (shape: (batch_size, out_channels, h, w) if stride == 1, (batch_size, out_channels, h/2, w/2) if stride == 2)
-
-        out = F.relu(out) # (shape: (batch_size, out_channels, h, w) if stride == 1, (batch_size, out_channels, h/2, w/2) if stride == 2)
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.bn2(self.conv2(out)))
+        out = self.bn3(self.conv3(out))
+        out = out + self.downsample(x)
+        out = F.relu(out)
 
         return out
 
@@ -91,27 +80,21 @@ class ResNet_Bottleneck_OS16(nn.Module):
 
         if num_layers == 50:
             resnet = models.resnet50()
-            # load pretrained model:
-            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet50-19c8e357.pth"))
+            resnet.load_state_dict(torch.load("pretrained_models/resnet/resnet50-19c8e357.pth"))
             # remove fully connected layer, avg pool and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-3])
-
             print ("pretrained resnet, 50")
         elif num_layers == 101:
             resnet = models.resnet101()
-            # load pretrained model:
-            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet101-5d3b4d8f.pth"))
+            resnet.load_state_dict(torch.load("pretrained_models/resnet/resnet101-5d3b4d8f.pth"))
             # remove fully connected layer, avg pool and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-3])
-
             print ("pretrained resnet, 101")
         elif num_layers == 152:
             resnet = models.resnet152()
-            # load pretrained model:
-            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet152-b121ed2d.pth"))
+            resnet.load_state_dict(torch.load("pretrained_models/resnet/resnet152-b121ed2d.pth"))
             # remove fully connected layer, avg pool and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-3])
-
             print ("pretrained resnet, 152")
         else:
             raise Exception("num_layers must be in {50, 101, 152}!")
@@ -119,11 +102,8 @@ class ResNet_Bottleneck_OS16(nn.Module):
         self.layer5 = make_layer(Bottleneck, in_channels=4*256, channels=512, num_blocks=3, stride=1, dilation=2)
 
     def forward(self, x):
-        # (x has shape (batch_size, 3, h, w))
-        c4 = self.resnet(x) # (shape: (batch_size, 4*256, h/16, w/16)) (it's called c4 since 16 == 2^4)
-
-        output = self.layer5(c4) # (shape: (batch_size, 4*512, h/16, w/16))
-
+        c4 = self.resnet(x)
+        output = self.layer5(c4)
         return output
 
 class ResNet_BasicBlock_OS16(nn.Module):
@@ -132,20 +112,16 @@ class ResNet_BasicBlock_OS16(nn.Module):
 
         if num_layers == 18:
             resnet = models.resnet18()
-            # load pretrained model:
-            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet18-5c106cde.pth"))
+            resnet.load_state_dict(torch.load("pretrained_models/resnet/resnet18-5c106cde.pth"))
             # remove fully connected layer, avg pool and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-3])
-
             num_blocks = 2
             print ("pretrained resnet, 18")
         elif num_layers == 34:
             resnet = models.resnet34()
-            # load pretrained model:
-            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet34-333f7ec4.pth"))
+            resnet.load_state_dict(torch.load("pretrained_models/resnet/resnet34-333f7ec4.pth"))
             # remove fully connected layer, avg pool and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-3])
-
             num_blocks = 3
             print ("pretrained resnet, 34")
         else:
@@ -154,12 +130,8 @@ class ResNet_BasicBlock_OS16(nn.Module):
         self.layer5 = make_layer(BasicBlock, in_channels=256, channels=512, num_blocks=num_blocks, stride=1, dilation=2)
 
     def forward(self, x):
-        # (x has shape (batch_size, 3, h, w))
-
-        # pass x through (parts of) the pretrained ResNet:
-        c4 = self.resnet(x) # (shape: (batch_size, 256, h/16, w/16)) (it's called c4 since 16 == 2^4)
-
-        output = self.layer5(c4) # (shape: (batch_size, 512, h/16, w/16))
+        c4 = self.resnet(x)
+        output = self.layer5(c4)
 
         return output
 
@@ -169,8 +141,7 @@ class ResNet_BasicBlock_OS8(nn.Module):
 
         if num_layers == 18:
             resnet = models.resnet18()
-            # load pretrained model:
-            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet18-5c106cde.pth"))
+            resnet.load_state_dict(torch.load("pretrained_models/resnet/resnet18-5c106cde.pth"))
             # remove fully connected layer, avg pool, layer4 and layer5:
             self.resnet = nn.Sequential(*list(resnet.children())[:-4])
 
@@ -179,9 +150,7 @@ class ResNet_BasicBlock_OS8(nn.Module):
             print ("pretrained resnet, 18")
         elif num_layers == 34:
             resnet = models.resnet34()
-            # load pretrained model:
-            resnet.load_state_dict(torch.load("/project/DeepLabV3/pretrained_models/resnet/resnet34-333f7ec4.pth"))
-            # remove fully connected layer, avg pool, layer4 and layer5:
+            resnet.load_state_dict(torch.load("pretrained_models/resnet/resnet34-333f7ec4.pth"))
             self.resnet = nn.Sequential(*list(resnet.children())[:-4])
 
             num_blocks_layer_4 = 6
@@ -195,11 +164,9 @@ class ResNet_BasicBlock_OS8(nn.Module):
         self.layer5 = make_layer(BasicBlock, in_channels=256, channels=512, num_blocks=num_blocks_layer_5, stride=1, dilation=4)
 
     def forward(self, x):
-        # (x has shape (batch_size, 3, h, w))
-        c3 = self.resnet(x) # (shape: (batch_size, 128, h/8, w/8)) (it's called c3 since 8 == 2^3)
-
-        output = self.layer4(c3) # (shape: (batch_size, 256, h/8, w/8))
-        output = self.layer5(output) # (shape: (batch_size, 512, h/8, w/8))
+        c3 = self.resnet(x)
+        output = self.layer4(c3)
+        output = self.layer5(output)
 
         return output
 
