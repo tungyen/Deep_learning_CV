@@ -1,21 +1,37 @@
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.optim.lr_scheduler import _LRScheduler, StepLR
 import pickle
 
-from model.deeplabv3 import DeepLabV3
+from model import DeepLabV3
+
+class PolyLR(_LRScheduler):
+    def __init__(self, optimizer, max_iters, power=0.9, last_epoch=-1, min_lr=1e-6):
+        self.power = power
+        self.max_iters = max_iters  # avoid zero lr
+        self.min_lr = min_lr
+        super(PolyLR, self).__init__(optimizer, last_epoch)
+    
+    def get_lr(self):
+        return [ max( base_lr * ( 1 - self.last_epoch/self.max_iters )**self.power, self.min_lr)
+                for base_lr in self.base_lrs]
 
 def get_model(args):
     dataset_type = args.dataset
     model_name = args.model
     class_num = args.class_num
     device = args.device
+    backbone = args.backbone
+    momemtum = args.bn_momentum
     
     if dataset_type == "cityscapes":
         class_num += 1
     
     if model_name == "deeplabv3":
-        return DeepLabV3(class_num=class_num).to(device)
+        model = DeepLabV3(class_num=class_num, in_channel=2048, backbone=backbone).to(device)
+        set_bn_momentum(model.backbone, momentum=momemtum)
+        return model
     else:
         raise ValueError(f'Unknown model {model_name}')
     
@@ -33,15 +49,18 @@ def get_criterion(args):
         return nn.CrossEntropyLoss(ignore_index=class_num, weight=class_weights)
     else:
         raise ValueError(f'Unknown dataset {dataset_type}')
+    
 
-def add_weight_decay(model, weight_decay, skip_list=()):
-    decay, no_decay = [], []
-    for name, param in model.named_parameters():
-        if not param.requires_grad:
-            continue
-        if len(param.shape) == 1 or name.endswith(".bias") or name in skip_list:
-            no_decay.append(param)
-        else:
-            decay.append(param)
+def get_scheduler(args, optimizer):
+    
+    if args.scheduler == "poly":
+        return PolyLR(optimizer, args.total_itrs)
+    elif args.scheduler == "step":
+        return StepLR(optimizer, step_size=args.step_size, gamma=0.1)
+    else:
+        raise ValueError(f'Unknown scheduler {args.scheduler}')
 
-    return [{'params': no_decay, 'weight_decay': 0.0}, {'params': decay, 'weight_decay': weight_decay}]
+def set_bn_momentum(model, momentum=0.1):
+    for m in model.modules():
+        if isinstance(m, nn.BatchNorm2d):
+            m.momentum = momentum

@@ -5,7 +5,7 @@ from tqdm import tqdm
 import argparse
 
 from dataset import get_dataset
-from utils import add_weight_decay, get_model, get_criterion
+from utils import get_model, get_criterion, get_scheduler
 from metrics import compute_image_seg_metrics
 
 
@@ -20,11 +20,15 @@ def train_model(args):
     lr = args.lr
     epochs = args.epochs
     weight_decay = args.weight_decay
+    momentum = args.momentum
     
     model = get_model(args)
     train_dataloader, val_dataloader, _, class_dict = get_dataset(args)
-    params = add_weight_decay(model, weight_decay=weight_decay)
-    optimizer = torch.optim.Adam(params, lr=lr)
+    optimizer = torch.optim.SGD(params=[
+        {'params': model.backbone.parameters(), 'lr': 0.1 * lr},
+        {'params': model.classifier.parameters(), 'lr': lr},
+    ], lr=lr, momentum=momentum, weight_decay=weight_decay)
+    scheduler = get_scheduler(args, optimizer)
     criterion = get_criterion(args)
     
     print("Start training model {} on {} dataset!".format(model_name, dataset_type))
@@ -49,6 +53,7 @@ def train_model(args):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            scheduler.step()
 
         epoch_loss = np.mean(batch_losses)
         print("Epoch {}-training loss===>{:.4f}".format(epoch, epoch_loss))
@@ -58,7 +63,7 @@ def train_model(args):
         all_preds = []
         all_labels = []
         
-        for imgs, labels in val_dataloader:
+        for imgs, labels in tqdm(val_dataloader):
             with torch.no_grad():
                 outputs = model(imgs.to(device))
                 pred_class = torch.argmax(outputs, dim=1)
@@ -86,14 +91,20 @@ def parse_args():
     
     # Model
     parse.add_argument('--model', type=str, default="deeplabv3")
+    parse.add_argument('--backbone', type=str, default="resnet101")
     parse.add_argument('--class_num', type=int, default=19)
     
     # Training
     parse.add_argument('--epochs', type=int, default=100)
     parse.add_argument('--batch_size', type=int, default=32)
     parse.add_argument('--device', type=str, default="cuda")
+    parse.add_argument('--scheduler', type=str, default="poly")
     parse.add_argument('--lr', type=float, default=1e-3)
     parse.add_argument('--weight_decay', type=float, default=1e-4)
+    parse.add_argument('--momentum', type=float, default=0.9)
+    parse.add_argument('--bn_momentum', type=float, default=0.1)
+    parse.add_argument('--step_size', type=int, default=10000)
+    parse.add_argument('--total_itrs', type=int, default=30e3)
     args = parse.parse_args()
     return args
 

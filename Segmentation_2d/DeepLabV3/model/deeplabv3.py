@@ -1,36 +1,144 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from model.resnet import ResNet18_OS16, ResNet34_OS16, ResNet50_OS16, ResNet101_OS16, ResNet152_OS16, ResNet18_OS8, ResNet34_OS8
-from model.aspp import ASPP, ASPP_Bottleneck
+from torch import nn
+from torch.nn import functional as F
+
+from model import resnet
+from model.model_utils import IntermediateLayerGetter
 
 class DeepLabV3(nn.Module):
-    def __init__(self, class_num):
+    def __init__(self, in_channel, class_num, backbone, mid_channel=256, out_stride=8, pretrained_backbone=True):
         super(DeepLabV3, self).__init__()
+        if out_stride==8:
+            replace_stride_with_dilation=[False, True, True]
+            aspp_dilate = [12, 24, 36]
+        else:
+            replace_stride_with_dilation=[False, False, True]
+            aspp_dilate = [6, 12, 18]
+            
+        return_layers = {'layer4': 'out'}
+        backbone = resnet.__dict__[backbone](pretrained=pretrained_backbone, replace_stride_with_dilation=replace_stride_with_dilation)
+        
+        self.backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
+        self.classifier = DeepLabHead(in_channel, mid_channel, class_num, aspp_dilate)
+        
+    def forward(self, x):
+        input_shape = x.shape[-2:]
+        features = self.backbone(x)
+        x = self.classifier(features)
+        x = F.interpolate(x, size=input_shape, mode='bilinear', align_corners=False)
+        return x
+        
+        
+class DeepLabHead(nn.Module):
+    def __init__(self, in_channel, out_channel, num_classes, aspp_dilate=[12, 24, 36]):
+        super(DeepLabHead, self).__init__()
 
-        self.class_num = class_num
-        # self.model_id = model_id
-        # self.project_dir = project_dir
-        # self.create_model_dirs()
-
-        self.resnet = ResNet34_OS8()
-        self.aspp = ASPP(class_num=class_num) # using ResNet50-152, set self.aspp = ASPP_Bottleneck(num_classes=self.num_classes) instead
+        self.classifier = nn.Sequential(
+            ASPP(in_channel, out_channel, aspp_dilate),
+            nn.Conv2d(out_channel, out_channel, 3, padding=1, bias=False),
+            nn.BatchNorm2d(out_channel),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_channel, num_classes, 1)
+        )
+        self._init_weight()
 
     def forward(self, x):
-        h = x.size()[2]
-        w = x.size()[3]
+        return self.classifier(x['out'])
 
-        feature_map = self.resnet(x)
-        output = self.aspp(feature_map)
-        output = F.upsample(output, size=(h, w), mode="bilinear")
-        return output
+    def _init_weight(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
 
-    # def create_model_dirs(self):
-    #     self.logs_dir = self.project_dir + "/training_logs"
-    #     self.model_dir = self.logs_dir + "/model_%s" % self.model_id
-    #     self.checkpoints_dir = self.model_dir + "/checkpoints"
-    #     if not os.path.exists(self.logs_dir):
-    #         os.makedirs(self.logs_dir)
-    #     if not os.path.exists(self.model_dir):
-    #         os.makedirs(self.model_dir)
-    #         os.makedirs(self.checkpoints_dir)
+class AtrousSeparableConvolution(nn.Module):
+    def __init__(self, in_channel, out_channel, kernel_size, stride=1, padding=0, dilation=1, bias=True):
+        super(AtrousSeparableConvolution, self).__init__()
+        self.layer = nn.Sequential(
+            nn.Conv2d(in_channel, out_channel, kernel_size, stride, padding, dilation, in_channel, bias),
+            nn.Conv2d(in_channel, out_channel, kernel_size=1, stride=1, padding=0, bias=bias)
+        )
+        
+        self.init_weight()
+        
+    def forward(self, x):
+        return self.layer(x)
+    
+    def _init_weight(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+                
+class ASPPConv(nn.Sequential):
+    def __init__(self, in_channel, out_channel, dilation):
+        modules = [
+            nn.Conv2d(in_channel, out_channel, 3, padding=dilation, dilation=dilation, bias=False),
+            nn.BatchNorm2d(out_channel),
+            nn.ReLU(inplace=True)
+        ]
+        super(ASPPConv, self).__init__(*modules)
+        
+
+class ASPPPooling(nn.Sequential):
+    def __init__(self, in_channel, out_channel):
+        super(ASPPPooling, self).__init__(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(in_channel, out_channel, 1, bias=False),
+            nn.BatchNorm2d(out_channel),
+            nn.ReLU(inplace=True))
+
+    def forward(self, x):
+        size = x.shape[-2:]
+        x = super(ASPPPooling, self).forward(x)
+        return F.interpolate(x, size=size, mode='bilinear', align_corners=False)
+    
+    
+class ASPP(nn.Module):
+    def __init__(self, in_channel, out_channel, atrous_rates):
+        super(ASPP, self).__init__()
+        modules = []
+        modules.append(nn.Sequential(
+            nn.Conv2d(in_channel, out_channel, 1, bias=False),
+            nn.BatchNorm2d(out_channel),
+            nn.ReLU(inplace=True)))
+
+        rate1, rate2, rate3 = tuple(atrous_rates)
+        modules.append(ASPPConv(in_channel, out_channel, rate1))
+        modules.append(ASPPConv(in_channel, out_channel, rate2))
+        modules.append(ASPPConv(in_channel, out_channel, rate3))
+        modules.append(ASPPPooling(in_channel, out_channel))
+
+        self.convs = nn.ModuleList(modules)
+
+        self.project = nn.Sequential(
+            nn.Conv2d(5 * out_channel, out_channel, 1, bias=False),
+            nn.BatchNorm2d(out_channel),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.1),)
+
+    def forward(self, x):
+        res = []
+        for conv in self.convs:
+            res.append(conv(x))
+        res = torch.cat(res, dim=1)
+        return self.project(res)
+    
+    
+def convert_to_separable_conv(module):
+    new_module = module
+    if isinstance(module, nn.Conv2d) and module.kernel_size[0]>1:
+        new_module = AtrousSeparableConvolution(module.in_channels,
+                                    module.out_channels, 
+                                    module.kernel_size,
+                                    module.stride,
+                                    module.padding,
+                                    module.dilation,
+                                    module.bias)
+    for name, child in module.named_children():
+        new_module.add_module(name, convert_to_separable_conv(child))
+    return new_module
