@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import argparse
 
-from dataset import get_dataset
+from dataset.utils import get_dataset
 from utils import get_model, get_criterion, get_scheduler
 from metrics import compute_image_seg_metrics
 
@@ -14,7 +14,7 @@ def train_model(args):
     model_name = args.model
     dataset_type = args.dataset
     class_num = args.class_num
-    weight_path = "ckpts/{}_{}_without_class_weight.pth".format(model_name, dataset_type)
+    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
     
     device = args.device
     lr = args.lr
@@ -23,7 +23,7 @@ def train_model(args):
     momentum = args.momentum
     
     model = get_model(args)
-    train_dataloader, val_dataloader, _, class_dict = get_dataset(args)
+    train_dataloader, val_dataloader, _, class_dict, _, _ = get_dataset(args)
     optimizer = torch.optim.SGD(params=[
         {'params': model.backbone.parameters(), 'lr': 0.1 * lr},
         {'params': model.classifier.parameters(), 'lr': lr},
@@ -53,8 +53,8 @@ def train_model(args):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            scheduler.step()
-
+            
+        scheduler.step()
         epoch_loss = np.mean(batch_losses)
         print("Epoch {}-training loss===>{:.4f}".format(epoch, epoch_loss))
 
@@ -88,6 +88,10 @@ def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="cityscapes")
+    parse.add_argument('--crop_size', type=int, default=513)
+    parse.add_argument('--voc_data_root', type=str, default="./datasets/data")
+    parse.add_argument('--year', type=str, default="2012")
+    parse.add_argument('--download', type=bool, default=False)
     
     # Model
     parse.add_argument('--model', type=str, default="deeplabv3")
@@ -103,8 +107,7 @@ def parse_args():
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--momentum', type=float, default=0.9)
     parse.add_argument('--bn_momentum', type=float, default=0.1)
-    parse.add_argument('--step_size', type=int, default=10000)
-    parse.add_argument('--total_itrs', type=int, default=30e3)
+    parse.add_argument('--step_size', type=int, default=70)
     args = parse.parse_args()
     return args
 

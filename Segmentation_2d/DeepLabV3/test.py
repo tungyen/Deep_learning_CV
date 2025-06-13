@@ -1,7 +1,7 @@
 import torch
 import argparse
 
-from dataset import get_dataset
+from dataset.utils import get_dataset
 from utils import get_model
 from vis_utils import *
 

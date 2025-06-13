@@ -4,8 +4,8 @@ import numpy as np
 from tqdm import tqdm
 import argparse
 
-from dataset import get_dataset
-from utils import get_model, get_criterion
+from dataset.utils import get_dataset
+from utils import get_model
 from metrics import compute_image_seg_metrics
 
 
@@ -16,8 +16,6 @@ def train_model(args):
     weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
     device = args.device
     
-    
-
     _, val_dataloader, _, class_dict = get_dataset(args)
     model = get_model(args)
     model.load_state_dict(torch.load(weight_path, map_location=device))

@@ -55,7 +55,7 @@ def get_criterion(args):
 def get_scheduler(args, optimizer):
     
     if args.scheduler == "poly":
-        return PolyLR(optimizer, args.total_itrs)
+        return PolyLR(optimizer, args.epochs)
     elif args.scheduler == "step":
         return StepLR(optimizer, step_size=args.step_size, gamma=0.1)
     else:
