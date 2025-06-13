@@ -46,7 +46,8 @@ def get_criterion(args):
         class_weights = torch.from_numpy(class_weights)
         class_weights = class_weights.type(torch.FloatTensor).to(device)
         
-        return nn.CrossEntropyLoss(ignore_index=class_num, weight=class_weights)
+        # return nn.CrossEntropyLoss(ignore_index=class_num, weight=class_weights)
+        return nn.CrossEntropyLoss(ignore_index=class_num)
     else:
         raise ValueError(f'Unknown dataset {dataset_type}')
     

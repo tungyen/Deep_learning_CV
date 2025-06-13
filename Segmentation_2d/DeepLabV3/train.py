@@ -14,7 +14,7 @@ def train_model(args):
     model_name = args.model
     dataset_type = args.dataset
     class_num = args.class_num
-    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+    weight_path = "ckpts/{}_{}_without_class_weight.pth".format(model_name, dataset_type)
     
     device = args.device
     lr = args.lr
@@ -95,11 +95,11 @@ def parse_args():
     parse.add_argument('--class_num', type=int, default=19)
     
     # Training
-    parse.add_argument('--epochs', type=int, default=100)
-    parse.add_argument('--batch_size', type=int, default=32)
+    parse.add_argument('--epochs', type=int, default=200)
+    parse.add_argument('--batch_size', type=int, default=16)
     parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--scheduler', type=str, default="poly")
-    parse.add_argument('--lr', type=float, default=1e-3)
+    parse.add_argument('--lr', type=float, default=0.01)
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--momentum', type=float, default=0.9)
     parse.add_argument('--bn_momentum', type=float, default=0.1)

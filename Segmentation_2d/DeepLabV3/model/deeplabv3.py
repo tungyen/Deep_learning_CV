@@ -6,7 +6,7 @@ from model import resnet
 from model.model_utils import IntermediateLayerGetter
 
 class DeepLabV3(nn.Module):
-    def __init__(self, in_channel, class_num, backbone, mid_channel=256, out_stride=8, pretrained_backbone=True):
+    def __init__(self, in_channel, class_num, backbone, mid_channel=256, out_stride=16, pretrained_backbone=True):
         super(DeepLabV3, self).__init__()
         if out_stride==8:
             replace_stride_with_dilation=[False, True, True]

@@ -83,27 +83,28 @@ class CityScapesDataset(Dataset):
 
         img_path = data["img_path"]
         img = cv2.imread(img_path, -1)
-        img = cv2.resize(img, (self.new_img_w, self.new_img_h), interpolation=cv2.INTER_NEAREST)
+        # img = cv2.resize(img, (self.new_img_w, self.new_img_h), interpolation=cv2.INTER_NEAREST)
         
         label_img_path = data["label_img_path"]
         label_img = cv2.imread(label_img_path, -1)
-        label_img = cv2.resize(label_img, (self.new_img_w, self.new_img_h), interpolation=cv2.INTER_NEAREST)
+        # label_img = cv2.resize(label_img, (self.new_img_w, self.new_img_h), interpolation=cv2.INTER_NEAREST)
 
         flip = np.random.randint(low=0, high=2)
         if flip == 1:
             img = cv2.flip(img, 1)
             label_img = cv2.flip(label_img, 1)
-
+        new_img_h = self.img_h
+        new_img_w = self.img_w
         scale = np.random.uniform(low=0.7, high=2.0)
-        new_img_h = int(scale*self.new_img_h)
-        new_img_w = int(scale*self.new_img_w)
+        new_img_h = int(scale*new_img_h)
+        new_img_w = int(scale*new_img_w)
         img = cv2.resize(img, (new_img_w, new_img_h), interpolation=cv2.INTER_NEAREST)
         label_img = cv2.resize(label_img, (new_img_w, new_img_h), interpolation=cv2.INTER_NEAREST)
 
-        start_x = np.random.randint(low=0, high=(new_img_w - 256))
-        end_x = start_x + 256
-        start_y = np.random.randint(low=0, high=(new_img_h - 256))
-        end_y = start_y + 256
+        start_x = np.random.randint(low=0, high=(new_img_w - 513))
+        end_x = start_x + 513
+        start_y = np.random.randint(low=0, high=(new_img_h - 513))
+        end_y = start_y + 513
 
         img = img[start_y:end_y, start_x:end_x]
         label_img = label_img[start_y:end_y, start_x:end_x]
