@@ -1,12 +1,21 @@
-# Result of DeepLabV3 on 2D semantic segmentation on CityScapes
-<!-- ![image](https://github.com/tungyen/Pytorch_deepLearning/blob/master/DeepLabV3/training_logs/model_eval_val/munster_000166_000019_overlayed.png) -->
+# DeepLabV3 #
+First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the cityscapes dataset.
 
-## _Training model_
+
+## Training ##
 ```bash
-python train.py
+python train.py --dataset cityspaces --model deeplabv3 --backbone resnet101 --class_num 19
+python train.py --dataset voc --model deeplabv3 --backbone resnet101 --class_num 20
 ```
 
-## _Evaluation based on training model_
+## Evaluation ##
 ```bash
-python eval.py
+python eval.py --dataset cityspaces --model deeplabv3 --backbone resnet101 --class_num 19
+python eval.py --dataset voc --model deeplabv3 --backbone resnet101 --class_num 20
+```
+
+## Test ##
+```bash
+python test.py --dataset cityspaces --model deeplabv3 --backbone resnet101 --class_num 19
+python test.py --dataset voc --model deeplabv3 --backbone resnet101 --class_num 20
 ```

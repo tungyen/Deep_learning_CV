@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from model import resnet
-from model.model_utils import IntermediateLayerGetter
+from model.utils import IntermediateLayerGetter
 
 class DeepLabV3(nn.Module):
     def __init__(self, in_channel, class_num, backbone, mid_channel=256, out_stride=16, pretrained_backbone=True):
@@ -27,8 +27,65 @@ class DeepLabV3(nn.Module):
         x = self.classifier(features)
         x = F.interpolate(x, size=input_shape, mode='bilinear', align_corners=False)
         return x
+    
+    
+class DeepLabV3Plus(nn.Module):
+    def __init__(self, in_channel, class_num, backbone, mid_channel=256, out_stride=16, pretrained_backbone=True):
+        super(DeepLabV3, self).__init__()
+        if out_stride==8:
+            replace_stride_with_dilation=[False, True, True]
+            aspp_dilate = [12, 24, 36]
+        else:
+            replace_stride_with_dilation=[False, False, True]
+            aspp_dilate = [6, 12, 18]
+            
+        return_layers = {'layer4': 'out', 'layer1': 'low_level'}
+        backbone = resnet.__dict__[backbone](pretrained=pretrained_backbone, replace_stride_with_dilation=replace_stride_with_dilation)
         
+        self.backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
+        self.classifier = DeepLabHeadV3Plus(in_channel, mid_channel, class_num, aspp_dilate=aspp_dilate)
         
+    def forward(self, x):
+        input_shape = x.shape[-2:]
+        features = self.backbone(x)
+        x = self.classifier(features)
+        x = F.interpolate(x, size=input_shape, mode='bilinear', align_corners=False)
+        return x
+    
+    
+class DeepLabHeadV3Plus(nn.Module):
+    def __init__(self, in_channel, low_level_channel, class_num, mid_channel=256, aspp_dilate=[12, 24, 36]):
+        super(DeepLabHeadV3Plus, self).__init__()
+        self.proj = nn.Sequential(
+            nn.Conv2d(low_level_channel, 48, 1, bias=False),
+            nn.BatchNorm2d(48),
+            nn.ReLU(inplace=True)
+        )
+        
+        self.aspp = ASPP(in_channel, mid_channel, aspp_dilate)
+        
+        self.classifier = nn.Sequential(
+            nn.Conv2d(304, 256, 3, padding=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, class_num, 1)
+        )
+        self.init_weight()
+        
+    def forward(self, feature):
+        out = self.proj(feature['low_level'])
+        out_feat = self.aspp(feature['out'])
+        out_feat = F.interpolate(out_feat, size=out.shape[2:], mode='bilinear', align_corners=False)
+        return self.classifier(torch.cat([out, out_feat], dim=1))
+    
+    def init_weight(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+                
 class DeepLabHead(nn.Module):
     def __init__(self, in_channel, out_channel, num_classes, aspp_dilate=[12, 24, 36]):
         super(DeepLabHead, self).__init__()
@@ -115,7 +172,7 @@ class ASPP(nn.Module):
 
         self.convs = nn.ModuleList(modules)
 
-        self.project = nn.Sequential(
+        self.proj = nn.Sequential(
             nn.Conv2d(5 * out_channel, out_channel, 1, bias=False),
             nn.BatchNorm2d(out_channel),
             nn.ReLU(inplace=True),
@@ -126,7 +183,7 @@ class ASPP(nn.Module):
         for conv in self.convs:
             res.append(conv(x))
         res = torch.cat(res, dim=1)
-        return self.project(res)
+        return self.proj(res)
     
     
 def convert_to_separable_conv(module):
