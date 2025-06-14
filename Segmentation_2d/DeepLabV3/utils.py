@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import _LRScheduler, StepLR
 import pickle
 
-from model import DeepLabV3
+from model import DeepLabV3, DeepLabV3Plus
 
 class PolyLR(_LRScheduler):
     def __init__(self, optimizer, max_iters, power=0.9, last_epoch=-1, min_lr=1e-6):
@@ -30,6 +30,10 @@ def get_model(args):
     
     if model_name == "deeplabv3":
         model = DeepLabV3(class_num=class_num, in_channel=2048, backbone=backbone).to(device)
+        set_bn_momentum(model.backbone, momentum=momemtum)
+        return model
+    elif model_name == "deeplabv3plus":
+        model = DeepLabV3Plus(class_num=class_num, in_channel=2048, backbone=backbone).to(device)
         set_bn_momentum(model.backbone, momentum=momemtum)
         return model
     else:

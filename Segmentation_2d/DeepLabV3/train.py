@@ -14,7 +14,7 @@ def train_model(args):
     model_name = args.model
     dataset_type = args.dataset
     class_num = args.class_num
-    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+    weight_path = "ckpts/{}_{}_modify.pth".format(model_name, dataset_type)
     
     device = args.device
     lr = args.lr
@@ -94,7 +94,7 @@ def parse_args():
     parse.add_argument('--download', type=bool, default=False)
     
     # Model
-    parse.add_argument('--model', type=str, default="deeplabv3")
+    parse.add_argument('--model', type=str, default="deeplabv3plus")
     parse.add_argument('--backbone', type=str, default="resnet101")
     parse.add_argument('--class_num', type=int, default=19)
     
