@@ -74,10 +74,10 @@ def train_model(args):
         all_preds = torch.cat(all_preds).numpy()
         all_labels = torch.cat(all_labels).numpy()
 
-        class_ious, miou = compute_image_seg_metrics(args, all_preds, all_labels)
+        class_ious_dict, miou = compute_image_seg_metrics(args, all_preds, all_labels)
         print("Validation mIoU===>{:.4f}".format(miou))
-        for cls in range(class_num):
-            print("{} IoU: {:.4f}".format(class_dict[cls], class_ious[cls]))
+        for cls, iou in class_ious_dict.items():
+            print("{} IoU: {:.4f}".format(class_dict[cls], iou))
             
         if miou > best_metric:
             best_metric = miou
@@ -90,8 +90,8 @@ def parse_args():
     parse.add_argument('--dataset', type=str, default="cityscapes")
     parse.add_argument('--crop_size', type=int, default=513)
     parse.add_argument('--voc_data_root', type=str, default="./datasets/data")
-    parse.add_argument('--year', type=str, default="2012")
-    parse.add_argument('--download', type=bool, default=False)
+    parse.add_argument('--voc_year', type=str, default="2012")
+    parse.add_argument('--voc_download', type=bool, default=False)
     
     # Model
     parse.add_argument('--model', type=str, default="deeplabv3plus")

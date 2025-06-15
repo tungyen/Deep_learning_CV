@@ -25,9 +25,6 @@ def get_model(args):
     backbone = args.backbone
     momemtum = args.bn_momentum
     
-    if dataset_type == "cityscapes":
-        class_num += 1
-    
     if model_name == "deeplabv3":
         model = DeepLabV3(class_num=class_num, in_channel=2048, backbone=backbone).to(device)
         set_bn_momentum(model.backbone, momentum=momemtum)
@@ -43,6 +40,11 @@ def get_criterion(args):
     dataset_type = args.dataset
     class_num = args.class_num
     device = args.device
+
+    if dataset_type == "cityscapes":
+        ignore_index = 19
+    elif dataset_type == "voc":
+        ignore_index = 255
     
     if dataset_type == "cityscapes":
         with open("../../Dataset/cityscapes/meta/class_weights.pkl", "rb") as file:
@@ -51,7 +53,9 @@ def get_criterion(args):
         class_weights = class_weights.type(torch.FloatTensor).to(device)
         
         # return nn.CrossEntropyLoss(ignore_index=class_num, weight=class_weights)
-        return nn.CrossEntropyLoss(ignore_index=class_num)
+        return nn.CrossEntropyLoss(ignore_index=ignore_index)
+    elif dataset_type == "voc":
+        return nn.CrossEntropyLoss(ignore_index=ignore_index)
     else:
         raise ValueError(f'Unknown dataset {dataset_type}')
     

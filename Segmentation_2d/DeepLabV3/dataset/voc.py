@@ -102,7 +102,8 @@ class VocDataset(Dataset):
             
         self.root = os.path.expanduser(root)
         self.year = year
-        self.url = VOC_DATASET_YEAR_DICT[year]['filename']
+        self.url = VOC_DATASET_YEAR_DICT[year]['url']
+        self.filename = VOC_DATASET_YEAR_DICT[year]['filename']
         self.md5 = VOC_DATASET_YEAR_DICT[year]['md5']
         self.transform = transform
         self.split = split

@@ -7,6 +7,7 @@ FashionMNIST
 cifar10
 cifar100
 cityscapes
+VOC
 ModelNet40
 ModelNet40_npz
 Stanford3dDataset_v1.2_Aligned_Version
