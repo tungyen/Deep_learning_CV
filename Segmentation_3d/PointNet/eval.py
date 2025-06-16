@@ -14,6 +14,14 @@ def eval_model(args):
     device = args.device
     model_name = args.model
     dataset_type = args.dataset
+    
+    if dataset_type == 'chair':
+        args.class_num = 4
+    elif dataset_type == 'modelnet40':
+        args.class_num = 40
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+    
     class_num = args.class_num
     weight_path = os.path.join(ckpts_path, '{}_{}.pth'.format(model_name, dataset_type))
     task = model_name[-3:]
@@ -60,7 +68,6 @@ def parse_args():
     
     # Model
     parse.add_argument('--model', type=str, default="pointnet_cls")
-    parse.add_argument('--class_num', type=int, default=40)
     
     # Eval
     parse.add_argument('--batch_size', type=int, default=16)

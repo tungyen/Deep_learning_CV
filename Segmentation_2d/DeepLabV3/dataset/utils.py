@@ -11,11 +11,6 @@ def get_dataset(args):
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
     
-    val_transform = Compose([
-        ToTensor(),
-        Normalize(mean=mean, std=std),
-    ])
-    
     if dataset_type == "cityscapes":
         data_path = "../../Dataset/cityscapes/"
         meta_path = "../../Dataset/cityscapes/meta"
@@ -24,6 +19,11 @@ def get_dataset(args):
             RandomCrop(size=(crop_size, crop_size)),
             ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
             RandomHorizontalFlip(),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+        
+        val_transform = Compose([
             ToTensor(),
             Normalize(mean=mean, std=std),
         ])
@@ -45,6 +45,20 @@ def get_dataset(args):
             ToTensor(),
             Normalize(mean=mean, std=std),
         ])
+        
+        if args.voc_crop_val:
+            val_transform = Compose([
+                Resize(args.crop_size),
+                CenterCrop(args.crop_size),
+                ToTensor(),
+                Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ])
+        else:
+            val_transform = Compose([
+                ToTensor(),
+                Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ])
+        
         train_dataset = VocDataset(root=voc_data_root, year=voc_year, split='train', download=voc_download, transform=train_transform)
         val_dataset = VocDataset(root=voc_data_root, year=voc_year, split='val', download=False, transform=val_transform)
         test_dataset = VocDataset(root=voc_data_root, year=voc_year, split='val', download=False, transform=val_transform)

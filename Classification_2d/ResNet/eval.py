@@ -18,6 +18,18 @@ def eval_model(args):
     dataset_type = args.dataset
     weight_path = os.path.join(ckpts_path, '{}_{}.pth'.format(model_name, dataset_type))
     
+    if dataset_type == "flower":
+        args.img_size = 224
+        args.class_num = 5
+    elif dataset_type == "cifar10":
+        args.img_size = 32
+        args.class_num = 10
+    elif dataset_type == "cifar100":
+        args.img_size = 32
+        args.class_num = 100
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+    
     print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
     
     _, val_dataloader, _, _ = get_dataset(args)
@@ -53,8 +65,6 @@ def parse_args():
     
     # Model
     parse.add_argument('--model', type=str, default="resnet34")
-    parse.add_argument('--img_size', type=int, default=224)
-    parse.add_argument('--class_num', type=int, default=5)
     
     # evaluating
     parse.add_argument('--batch_size', type=int, default=128)

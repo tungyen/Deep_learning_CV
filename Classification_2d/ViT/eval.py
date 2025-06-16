@@ -18,6 +18,21 @@ def eval_model(args):
     dataset_type = args.dataset
     weight_path = os.path.join(ckpts_path, '{}_{}.pth'.format(model_name, dataset_type))
     
+    if dataset_type == "flower":
+        args.patch_size = 16
+        args.img_size = 224
+        args.class_num = 5
+    elif dataset_type == "cifar10":
+        args.patch_size = 4
+        args.img_size = 32
+        args.class_num = 10
+    elif dataset_type == "cifar100":
+        args.patch_size = 4
+        args.img_size = 32
+        args.class_num = 100
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+    
     print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
     
     _, val_dataloader, _, _ = get_dataset(args)
@@ -48,14 +63,11 @@ def eval_model(args):
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="cifar100")
+    parse.add_argument('--dataset', type=str, default="flower")
     parse.add_argument('--data_path', type=str, default="../../Dataset/flower_data")
     
     # Model
     parse.add_argument('--model', type=str, default="vit_rope")
-    parse.add_argument('--img_size', type=int, default=32)
-    parse.add_argument('--patch_size', type=int, default=4)
-    parse.add_argument('--class_num', type=int, default=100)
     
     # evaluating
     parse.add_argument('--batch_size', type=int, default=128)

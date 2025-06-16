@@ -18,7 +18,6 @@ class PolyLR(_LRScheduler):
                 for base_lr in self.base_lrs]
 
 def get_model(args):
-    dataset_type = args.dataset
     model_name = args.model
     class_num = args.class_num
     device = args.device
@@ -38,13 +37,8 @@ def get_model(args):
     
 def get_criterion(args):
     dataset_type = args.dataset
-    class_num = args.class_num
     device = args.device
-
-    if dataset_type == "cityscapes":
-        ignore_index = 19
-    elif dataset_type == "voc":
-        ignore_index = 255
+    ignore_idx = args.ignore_idx
     
     if dataset_type == "cityscapes":
         with open("../../Dataset/cityscapes/meta/class_weights.pkl", "rb") as file:
@@ -53,9 +47,9 @@ def get_criterion(args):
         class_weights = class_weights.type(torch.FloatTensor).to(device)
         
         # return nn.CrossEntropyLoss(ignore_index=class_num, weight=class_weights)
-        return nn.CrossEntropyLoss(ignore_index=ignore_index)
+        return nn.CrossEntropyLoss(ignore_index=ignore_idx)
     elif dataset_type == "voc":
-        return nn.CrossEntropyLoss(ignore_index=ignore_index)
+        return nn.CrossEntropyLoss(ignore_index=ignore_idx)
     else:
         raise ValueError(f'Unknown dataset {dataset_type}')
     

@@ -35,10 +35,13 @@ def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="cityscapes")
+    parse.add_argument('--crop_size', type=int, default=513)
     
     # Model
     parse.add_argument('--model', type=str, default="deeplabv3")
+    parse.add_argument('--backbone', type=str, default="resnet101")
     parse.add_argument('--class_num', type=int, default=19)
+    parse.add_argument('--bn_momentum', type=float, default=0.1)
     
     # testing
     parse.add_argument('--batch_size', type=int, default=4)

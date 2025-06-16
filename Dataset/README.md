@@ -23,7 +23,10 @@ Go to the my drive for [FlowerDataset](https://drive.google.com/file/d/1PVqNgHBQ
 
 
 ### VOCdevkit ###
-Go to [VOCdevkit](https://www.kaggle.com/datasets/wangyuhang3303/vocdevkit) for downloading. Unzip it under this folder as `Dataset/VOCdevkit`
+Go to [VOCdevkit](https://www.kaggle.com/datasets/wangyuhang3303/vocdevkit) for downloading. Unzip it under this folder as `Dataset/VOCdevkit`. Or when running code in Segmentation_2d/Deeplabv3, you will download the VOCdevkit dataset automatically by using --voc_download True. And if you want to use Pascal VOC trainaug labels, please go to [This dropbox](https://www.dropbox.com/scl/fi/xccys1fus0utdioi7nj4d/SegmentationClassAug.zip?e=2&rlkey=0wl8iz6sc40b3qf6nidun4rez&dl=0) for downloading. And then put it under Dataset/VOC, and then run the command below to unzip to the designated path:
+```bash
+unzip SegmentationClassAug.zip -d VOCdevkit/VOC2012/SegmentationClassAug
+```
 
 ### Celeba ###
 Go to [Celeba](https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) and download `img_align_celeba.zip` file. And then unzip it as Dataset/img_align_celeba

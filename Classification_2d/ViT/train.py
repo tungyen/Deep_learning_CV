@@ -27,6 +27,21 @@ def train_model(args):
     weight_decay = args.weight_decay
     lrf = args.lrf
     
+    if dataset_type == "flower":
+        args.patch_size = 16
+        args.img_size = 224
+        args.class_num = 5
+    elif dataset_type == "cifar10":
+        args.patch_size = 4
+        args.img_size = 32
+        args.class_num = 10
+    elif dataset_type == "cifar100":
+        args.patch_size = 4
+        args.img_size = 32
+        args.class_num = 100
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+    
     weight_path = os.path.join("ckpts", "{}_{}.pth".format(model_name, dataset_type))
     print("Start training model {} on {} dataset!".format(model_name, dataset_type))
 
@@ -83,9 +98,6 @@ def parse_args():
     
     # Model
     parse.add_argument('--model', type=str, default="vit_relative")
-    parse.add_argument('--img_size', type=int, default=32)
-    parse.add_argument('--patch_size', type=int, default=4)
-    parse.add_argument('--class_num', type=int, default=10)
     
     # training
     parse.add_argument('--epochs', type=int, default=200)

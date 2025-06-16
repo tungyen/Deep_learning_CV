@@ -4,23 +4,23 @@ First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_le
 The command is taking resnet34 as example, for other models names, please refer to utils.py
 ## Training ##
 ```bash
-python train.py --dataset flower --model resnet34 --class_num 5
-python train.py --dataset cifar10 --model resnet34 --class_num 10
-python train.py --dataset cifar100 --model resnet34 --class_num 100
+python train.py --dataset flower --model resnet34
+python train.py --dataset cifar10 --model resnet34
+python train.py --dataset cifar100 --model resnet34
 ```
 
 ## Evaluation ##
 ```bash
-python eval.py --dataset flower --model resnet34 --class_num 5
-python eval.py --dataset cifar10 --model resnet34 --class_num 10
-python eval.py --dataset cifar100 --model resnet34 --class_num 100
+python eval.py --dataset flower --model resnet34
+python eval.py --dataset cifar10 --model resnet34
+python eval.py --dataset cifar100 --model resnet34
 ```
 
 ## Testing ##
 ```bash
-python test.py --dataset flower --model resnet34 --class_num 5
-python test.py --dataset cifar10 --model resnet34 --class_num 10
-python test.py --dataset cifar100 --model resnet34 --class_num 100
+python test.py --dataset flower --model resnet34
+python test.py --dataset cifar10 --model resnet34
+python test.py --dataset cifar100 --model resnet34
 ```
 
 ## ResNet34 ##

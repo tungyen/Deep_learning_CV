@@ -13,9 +13,17 @@ def train_model(args):
     os.makedirs("ckpts", exist_ok=True)
     model_name = args.model
     dataset_type = args.dataset
-    class_num = args.class_num
-    weight_path = "ckpts/{}_{}_modify.pth".format(model_name, dataset_type)
     
+    if dataset_type == 'cityscapes':
+        args.class_num = 19
+        args.ignore_idx = 19
+    elif dataset_type == 'voc':
+        args.class_num = 21
+        args.ignore_idx = 255
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+    
+    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
     device = args.device
     lr = args.lr
     epochs = args.epochs
@@ -23,6 +31,7 @@ def train_model(args):
     momentum = args.momentum
     
     model = get_model(args)
+    # model.load_state_dict(torch.load(weight_path, map_location=device))
     train_dataloader, val_dataloader, _, class_dict, _, _ = get_dataset(args)
     optimizer = torch.optim.SGD(params=[
         {'params': model.backbone.parameters(), 'lr': 0.1 * lr},
@@ -56,7 +65,7 @@ def train_model(args):
             
         scheduler.step()
         epoch_loss = np.mean(batch_losses)
-        print("Epoch {}-training loss===>{:.4f}".format(epoch, epoch_loss))
+        print("Epoch {}-training loss===>{:.4f}".format(epoch+1, epoch_loss))
 
         # Validation
         model.eval()
@@ -89,14 +98,15 @@ def parse_args():
     # Dataset
     parse.add_argument('--dataset', type=str, default="cityscapes")
     parse.add_argument('--crop_size', type=int, default=513)
-    parse.add_argument('--voc_data_root', type=str, default="./datasets/data")
-    parse.add_argument('--voc_year', type=str, default="2012")
+    parse.add_argument('--voc_data_root', type=str, default="../../Dataset/VOC")
+    parse.add_argument('--voc_year', type=str, default="2012_aug")
     parse.add_argument('--voc_download', type=bool, default=False)
+    parse.add_argument('--voc_crop_val', type=bool, default=True)
     
     # Model
     parse.add_argument('--model', type=str, default="deeplabv3plus")
     parse.add_argument('--backbone', type=str, default="resnet101")
-    parse.add_argument('--class_num', type=int, default=19)
+    parse.add_argument('--bn_momentum', type=float, default=0.1)
     
     # Training
     parse.add_argument('--epochs', type=int, default=200)
@@ -106,7 +116,6 @@ def parse_args():
     parse.add_argument('--lr', type=float, default=0.01)
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--momentum', type=float, default=0.9)
-    parse.add_argument('--bn_momentum', type=float, default=0.1)
     parse.add_argument('--step_size', type=int, default=70)
     args = parse.parse_args()
     return args

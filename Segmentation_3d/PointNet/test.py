@@ -11,6 +11,13 @@ def test_model(args):
     device = args.device
     model_name = args.model
     dataset_type = args.dataset
+    
+    if dataset_type == 'chair':
+        args.class_num = 4
+    elif dataset_type == 'modelnet40':
+        args.class_num = 40
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
 
     model = get_model(args)
     color_map = get_color_map(args)
@@ -55,7 +62,6 @@ def parse_args():
     
     # Model
     parse.add_argument('--model', type=str, default="pointnet_seg")
-    parse.add_argument('--class_num', type=int, default=4)
     
     # testing
     parse.add_argument('--batch_size', type=int, default=6)

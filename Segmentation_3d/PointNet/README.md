@@ -5,17 +5,17 @@ First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_le
 
 ### Training ###
 ```bash
-python train.py --dataset modelnet40 --model pointnet_cls --class_num 40
+python train.py --dataset modelnet40 --model pointnet_cls
 ```
 
 ### Evaluation ###
 ```bash
-python eval.py --dataset modelnet40 --model pointnet_cls --class_num 40
+python eval.py --dataset modelnet40 --model pointnet_cls
 ```
 
 ### Testing ###
 ```bash
-python test.py --dataset modelnet40 --model pointnet_cls --class_num 40 --batch_size 4
+python test.py --dataset modelnet40 --model pointnet_cls --batch_size 4
 ```
 
 ### Result of Modelnet40 Dataset ###
@@ -25,17 +25,17 @@ python test.py --dataset modelnet40 --model pointnet_cls --class_num 40 --batch_
 
 ### Training ###
 ```bash
-python train.py --dataset chair --model pointnet_seg --class_num 4
+python train.py --dataset chair --model pointnet_seg
 ```
 
 ### Evaluation ###
 ```bash
-python eval.py --dataset chair --model pointnet_seg --class_num 4
+python eval.py --dataset chair --model pointnet_seg
 ```
 
 ### Testing ###
 ```bash
-python test.py --dataset chair --model pointnet_seg --class_num 4 --batch_size 6
+python test.py --dataset chair --model pointnet_seg --batch_size 6
 ```
 
 ### Result of Chair Dataset ###

@@ -5,23 +5,23 @@ Here is the pipeline command for ViT with relative distance position embedding, 
 
 ## Training ##
 ```bash
-python train.py --dataset flower --model vit_relative --patch_size 16 --img_size 224 --class_num 5
-python train.py --dataset cifar10 --model vit_relative --patch_size 4 --img_size 32 --class_num 10
-python train.py --dataset cifar100 --model vit_relative --patch_size 4 --img_size 32 --class_num 100
+python train.py --dataset flower --model vit_relative
+python train.py --dataset cifar10 --model vit_relative
+python train.py --dataset cifar100 --model vit_relative
 ```
 
 ## Evaluating ##
 ```bash
-python eval.py --dataset flower --model vit_relative --patch_size 16 --img_size 224 --class_num 5
-python eval.py --dataset cifar10 --model vit_relative --patch_size 4 --img_size 32 --class_num 10
-python eval.py --dataset cifar100 --model vit_relative --patch_size 4 --img_size 32 --class_num 100
+python eval.py --dataset flower --model vit_relative
+python eval.py --dataset cifar10 --model vit_relative
+python eval.py --dataset cifar100 --model vit_relative
 ```
 
 ## Testing ##
 ```bash
-python test.py --dataset flower --model vit_relative --patch_size 16 --img_size 224 --class_num 5
-python test.py --dataset cifar10 --model vit_relative --patch_size 4 --img_size 32 --class_num 10
-python test.py --dataset cifar100 --model vit_relative --patch_size 4 --img_size 32 --class_num 100
+python test.py --dataset flower --model vit_relative
+python test.py --dataset cifar10 --model vit_relative
+python test.py --dataset cifar100 --model vit_relative
 ```
 
 

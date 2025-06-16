@@ -12,11 +12,18 @@ from metrics import compute_image_seg_metrics
 def train_model(args):
     model_name = args.model
     dataset_type = args.dataset
-    class_num = args.class_num
-    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+    
+    if dataset_type == 'cityscapes':
+        args.class_num = 19
+    elif dataset_type == 'voc':
+        args.class_num = 21
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+    
+    weight_path = "ckpts/{}_{}_modify.pth".format(model_name, dataset_type)
     device = args.device
     
-    _, val_dataloader, _, class_dict = get_dataset(args)
+    _, val_dataloader, _, class_dict, _, _ = get_dataset(args)
     model = get_model(args)
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model.eval()
@@ -37,19 +44,21 @@ def train_model(args):
     all_preds = torch.cat(all_preds).numpy()
     all_labels = torch.cat(all_labels).numpy()
     
-    class_ious, miou = compute_image_seg_metrics(args, all_preds, all_labels)
+    class_ious_dict, miou = compute_image_seg_metrics(args, all_preds, all_labels)
     print("Validation mIoU===>{:.4f}".format(miou))
-    for cls in range(class_num):
-        print("{} IoU: {:.4f}".format(class_dict[cls], class_ious[cls]))
+    for cls, iou in class_ious_dict.items():
+        print("{} IoU: {:.4f}".format(class_dict[cls], iou))
     
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="cityscapes")
+    parse.add_argument('--crop_size', type=int, default=513)
     
     # Model
     parse.add_argument('--model', type=str, default="deeplabv3")
-    parse.add_argument('--class_num', type=int, default=19)
+    parse.add_argument('--backbone', type=str, default="resnet101")
+    parse.add_argument('--bn_momentum', type=float, default=0.1)
     
     # Validation
     parse.add_argument('--batch_size', type=int, default=32)

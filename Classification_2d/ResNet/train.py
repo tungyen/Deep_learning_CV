@@ -22,6 +22,18 @@ def train_model(args):
     lr = args.lr
     weight_decay = args.weight_decay
     
+    if dataset_type == "flower":
+        args.img_size = 224
+        args.class_num = 5
+    elif dataset_type == "cifar10":
+        args.img_size = 32
+        args.class_num = 10
+    elif dataset_type == "cifar100":
+        args.img_size = 32
+        args.class_num = 100
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+    
     weight_path = os.path.join("ckpts", "{}_{}.pth".format(model_name, dataset_type))
     print("Start training model {} on {} dataset!".format(model_name, dataset_type))
 
@@ -79,8 +91,6 @@ def parse_args():
     
     # Model
     parse.add_argument('--model', type=str, default="resnet34")
-    parse.add_argument('--img_size', type=int, default=224)
-    parse.add_argument('--class_num', type=int, default=5)
     
     # training
     parse.add_argument('--epochs', type=int, default=200)

@@ -14,8 +14,16 @@ def train_model(args):
     model_name = args.model
     task = model_name[-3:]
     dataset_type = args.dataset
-    class_num = args.class_num
+    
+    if dataset_type == 'chair':
+        args.class_num = 4
+    elif dataset_type == 'modelnet40':
+        args.class_num = 40
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+    
     weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+    class_num = args.class_num
     
     device = args.device
     lr = args.lr
@@ -93,7 +101,6 @@ def parse_args():
     
     # Model
     parse.add_argument('--model', type=str, default="pointnet_seg")
-    parse.add_argument('--class_num', type=int, default=4)
     
     # training
     parse.add_argument('--epochs', type=int, default=100)

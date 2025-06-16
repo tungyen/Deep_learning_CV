@@ -20,6 +20,21 @@ def test_model(args):
     weight_path = os.path.join(ckpts_path, '{}_{}.pth'.format(model_name, dataset_type))
     print("Start test model {} on {} dataset!".format(model_name, dataset_type))
     
+    if dataset_type == "flower":
+        args.patch_size = 16
+        args.img_size = 224
+        args.class_num = 5
+    elif dataset_type == "cifar10":
+        args.patch_size = 4
+        args.img_size = 32
+        args.class_num = 10
+    elif dataset_type == "cifar100":
+        args.patch_size = 4
+        args.img_size = 32
+        args.class_num = 100
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+    
     rows = cols = int(math.sqrt(batch_size))
     mean, std = get_dataset_stat(args)
     _, _, test_dataloader, class_dict = get_dataset(args)
@@ -58,9 +73,6 @@ def parse_args():
     
     # Model
     parse.add_argument('--model', type=str, default="vit_relative")
-    parse.add_argument('--img_size', type=int, default=32)
-    parse.add_argument('--patch_size', type=int, default=4)
-    parse.add_argument('--class_num', type=int, default=10)
     
     # evaluating
     parse.add_argument('--batch_size', type=int, default=4)
