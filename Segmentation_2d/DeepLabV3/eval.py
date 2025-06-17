@@ -54,6 +54,11 @@ def parse_args():
     # Dataset
     parse.add_argument('--dataset', type=str, default="cityscapes")
     parse.add_argument('--crop_size', type=int, default=513)
+    parse.add_argument('--voc_data_root', type=str, default="../../Dataset/VOC")
+    parse.add_argument('--voc_year', type=str, default="2012_aug")
+    parse.add_argument('--voc_download', type=bool, default=False)
+    parse.add_argument('--voc_crop_val', type=bool, default=True)
+    parse.add_argument('--cityscapes_crop_val', type=bool, default=True)
     
     # Model
     parse.add_argument('--model', type=str, default="deeplabv3")

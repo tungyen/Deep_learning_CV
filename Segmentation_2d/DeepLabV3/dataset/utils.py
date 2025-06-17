@@ -23,10 +23,18 @@ def get_dataset(args):
             Normalize(mean=mean, std=std),
         ])
         
-        val_transform = Compose([
-            ToTensor(),
-            Normalize(mean=mean, std=std),
-        ])
+        if args.cityscapes_crop_val:
+            val_transform = Compose([
+                Resize(args.crop_size),
+                CenterCrop(args.crop_size),
+                ToTensor(),
+                Normalize(mean=mean, std=std),
+            ])
+        else:
+            val_transform = Compose([
+                ToTensor(),
+                Normalize(mean=mean, std=std),
+            ])
         
         train_dataset = CityScapesDataset(data_path, meta_path, "train", transform=train_transform)
         val_dataset = CityScapesDataset(data_path, meta_path, "val", transform=val_transform)
@@ -51,12 +59,12 @@ def get_dataset(args):
                 Resize(args.crop_size),
                 CenterCrop(args.crop_size),
                 ToTensor(),
-                Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                Normalize(mean=mean, std=std),
             ])
         else:
             val_transform = Compose([
                 ToTensor(),
-                Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                Normalize(mean=mean, std=std),
             ])
         
         train_dataset = VocDataset(root=voc_data_root, year=voc_year, split='train', download=voc_download, transform=train_transform)
