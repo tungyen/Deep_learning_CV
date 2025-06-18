@@ -8,12 +8,11 @@ Model with task category:
 2. **ViT**
 
 ## 2D Semantic Segmentation ##
-1. **Unet++**
-2. **DeepLabV3**
-3. **FCN**
+1. **DeepLabV3**
 
 ## 3D Semantic Segmentation/Classification ##
 1. **PointNet**
+2. **PointNet++**
 
 ## 6D Pose Estimation ##
 1. **PoseCNN**

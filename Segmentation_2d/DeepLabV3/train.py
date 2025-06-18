@@ -23,7 +23,10 @@ def train_model(args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
-    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+    if dataset_type == 'cityscapes':
+        weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+    else:
+        weight_path = "ckpts/{}_{}_{}.pth".format(model_name, dataset_type, args.voc_year)
     device = args.device
     lr = args.lr
     epochs = args.epochs
