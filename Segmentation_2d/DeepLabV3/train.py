@@ -17,16 +17,14 @@ def train_model(args):
     if dataset_type == 'cityscapes':
         args.class_num = 19
         args.ignore_idx = 19
+        weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
     elif dataset_type == 'voc':
         args.class_num = 21
         args.ignore_idx = 255
+        weight_path = "ckpts/{}_{}_{}.pth".format(model_name, dataset_type, args.voc_year)
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
-    
-    if dataset_type == 'cityscapes':
-        weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
-    else:
-        weight_path = "ckpts/{}_{}_{}.pth".format(model_name, dataset_type, args.voc_year)
+
     device = args.device
     lr = args.lr
     epochs = args.epochs
