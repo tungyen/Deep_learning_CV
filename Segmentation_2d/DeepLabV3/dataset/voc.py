@@ -122,7 +122,7 @@ class VocDataset(Dataset):
         if is_aug and split=='train':
             mask_dir = os.path.join(voc_root, 'SegmentationClassAug')
             assert os.path.exists(mask_dir), "SegmentationClassAug not found, please refer to README.md and prepare it manually"
-            split_f = os.path.join( self.root, 'train_aug.txt')#'./datasets/data/train_aug.txt'
+            split_f = os.path.join(voc_root, 'train_aug.txt')#'./datasets/data/train_aug.txt'
         else:
             mask_dir = os.path.join(voc_root, 'SegmentationClass')
             splits_dir = os.path.join(voc_root, 'ImageSets/Segmentation')
