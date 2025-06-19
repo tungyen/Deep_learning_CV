@@ -1,10 +1,11 @@
 #include "ball_query.h"
 
-void ball_query_kernel_wrapper(const float* batched_points_xyz, 
-                               const float* batched_centroids_xyz,
-                               int n_batches, int n_points, int n_centroids,
-                               float radius, int n_points_per_group,
-                               int64_t* batched_index);
+void ball_query_kernel_wrapper(
+    const float* batched_points_xyz, 
+    const float* batched_centroids_xyz,
+    int n_batches, int n_points, int n_centroids,
+    float radius, int n_points_per_group,
+    int64_t* batched_index);
 
 torch::Tensor ball_query_cuda(torch::Tensor points_xyz, 
                               torch::Tensor centroids_xyz,
