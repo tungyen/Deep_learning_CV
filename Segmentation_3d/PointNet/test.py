@@ -40,13 +40,11 @@ def test_model(args):
             visualize_pcloud(args, pclouds, color_map, predict_classes, class_dict)
         
     elif dataset_type == "modelnet40":
-        for pclouds, _ in test_dataloader:
-            with torch.no_grad():
-                outputs = model(pclouds.to(device))
-                predict_classes = torch.argmax(outputs, dim=1).cpu().numpy()
-                
-            visualize_pcloud(args, pclouds, color_map, predict_classes, class_dict)
-            break
+        pclouds, _ = next(iter(test_dataloader))
+        with torch.no_grad():
+            outputs = model(pclouds.to(device))
+            predict_classes = torch.argmax(outputs, dim=1).cpu().numpy()    
+        visualize_pcloud(args, pclouds, color_map, predict_classes, class_dict)
         
     elif dataset_type == "s3dis":
         pass

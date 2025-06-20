@@ -92,7 +92,7 @@ train_dirs = ["jena/", "zurich/", "weimar/", "ulm/", "tubingen/", "stuttgart/",
               "hamburg/", "erfurt/", "dusseldorf/", "darmstadt/", "cologne/",
               "bremen/", "bochum/", "aachen/"]
 val_dirs = ["frankfurt/", "munster/", "lindau/"]
-test_dirs = ["berlin", "bielefeld", "bonn", "leverkusen", "mainz", "munich"]
+test_dirs = ["berlin/", "bielefeld/", "bonn/", "leverkusen/", "mainz/", "munich/"]
 
 cityscapes_data_path = "cityscapes/"
 cityscapes_meta_path = "cityscapes/meta"
@@ -142,6 +142,27 @@ for val_dir in val_dirs:
         img_id = file_name.split("_leftImg8bit.png")[0]
 
         gtFine_img_path = val_label_dir_path + img_id + "_gtFine_labelIds.png"
+        gtFine_img = cv2.imread(gtFine_img_path, -1) # (shape: (1024, 2048))
+
+        # convert gtFine_img from id to trainId pixel values:
+        label_img = id_to_trainId_map_func(gtFine_img) # (shape: (1024, 2048))
+        label_img = label_img.astype(np.uint8)
+
+        cv2.imwrite(cityscapes_meta_path + "/label_imgs/" + img_id + ".png", label_img)
+        
+img_dir = cityscapes_data_path + "leftImg8bit_trainvaltest/leftImg8bit/test/"
+label_dir = cityscapes_data_path + "gtFine_trainvaltest/gtFine/test/"
+for test_dir in test_dirs:
+    print (test_dir)
+
+    test_img_dir_path = img_dir + test_dir
+    test_label_dir_path = label_dir + test_dir
+
+    file_names = os.listdir(test_img_dir_path)
+    for file_name in file_names:
+        img_id = file_name.split("_leftImg8bit.png")[0]
+
+        gtFine_img_path = test_label_dir_path + img_id + "_gtFine_labelIds.png"
         gtFine_img = cv2.imread(gtFine_img_path, -1) # (shape: (1024, 2048))
 
         # convert gtFine_img from id to trainId pixel values:

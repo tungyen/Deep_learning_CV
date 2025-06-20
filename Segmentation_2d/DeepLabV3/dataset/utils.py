@@ -78,4 +78,7 @@ def get_dataset(args):
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
     
+    mean = torch.tensor(mean).view(1, 3, 1, 1)
+    std = torch.tensor(std).view(1, 3, 1, 1)
+    
     return train_dataloader, val_dataloader, test_dataloader, class_dict, mean, std

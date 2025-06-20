@@ -43,27 +43,26 @@ def test_model(args):
     model.eval()
     
     plt.figure(figsize=(4, 4))
-    for imgs, _ in test_dataloader:
-        imgs_denorm = imgs * std + mean
-        with torch.no_grad():
-            outputs = torch.squeeze(model(imgs.to(device))).cpu()
-            predicts = torch.softmax(outputs, dim=1)
-            predict_classes = torch.argmax(predicts, dim=1).numpy()
+    imgs, _ = next(iter(test_dataloader))
+    imgs_denorm = imgs * std + mean
+    with torch.no_grad():
+        outputs = torch.squeeze(model(imgs.to(device))).cpu()
+        predicts = torch.softmax(outputs, dim=1)
+        predict_classes = torch.argmax(predicts, dim=1).numpy()
+        
+        for i in range(batch_size):
+            plt.subplot(rows, cols, i+1)
+            plt.imshow(imgs_denorm[i].permute(1, 2, 0).numpy())
+            plt.axis('off')
             
-            for i in range(batch_size):
-                plt.subplot(rows, cols, i+1)
-                plt.imshow(imgs_denorm[i].permute(1, 2, 0).numpy())
-                plt.axis('off')
-                
-                class_name = class_dict[str(predict_classes[i])]
-                score = predicts[i, predict_classes[i]].numpy()
-                title = "{}, score: {:.2f}".format(class_name, score)
-                plt.title(title, fontsize=10)
-            
-            plt.tight_layout()
-            plt.show()
-            plt.savefig('img/{}_{}.png'.format(model_name, dataset_type), bbox_inches='tight')
-            break
+            class_name = class_dict[str(predict_classes[i])]
+            score = predicts[i, predict_classes[i]].numpy()
+            title = "{}, score: {:.2f}".format(class_name, score)
+            plt.title(title, fontsize=10)
+        
+        plt.tight_layout()
+        plt.show()
+        plt.savefig('img/{}_{}.png'.format(model_name, dataset_type), bbox_inches='tight')
     
 def parse_args():
     parse = argparse.ArgumentParser()

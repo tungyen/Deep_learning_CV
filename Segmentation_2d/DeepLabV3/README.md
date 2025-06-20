@@ -6,31 +6,37 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 ```bash
 # DeepLabV3
 python train.py --dataset cityspaces --model deeplabv3 --backbone resnet101 
-python train.py --dataset voc --model deeplabv3 --backbone resnet101
+python train.py --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
+python train.py --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
 
 # DeepLabV3+
 python train.py --dataset cityspaces --model deeplabv3plus --backbone resnet101 
-python train.py --dataset voc --model deeplabv3plus --backbone resnet101
+python train.py --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
+python train.py --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
 ```
 
 ## Evaluation ##
-# DeepLabV3
 ```bash
+# DeepLabV3
 python eval.py --dataset cityspaces --model deeplabv3 --backbone resnet101 
-python eval.py --dataset voc --model deeplabv3 --backbone resnet101
+python eval.py --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
+python eval.py --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
 
 # DeepLabV3+
 python eval.py --dataset cityspaces --model deeplabv3plus --backbone resnet101 
-python eval.py --dataset voc --model deeplabv3plus --backbone resnet101
+python eval.py --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
+python eval.py --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
 ```
 
 ## Test ##
-# DeepLabV3
 ```bash
+# DeepLabV3
 python test.py --dataset cityspaces --model deeplabv3 --backbone resnet101 
-python test.py --dataset voc --model deeplabv3 --backbone resnet101
+python test.py --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
+python test.py --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
 
 # DeepLabV3+
 python test.py --dataset cityspaces --model deeplabv3plus --backbone resnet101 
-python test.py --dataset voc --model deeplabv3plus --backbone resnet101
+python test.py --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
+python test.py --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
 ```

@@ -1,36 +1,38 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
-def label_img_to_color(img):
-    label_to_color = {
-        0: [128, 64,128],
-        1: [244, 35,232],
-        2: [ 70, 70, 70],
-        3: [102,102,156],
-        4: [190,153,153],
-        5: [153,153,153],
-        6: [250,170, 30],
-        7: [220,220,  0],
-        8: [107,142, 35],
-        9: [152,251,152],
-        10: [ 70,130,180],
-        11: [220, 20, 60],
-        12: [255,  0,  0],
-        13: [  0,  0,142],
-        14: [  0,  0, 70],
-        15: [  0, 60,100],
-        16: [  0, 80,100],
-        17: [  0,  0,230],
-        18: [119, 11, 32],
-        19: [81,  0, 81]
-        }
+from dataset.voc import VocDataset
+from dataset.cityscapes import CityScapesDataset
 
-    img_height, img_width = img.shape
+def visualize_image_seg(args, masks, imgs, alpha=0.6):
+    batch_size = args.batch_size
+    model_name = args.model
+    dataset_type = args.dataset
+    year = args.voc_year
+    
+    if dataset_type == "voc":
+        colorized_masks = VocDataset.decode_target(masks).astype('uint8')
+    elif dataset_type == "cityscapes":
+        colorized_masks = CityScapesDataset.decode_target(masks).astype('uint8')
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+        
+    imgs_f = imgs.astype(np.float32)
+    colorized_masks_f = colorized_masks.astype(np.float32)
+    overlays = ((1 - alpha) * imgs_f + alpha * colorized_masks_f).astype(np.uint8)
+    
+    _, axs = plt.subplots(3, batch_size, figsize=(8, 8))
+    for i in range(batch_size):
+        axs[0, i].imshow(colorized_masks[i])
+        axs[1, i].imshow(imgs[i])
+        axs[2, i].imshow(overlays[i])
+        axs[0, i].axis('off')
+        axs[1, i].axis('off')
+        axs[2, i].axis('off')
 
-    img_color = np.zeros((img_height, img_width, 3))
-    for row in range(img_height):
-        for col in range(img_width):
-            label = img[row, col]
-
-            img_color[row, col] = np.array(label_to_color[label])
-
-    return img_color
+    plt.tight_layout()
+    plt.show()
+    save_name = 'imgs/{}_{}'.format(model_name, dataset_type)
+    if dataset_type == "voc":
+        save_name = save_name + "_{}".format(year)
+    plt.savefig(save_name + ".png", bbox_inches='tight')

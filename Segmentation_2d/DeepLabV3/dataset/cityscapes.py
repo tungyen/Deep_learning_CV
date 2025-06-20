@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 import os
 from PIL import Image
+import numpy as np
 
 cityscapes_class_dict = {
     0: "road",
@@ -25,6 +26,29 @@ cityscapes_class_dict = {
     19: "unlabeled"
 }
 
+label_color_dict = {
+    0: [128, 64, 128],
+    1: [244, 35, 232],
+    2: [70, 70, 70],
+    3: [102, 102, 156],
+    4: [190, 153, 153],
+    5: [153, 153, 153],
+    6: [250, 170, 30],
+    7: [220, 220, 0],
+    8: [107, 142, 35],
+    9: [152, 251, 152],
+    10: [70, 130, 180],
+    11: [220, 20, 60],
+    12: [255, 0, 0],
+    13: [0, 0, 142],
+    14: [0, 0, 70],
+    15: [0, 60, 100],
+    16: [0, 80, 100],
+    17: [0, 0, 230],
+    18: [119, 11, 32],
+    19: [0, 0, 0]
+}
+
 
 cityscapes_dataset_dirs = {
     "train": ["jena/", "zurich/", "weimar/", "ulm/", "tubingen/", "stuttgart/",
@@ -37,6 +61,9 @@ cityscapes_dataset_dirs = {
 
 
 class CityScapesDataset(Dataset):
+    
+    train_id_to_color = [label_color_dict[c] for c in label_color_dict]
+    train_id_to_color = np.array(train_id_to_color)
     def __init__(self, data_path, meta_path, split, transform=None):
         self.split = split
         self.img_dir = data_path + "leftImg8bit_trainvaltest/leftImg8bit/" + split
@@ -79,3 +106,7 @@ class CityScapesDataset(Dataset):
         if self.transform:
             img, label = self.transform(img, label)
         return img, label
+    
+    @classmethod
+    def decode_target(cls, target):
+        return cls.train_id_to_color[target]
