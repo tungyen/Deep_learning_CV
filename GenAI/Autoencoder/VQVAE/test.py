@@ -8,6 +8,7 @@ from torchvision import datasets
 
 
 def test_model(args):
+    os.makedirs("imgs", exist_ok=True)
     task = args.task
     device = args.device
     B = args.batch_size

@@ -8,6 +8,7 @@ from vis_utils import *
 
 
 def test_model(args):
+    os.makedirs("imgs", exist_ok=True)
     device = args.device
     model_name = args.model
     dataset_type = args.dataset

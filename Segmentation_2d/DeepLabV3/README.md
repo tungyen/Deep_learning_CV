@@ -40,3 +40,29 @@ python test.py --dataset cityspaces --model deeplabv3plus --backbone resnet101
 python test.py --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
 python test.py --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
 ```
+
+## Result ##
+
+### Result of Cityscapes Dataset ###
+
+#### DeepLabV3 ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/imgs/deeplabv3_cityscapes.png)
+
+#### DeepLabV3+ ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/imgs/deeplabv3plus_cityscapes.png)
+
+### Result of Paskal VOC 2012 Dataset ###
+
+#### DeepLabV3 ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/imgs/deeplabv3_voc_2012.png)
+
+#### DeepLabV3+ ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/imgs/deeplabv3plus_voc_2012.png)
+
+### Result of Paskal VOC 2012_aug Dataset ###
+
+#### DeepLabV3 ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/imgs/deeplabv3_voc_2012_aug.png)
+
+#### DeepLabV3+ ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/imgs/deeplabv3plus_voc_2012_aug.png)

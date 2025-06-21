@@ -19,7 +19,7 @@ python test.py --dataset modelnet40 --model pointnet_cls --batch_size 4
 ```
 
 ### Result of Modelnet40 Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/img/pointnet_cls_modelnet40.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_cls_modelnet40.png)
 
 ## Part Segmentation ##
 
@@ -39,4 +39,4 @@ python test.py --dataset chair --model pointnet_seg --batch_size 6
 ```
 
 ### Result of Chair Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/img/pointnet_seg_chair.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_seg_chair.png)

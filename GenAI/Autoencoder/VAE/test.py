@@ -13,6 +13,7 @@ def sample(model: nn.Module, labels, B, img_size, C, latent_dim):
     return x
 
 def test_model(args):
+    os.makedirs("imgs", exist_ok=True)
     task = args.task
     device = args.device
     B = args.batch_size

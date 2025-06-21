@@ -12,6 +12,7 @@ from Classification_2d.dataset import get_dataset, get_dataset_stat
 
 
 def test_model(args):
+    os.makedirs("imgs", exist_ok=True)
     ckpts_path = "ckpts"
     device = args.device
     dataset_type = args.dataset

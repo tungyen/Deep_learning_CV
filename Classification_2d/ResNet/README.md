@@ -27,15 +27,15 @@ python test.py --dataset cifar100 --model resnet34
 
 ### Flower classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnet34_flower.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnet34_flower.png)
 
 ### Cifar10 classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnet34_cifar10.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnet34_cifar10.png)
 
 ### Cifar100 classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnet34_cifar100.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnet34_cifar100.png)
 
 
 
@@ -43,15 +43,15 @@ python test.py --dataset cifar100 --model resnet34
 
 ### Flower classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnet50_flower.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnet50_flower.png)
 
 ### Cifar10 classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnet50_cifar10.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnet50_cifar10.png)
 
 ### Cifar100 classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnet50_cifar100.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnet50_cifar100.png)
 
 
 
@@ -59,15 +59,15 @@ python test.py --dataset cifar100 --model resnet34
 
 ### Flower classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnet101_flower.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnet101_flower.png)
 
 ### Cifar10 classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnet101_cifar10.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnet101_cifar10.png)
 
 ### Cifar100 classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnet101_cifar100.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnet101_cifar100.png)
 
 
 
@@ -75,15 +75,15 @@ python test.py --dataset cifar100 --model resnet34
 
 ### Flower classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnext50_32x4d_flower.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnext50_32x4d_flower.png)
 
 ### Cifar10 classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnext50_32x4d_cifar10.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnext50_32x4d_cifar10.png)
 
 ### Cifar100 classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnext50_32x4d_cifar100.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnext50_32x4d_cifar100.png)
 
 
 
@@ -91,12 +91,12 @@ python test.py --dataset cifar100 --model resnet34
 
 ### Flower classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnext101_32x8d_flower.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnext101_32x8d_flower.png)
 
 ### Cifar10 classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnext101_32x8d_cifar10.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnext101_32x8d_cifar10.png)
 
 ### Cifar100 classification ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/img/resnext101_32x8d_cifar100.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ResNet/imgs/resnext101_32x8d_cifar100.png)

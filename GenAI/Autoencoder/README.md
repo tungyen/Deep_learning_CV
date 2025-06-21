@@ -29,46 +29,46 @@ python VQVAE/test.py --dataset celeba --task recon # Reconstruct the dataset
 
 ## Result of VAE ##
 ### Celeba Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_celeba_recon.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_celeba_gen.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/imgss/VAE_celeba_recon.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/imgs/VAE_celeba_gen.png)
 
 ### MNIST Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_MNIST_recon.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/imgs/VAE_MNIST_recon.png)
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_MNIST_gen.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/imgs/VAE_MNIST_gen.png)
 
 ### Fashion MNIST Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_fashion_recon.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/imgs/VAE_fashion_recon.png)
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_fashion_gen.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/imgs/VAE_fashion_gen.png)
 
 ### CIFAR Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_cifar_recon.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/imgs/VAE_cifar_recon.png)
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/img/VAE_cifar_gen.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VAE/imgs/VAE_cifar_gen.png)
 
 
 ## Result of VQVAE ##
 ### Celeba Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_celeba_recon.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_celeba_gen.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/imgs/VQVAE_celeba_recon.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/imgs/VQVAE_celeba_gen.png)
 
 ### MNIST Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_MNIST_recon.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/imgs/VQVAE_MNIST_recon.png)
 
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_MNIST_gen.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/imgs/VQVAE_MNIST_gen.png)
 
 
 ### Fashion Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_fashion_recon.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/imgs/VQVAE_fashion_recon.png)
 
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_fashion_gen.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/imgs/VQVAE_fashion_gen.png)
 
 
 ### CIFAR Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_cifar_recon.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/imgs/VQVAE_cifar_recon.png)
 
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/img/VQVAE_cifar_gen.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/GenAI/Autoencoder/VQVAE/imgs/VQVAE_cifar_gen.png)
