@@ -6,18 +6,15 @@ from tqdm import tqdm
 import math
 import os
 import argparse
-import sys
 
-root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.append(root_dir)
-
-from utils import get_model
+from Classification_2d.ViT.utils import get_model
 from Classification_2d.dataset import get_dataset
 from Classification_2d.metrics import compute_image_cls_metrics
 
 
 def train_model(args):
-    os.makedirs("ckpts", exist_ok=True)
+    root = os.path.dirname(os.path.abspath(__file__))
+    os.makedirs(os.path.join(root, "ckpts"), exist_ok=True)
     device = args.device
     dataset_type = args.dataset
     model_name = args.model
@@ -42,7 +39,7 @@ def train_model(args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
-    weight_path = os.path.join("ckpts", "{}_{}.pth".format(model_name, dataset_type))
+    weight_path = os.path.join(root, "ckpts", "{}_{}.pth".format(model_name, dataset_type))
     print("Start training model {} on {} dataset!".format(model_name, dataset_type))
 
     train_dataloader, val_dataloader, _, _ = get_dataset(args)
@@ -94,7 +91,7 @@ def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="cifar10")
-    parse.add_argument('--data_path', type=str, default="../../Dataset/flower_data")
+    parse.add_argument('--data_path', type=str, default="Dataset/flower_data")
     
     # Model
     parse.add_argument('--model', type=str, default="vit_relative")

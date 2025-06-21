@@ -1,5 +1,5 @@
 import torch.nn as nn
-from model import *
+from Classification_2d.ViT.model import *
 
 def get_model(args) -> nn.Module:
     model_name = args.model

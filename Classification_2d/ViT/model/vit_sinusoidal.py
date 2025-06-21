@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from einops import repeat
 
-from model.model_utils import *
+from Classification_2d.ViT.model.model_utils import *
 
 class SinusoidalPositionEmbedding2D(nn.Module):
     def __init__(self, n_patches, emb_dim):

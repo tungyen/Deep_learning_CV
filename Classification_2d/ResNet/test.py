@@ -3,22 +3,20 @@ import torch
 import matplotlib.pyplot as plt
 import argparse
 import math
-import sys
-root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.append(root_dir)
 
-from utils import get_model
+from Classification_2d.ResNet.utils import get_model
 from Classification_2d.dataset import get_dataset, get_dataset_stat
 
-
 def test_model(args):
-    os.makedirs("imgs", exist_ok=True)
-    ckpts_path = "ckpts"
+    root = os.path.dirname(os.path.abspath(__file__))
+    save_path = os.path.join(root, "imgs")
+    os.makedirs(save_path, exist_ok=True)
+    
     device = args.device
     dataset_type = args.dataset
     batch_size = args.batch_size
     model_name = args.model
-    weight_path = os.path.join(ckpts_path, '{}_{}.pth'.format(model_name, dataset_type))
+    weight_path = os.path.join(root, "ckpts", "{}_{}.pth".format(model_name, dataset_type))
     
     if dataset_type == "flower":
         args.img_size = 224
@@ -61,13 +59,13 @@ def test_model(args):
         
         plt.tight_layout()
         plt.show()
-        plt.savefig('img/{}_{}.png'.format(model_name, dataset_type), bbox_inches='tight')
+        plt.savefig(os.path.join(save_path, '{}_{}.png'.format(model_name, dataset_type)), bbox_inches='tight')
     
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="flower")
-    parse.add_argument('--data_path', type=str, default="../../Dataset/flower_data")
+    parse.add_argument('--data_path', type=str, default="Dataset/flower_data")
     
     # Model
     parse.add_argument('--model', type=str, default="resnet34")
@@ -77,7 +75,6 @@ def parse_args():
     parse.add_argument('--device', type=str, default="cuda")
     args = parse.parse_args()
     return args
-
 
 if __name__ == '__main__':
     args = parse_args()

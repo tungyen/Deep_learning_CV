@@ -1,20 +1,17 @@
 import os
-import sys
 import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 
-root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.append(root_dir)
-
-from utils import get_model
+from Classification_2d.ResNet.utils import get_model
 from Classification_2d.dataset import get_dataset
 from Classification_2d.metrics import compute_image_cls_metrics
 
 def train_model(args):
-    os.makedirs("ckpts", exist_ok=True)
+    root = os.path.dirname(os.path.abspath(__file__))
+    os.makedirs(os.path.join(root, "ckpts"), exist_ok=True)
     device = args.device
     dataset_type = args.dataset
     model_name = args.model
@@ -34,13 +31,10 @@ def train_model(args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
-    weight_path = os.path.join("ckpts", "{}_{}.pth".format(model_name, dataset_type))
+    weight_path = os.path.join(root, "ckpts", "{}_{}.pth".format(model_name, dataset_type))
     print("Start training model {} on {} dataset!".format(model_name, dataset_type))
-
     train_dataloader, val_dataloader, _, _ = get_dataset(args)
     model = get_model(args)
-    # model.load_state_dict(torch.load(weight_path, map_location=device))
-
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -87,7 +81,7 @@ def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="flower")
-    parse.add_argument('--data_path', type=str, default="../../Dataset/flower_data")
+    parse.add_argument('--data_path', type=str, default="Dataset/flower_data")
     
     # Model
     parse.add_argument('--model', type=str, default="resnet34")
@@ -100,7 +94,6 @@ def parse_args():
     parse.add_argument('--weight_decay', type=float, default=5e-5)
     args = parse.parse_args()
     return args
-
 
 if __name__ == '__main__':
     args = parse_args()

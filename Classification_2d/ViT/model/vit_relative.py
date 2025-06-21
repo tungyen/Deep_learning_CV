@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import repeat
 
-from model.model_utils import *
+from Classification_2d.ViT.model.model_utils import *
 
 
 class RelativePositionEmbedding2D(nn.Module):
