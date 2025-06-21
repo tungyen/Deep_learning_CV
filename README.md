@@ -2,6 +2,11 @@
 
 This is the repo including multiple Computer Vision Model Implementation with full explanation. For each model, there is tutorial for any operation.
 
+Note that before running any code, please use command under the root path `Deep_learning_CV`:
+```bash
+export PYTHONPATH=$(pwd)
+```
+
 Model with task category:
 ## Image Classification ##
 1. **ResNet**
