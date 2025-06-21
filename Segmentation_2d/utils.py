@@ -1,10 +1,7 @@
-import numpy as np
-import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import _LRScheduler, StepLR
-import pickle
 
-from model import DeepLabV3, DeepLabV3Plus
+from Segmentation_2d.DeepLabV3.model import DeepLabV3, DeepLabV3Plus
 
 class PolyLR(_LRScheduler):
     def __init__(self, optimizer, max_iters, power=0.9, last_epoch=-1, min_lr=1e-6):
@@ -36,26 +33,11 @@ def get_model(args):
         raise ValueError(f'Unknown model {model_name}')
     
 def get_criterion(args):
-    dataset_type = args.dataset
-    device = args.device
     ignore_idx = args.ignore_idx
-    
-    if dataset_type == "cityscapes":
-        with open("../../Dataset/cityscapes/meta/class_weights.pkl", "rb") as file:
-            class_weights = np.array(pickle.load(file))
-        class_weights = torch.from_numpy(class_weights)
-        class_weights = class_weights.type(torch.FloatTensor).to(device)
-        
-        # return nn.CrossEntropyLoss(ignore_index=class_num, weight=class_weights)
-        return nn.CrossEntropyLoss(ignore_index=ignore_idx)
-    elif dataset_type == "voc":
-        return nn.CrossEntropyLoss(ignore_index=ignore_idx)
-    else:
-        raise ValueError(f'Unknown dataset {dataset_type}')
+    return nn.CrossEntropyLoss(ignore_index=ignore_idx)
     
 
 def get_scheduler(args, optimizer):
-    
     if args.scheduler == "poly":
         return PolyLR(optimizer, args.epochs)
     elif args.scheduler == "step":

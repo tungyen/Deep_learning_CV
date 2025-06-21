@@ -2,8 +2,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from model import resnet
-from model.utils import IntermediateLayerGetter
+from Segmentation_2d.DeepLabV3.model import resnet
+from Segmentation_2d.DeepLabV3.model.utils import IntermediateLayerGetter
 
 class DeepLabV3(nn.Module):
     def __init__(self, in_channel, class_num, backbone, mid_channel=256, out_stride=16, pretrained_backbone=True):

@@ -3,13 +3,15 @@ import argparse
 import os
 import numpy as np
 
-from dataset.utils import get_dataset
-from utils import get_model
-from vis_utils import visualize_image_seg
+from Segmentation_2d.dataset.utils import get_dataset
+from Segmentation_2d.utils import get_model
+from Segmentation_2d.vis_utils import visualize_image_seg
 
 
 def test_model(args):
-    os.makedirs("imgs", exist_ok=True)
+    root = os.path.dirname(os.path.abspath(__file__))
+    save_path = os.path.join(root, "imgs")
+    os.makedirs(save_path, exist_ok=True)
     device = args.device
     model_name = args.model
     dataset_type = args.dataset
@@ -17,11 +19,11 @@ def test_model(args):
     if dataset_type == 'cityscapes':
         args.class_num = 19
         args.ignore_idx = 19
-        weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+        weight_path = os.path.join(root, "ckpts", "{}_{}.pth".format(model_name, dataset_type))
     elif dataset_type == 'voc':
         args.class_num = 21
         args.ignore_idx = 255
-        weight_path = "ckpts/{}_{}_{}.pth".format(model_name, dataset_type, args.voc_year)
+        weight_path = os.path.join(root, "ckpts", "{}_{}_{}.pth".format(model_name, dataset_type, args.voc_year))
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
 
@@ -38,7 +40,7 @@ def test_model(args):
     with torch.no_grad():
         outputs = model(imgs.to(device))
         predict_class = torch.argmax(outputs, dim=1).cpu().numpy()
-        visualize_image_seg(args, predict_class, imgs_denorm)
+        visualize_image_seg(args, predict_class, imgs_denorm, save_path)
 
 
 def parse_args():

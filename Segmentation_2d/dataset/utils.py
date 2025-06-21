@@ -1,7 +1,8 @@
 from torch.utils.data import DataLoader
-from transforms import *
-from dataset.cityscapes import CityScapesDataset, cityscapes_class_dict
-from dataset.voc import VocDataset, voc_class_dict
+
+from Segmentation_2d.transforms import *
+from Segmentation_2d.dataset.cityscapes import CityScapesDataset, cityscapes_class_dict
+from Segmentation_2d.dataset.voc import VocDataset, voc_class_dict
 
 def get_dataset(args):
     dataset_type = args.dataset
@@ -12,8 +13,8 @@ def get_dataset(args):
     std = [0.229, 0.224, 0.225]
     
     if dataset_type == "cityscapes":
-        data_path = "../../Dataset/cityscapes/"
-        meta_path = "../../Dataset/cityscapes/meta"
+        data_path = "Dataset/cityscapes/"
+        meta_path = "Dataset/cityscapes/meta"
         
         train_transform = Compose([
             RandomCrop(size=(crop_size, crop_size)),
