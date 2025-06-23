@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from model import *
+from Segmentation_3d.PointNet.model import *
 
 class FocalLoss(nn.Module):
     def __init__(self, numClasses=4, alpha=0.25, gamma=2):
@@ -23,19 +23,20 @@ def get_model(args) -> nn.Module:
     class_num = args.class_num
     
     if model_name == "pointnet_cls":
-        model = pointnet_cls(class_num=class_num).to(device)
+        model = PointNetCls(class_num=class_num).to(device)
     elif model_name == "pointnet_seg":
-        model = pointnet_seg(class_num=class_num).to(device)
+        model = PointNetSeg(class_num=class_num).to(device)
     else:
         raise ValueError(f'unknown model {model_name}')
     
     return model
 
 def get_loss(args):
-    model_name = args.model
+    loss_func = args.loss_func
     
-    if model_name == "pointnet_cls":
-        loss_func = nn.CrossEntropyLoss()
+    if loss_func == "ce":
+        return nn.CrossEntropyLoss()
+    elif loss_func == "focal":
+        return FocalLoss()
     else:
-        loss_func = FocalLoss()
-    return loss_func
+        raise ValueError(f'Unknown loss function {loss_func}.')

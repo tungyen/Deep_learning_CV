@@ -39,23 +39,23 @@ __global__ void furthest_point_sampling_kernel(
     float* __restrict__ batched_points_xyz,
     float* __restrict__ batched_dists_temp,
     int n_points, int n_samples,
-    int64_t* __restrict__ batched_furthest_index) {
+    int64_t* __restrict__ batched_furthest_indexes) {
   const int bid = blockIdx.x;
   const int tid = threadIdx.x;
 
   float* __restrict__ points_xyz = batched_points_xyz + bid * n_points * 3;
   float* __restrict__ dists_temp = batched_dists_temp + bid * n_points;
-  int64_t* __restrict__ furthest_index =
-      batched_furthest_index + bid * n_samples;
+  int64_t* __restrict__ furthest_indexes =
+      batched_furthest_indexes + bid * n_samples;
 
   __shared__ float max_dists[block_size];
   __shared__ int max_dists_idx[block_size];
 
   int64_t current_furthest_idx = 0;
   for (int s = 0; s < n_samples; s++) {
-    // Thread 0 stores the selected index in this round.
+    // Thread 0 stores the selected indexes in this round.
     if (tid == 0) {
-      furthest_index[s] = current_furthest_idx;
+      furthest_indexes[s] = current_furthest_idx;
     }
 
     float x1 = points_xyz[current_furthest_idx * 3 + 0];
@@ -90,10 +90,10 @@ void furthest_point_sampling_kernel_wrapper(
     float* batched_points_xyz,
     float* batched_dists_temp,
     int n_batch, int n_points, int n_samples,
-    int64_t* batched_furthest_index) {
+    int64_t* batched_furthest_indexes) {
   furthest_point_sampling_kernel<1024><<<n_batch, 1024>>>(
     batched_points_xyz,
     batched_dists_temp,
     n_points, n_samples,
-    batched_furthest_index);
+    batched_furthest_indexes);
 }

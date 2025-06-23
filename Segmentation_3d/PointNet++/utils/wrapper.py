@@ -61,10 +61,10 @@ def furthest_point_sampling(points_xyz, n_samples, cpp_impl=True):
             distances[mask] = new_distances[mask]
             current_farthest_idx = torch.max(distances, -1)[1]
             
-        if cpp_impl:
-            return _furthest_point_sampling_cuda(points_xyz, n_samples).to(torch.long)
-        else:
-            return _furthest_point_sampling_py(points_xyz, n_samples).to(torch.long)
+    if cpp_impl:
+        return _furthest_point_sampling_cuda(points_xyz, n_samples).to(torch.long)
+    else:
+        return _furthest_point_sampling_py(points_xyz, n_samples).to(torch.long)
         
 def k_nearest_neighbor(points_xyz, centroids_xyz, k, cpp_impl=True):
     dists = squared_distance(centroids_xyz, points_xyz, cpp_impl)

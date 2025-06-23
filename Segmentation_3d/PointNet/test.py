@@ -1,10 +1,10 @@
 import torch
 import argparse
 
-from dataset import *
-from model import *
-from utils import *
-from vis_utils import *
+from Segmentation_3d.dataset import *
+from Segmentation_3d.PointNet.model import *
+from Segmentation_3d.utils import *
+from Segmentation_3d.vis_utils import *
 
 
 def test_model(args):

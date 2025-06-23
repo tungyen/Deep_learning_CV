@@ -5,7 +5,7 @@ import torch.nn.functional as F
 # define the model structure
 class STN3d(nn.Module):
     def __init__(self):
-        super(STN3d, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv1d(3, 64, 1).float()
         self.conv2 = nn.Conv1d(64, 128, 1).float()
         self.conv3 = nn.Conv1d(128, 1024, 1).float()
@@ -41,7 +41,7 @@ class STN3d(nn.Module):
 # define the model structure
 class STNkd(nn.Module):
     def __init__(self, k=64):
-        super(STNkd, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv1d(k, 64, 1).float()
         self.conv2 = nn.Conv1d(64, 128, 1).float()
         self.conv3 = nn.Conv1d(128, 1024, 1).float()
@@ -76,9 +76,9 @@ class STNkd(nn.Module):
         return x
     
     
-class encoder(nn.Module):
+class Encoder(nn.Module):
     def __init__(self, dimension=3):
-        super(encoder, self).__init__()
+        super().__init__()
         self.pointCloudSTN = STN3d()
         self.featureSTN = STNkd()
         self.conv1 = nn.Conv1d(dimension, 64, 1).float()
@@ -114,9 +114,9 @@ class encoder(nn.Module):
         x_seg = torch.cat([x, feat], 1)
         return x_cls, x_seg, trans1, trans2
     
-class seg_head(nn.Module):
+class SegHead(nn.Module):
     def __init__(self, class_num):
-        super(seg_head, self).__init__()
+        super().__init__()
         self.numClasses = class_num
         self.conv1 = nn.Conv1d(1088, 512, 1).float()
         self.conv2 = nn.Conv1d(512, 256, 1).float()
@@ -135,9 +135,9 @@ class seg_head(nn.Module):
         return x
     
     
-class cls_head(nn.Module):
+class ClsHead(nn.Module):
     def __init__(self, class_num):
-        super(cls_head, self).__init__()
+        super().__init__()
         self.class_num = class_num
         
         self.fc1 = nn.Linear(1024, 512)
@@ -154,24 +154,24 @@ class cls_head(nn.Module):
         return x
     
     
-class pointnet_seg(nn.Module):
+class PointNetSeg(nn.Module):
     def __init__(self, class_num):
-        super(pointnet_seg, self).__init__()
+        super().__init__()
         self.class_num = class_num
-        self.encoder = encoder()
-        self.seg_head = seg_head(self.class_num)
+        self.encoder = Encoder()
+        self.seg_head = SegHead(self.class_num)
         
     def forward(self, x):
         _, x_seg, _, _ = self.encoder(x)
         seg_out = self.seg_head(x_seg)
         return seg_out
     
-class pointnet_cls(nn.Module):
+class PointNetCls(nn.Module):
     def __init__(self, class_num):
-        super(pointnet_cls, self).__init__()
+        super().__init__()
         self.class_num = class_num
-        self.encoder = encoder()
-        self.cls_head = cls_head(self.class_num)
+        self.encoder = Encoder()
+        self.cls_head = ClsHead(self.class_num)
         
     def forward(self, x):
         x_cls, _, _, _ = self.encoder(x)

@@ -3,10 +3,10 @@ from tqdm import tqdm
 import os
 import argparse
 
-from dataset import *
-from model import *
-from utils import *
-from metrics import *
+from Segmentation_3d.dataset import *
+from Segmentation_3d.PointNet.model import *
+from Segmentation_3d.utils import *
+from Segmentation_3d.metrics import *
 
 
 def eval_model(args):
