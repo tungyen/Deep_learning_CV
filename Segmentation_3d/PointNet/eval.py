@@ -3,14 +3,13 @@ from tqdm import tqdm
 import os
 import argparse
 
-from Segmentation_3d.dataset import *
-from Segmentation_3d.PointNet.model import *
-from Segmentation_3d.utils import *
-from Segmentation_3d.metrics import *
+from Segmentation_3d.dataset import get_dataset
+from Segmentation_3d.utils import get_model
+from Segmentation_3d.metrics import compute_pcloud_seg_metrics, compute_pcloud_cls_metrics
 
 
 def eval_model(args):
-    ckpts_path = "ckpts"
+    root = os.path.dirname(os.path.abspath(__file__))
     device = args.device
     model_name = args.model
     dataset_type = args.dataset
@@ -23,7 +22,7 @@ def eval_model(args):
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
     class_num = args.class_num
-    weight_path = os.path.join(ckpts_path, '{}_{}.pth'.format(model_name, dataset_type))
+    weight_path = os.path.join(root, "ckpts", '{}_{}.pth'.format(model_name, dataset_type))
     task = model_name[-3:]
     
     print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))

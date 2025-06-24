@@ -277,7 +277,7 @@ def get_dataset(args):
     n_points = args.n_points
     
     if dataset_type == "chair":
-        path = os.path.join("../..", "Dataset", "Chair_dataset")
+        path = os.path.join("Dataset", "Chair_dataset")
         train_dataset = ChairDataset(path, n_points=n_points)
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         test_dataset = ChairDataset(path, train=False, n_points=n_points)
@@ -289,14 +289,14 @@ def get_dataset(args):
         }
         
     elif dataset_type == "modelnet40":
-        path = os.path.join("../..", "Dataset", "ModelNet40_npz")
+        path = os.path.join("Dataset", "ModelNet40_npz")
         train_dataset = ModelNet40(path, n_points, "train")
         class_dict = train_dataset.id2name
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         test_dataset = ModelNet40(path, n_points, "test")
         
     elif dataset_type == 's3dis':
-        path = os.path.join("../..", "Dataset", "S3DIS_npz")
+        path = os.path.join("Dataset", "S3DIS_npz")
         test_area = args.test_area
         max_dropout = args.max_dropout
         block_type = args.block_type

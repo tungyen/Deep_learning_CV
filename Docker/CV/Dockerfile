@@ -1,4 +1,4 @@
-FROM cnstark/pytorch:2.0.1-py3.10.11-cuda11.8.0-ubuntu22.04
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-devel
 RUN apt-get update && \
     apt-get install -y build-essential wget unzip zip git
 
@@ -11,3 +11,4 @@ RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/
 WORKDIR /save
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+WORKDIR /project

@@ -1,7 +1,6 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pointnet_plus_layers import PointNetPlusSetAbstraction, PointNetPlusFeaturePropagation
+from Segmentation_3d.PointNet.model.pointnet_plus_layers import PointNetPlusSetAbstraction, PointNetPlusFeaturePropagation
 
 class PointNetPlusCls(nn.Module):
     def __init__(self, class_num, pointnet_plus_cls_dict, fc_out_channels=[512, 256]):
@@ -10,24 +9,21 @@ class PointNetPlusCls(nn.Module):
         self.sa1 = PointNetPlusSetAbstraction(
             pointnet_plus_cls_dict['n_samples_list'][0],
             pointnet_plus_cls_dict['radius_list'][0],
-            pointnet_plus_cls_dict['n_points_per_group_list'][0],
-            pointnet_plus_cls_dict['in_channels_list'][0],
+            pointnet_plus_cls_dict['n_points_per_group_list'][0], 3,
             pointnet_plus_cls_dict['mlp_out_channels_list'][0])
         
         self.sa2 = PointNetPlusSetAbstraction(
             pointnet_plus_cls_dict['n_samples_list'][1],
             pointnet_plus_cls_dict['radius_list'][1],
             pointnet_plus_cls_dict['n_points_per_group_list'][1],
-            pointnet_plus_cls_dict['in_channels_list'][0]+
-                self.sa1.out_channels(),
+            3+self.sa1.out_channels(),
             pointnet_plus_cls_dict['mlp_out_channels_list'][1])
         
         self.sa3 = PointNetPlusSetAbstraction(
             pointnet_plus_cls_dict['n_samples_list'][2],
             pointnet_plus_cls_dict['radius_list'][2],
             pointnet_plus_cls_dict['n_points_per_group_list'][2],
-            pointnet_plus_cls_dict['in_channels_list'][0]+
-                self.sa2.out_channels(),
+            3+self.sa2.out_channels(),
             pointnet_plus_cls_dict['mlp_out_channels_list'][2])
         
         self.fc_layers = []
@@ -67,31 +63,28 @@ class PointNetPlusSeg(nn.Module):
             pointnet_plus_seg_dict['n_samples_list'][0],
             pointnet_plus_seg_dict['radius_list'][0],
             pointnet_plus_seg_dict['n_points_per_group_list'][0],
-            pointnet_plus_seg_dict['in_channels_list'][0] + n_feats,
+            3 + n_feats,
             pointnet_plus_seg_dict['mlp_out_channels_list'][0])
         
         self.sa2 = PointNetPlusSetAbstraction(
             pointnet_plus_seg_dict['n_samples_list'][1],
             pointnet_plus_seg_dict['radius_list'][1],
             pointnet_plus_seg_dict['n_points_per_group_list'][1],
-            pointnet_plus_seg_dict['in_channels_list'][0]+
-                self.sa1.out_channels(),
+            3+self.sa1.out_channels(),
             pointnet_plus_seg_dict['mlp_out_channels_list'][1])
         
         self.sa3 = PointNetPlusSetAbstraction(
             pointnet_plus_seg_dict['n_samples_list'][2],
             pointnet_plus_seg_dict['radius_list'][2],
             pointnet_plus_seg_dict['n_points_per_group_list'][2],
-            pointnet_plus_seg_dict['in_channels_list'][0]+
-                self.sa2.out_channels(),
+            3+self.sa2.out_channels(),
             pointnet_plus_seg_dict['mlp_out_channels_list'][2])
         
         self.sa4 = PointNetPlusSetAbstraction(
             pointnet_plus_seg_dict['n_samples_list'][3],
             pointnet_plus_seg_dict['radius_list'][3],
             pointnet_plus_seg_dict['n_points_per_group_list'][3],
-            pointnet_plus_seg_dict['in_channels_list'][0]+
-                self.sa3.out_channels(),
+            3+self.sa3.out_channels(),
             pointnet_plus_seg_dict['mlp_out_channels_list'][3])
         
         self.fp1 = PointNetPlusFeaturePropagation(

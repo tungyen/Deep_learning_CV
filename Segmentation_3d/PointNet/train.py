@@ -2,15 +2,16 @@ import torch
 import torch.optim as optim
 from tqdm import tqdm
 import argparse
+import os
 
-from Segmentation_3d.dataset import *
-from Segmentation_3d.PointNet.model import *
-from Segmentation_3d.utils import *
-from Segmentation_3d.metrics import *
+from Segmentation_3d.dataset import get_dataset
+from Segmentation_3d.utils import get_model, get_loss
+from Segmentation_3d.metrics import compute_pcloud_seg_metrics, compute_pcloud_cls_metrics
 
 
 def train_model(args):
-    os.makedirs("ckpts", exist_ok=True)
+    root = os.path.dirname(os.path.abspath(__file__))
+    os.makedirs(os.path.join(root, "ckpts"), exist_ok=True)
     model_name = args.model
     task = model_name[-3:]
     dataset_type = args.dataset
@@ -22,9 +23,8 @@ def train_model(args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
-    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+    weight_path = os.path.join(root, "ckpts", "{}_{}.pth".format(model_name, dataset_type))
     class_num = args.class_num
-    
     device = args.device
     lr = args.lr
     beta1= args.beta1
@@ -34,19 +34,16 @@ def train_model(args):
     weight_decay = args.weight_decay
     
     print("Start training model {} on {} dataset!".format(model_name, dataset_type))
-    
     train_dataloader, val_dataloader, _, class_dict = get_dataset(args)
     model = get_model(args)
-    
     opt = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay, betas=(beta1, beta2), eps=eps)
     criterion = get_loss(args)
-    
     best_metric = 0.0
     
     for epoch in range(epochs):
         print("Epoch {} start now!".format(epoch+1))
         for pclouds, labels in tqdm(train_dataloader):
-            pcloud = pclouds.to(device).float()
+            pclouds = pclouds.to(device).float()
             labels = labels.to(device)
             outputs = model(pclouds)
 
@@ -54,7 +51,7 @@ def train_model(args):
             opt.zero_grad()
             loss.backward()
             opt.step()      
-        print("Epoch {}-training loss===>{:.2f}".format(epoch, loss.item()))
+        print("Epoch {}-training loss===>{:.2f}".format(epoch+1, loss.item()))
         
         # Validation
         all_preds = []
@@ -96,21 +93,27 @@ def train_model(args):
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="chair")
-    parse.add_argument('--n_points', type=int, default=1500)
+    parse.add_argument('--dataset', type=str, default="modelnet40")
+    parse.add_argument('--n_points', type=int, default=1024)
+    parse.add_argument('--n_feats', type=int, default=0)
     
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_seg")
+    parse.add_argument('--model', type=str, default="pointnet_plus_cls")
+    parse.add_argument('--n_samples_list', type=list, default=[512, 128, 1])
+    parse.add_argument('--radius_list', type=list, default=[0.2, 0.4, -1])
+    parse.add_argument('--n_points_per_group_list', type=list, default=[32, 64, -1])
+    parse.add_argument('--mlp_out_channels_list', type=list, default=[[64, 64, 128], [128, 128, 256], [256, 512, 1024]])
     
     # training
-    parse.add_argument('--epochs', type=int, default=100)
-    parse.add_argument('--batch_size', type=int, default=16)
+    parse.add_argument('--epochs', type=int, default=200)
+    parse.add_argument('--batch_size', type=int, default=64)
     parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--lr', type=float, default=1e-3)
     parse.add_argument('--beta1', type=float, default=0.9)
     parse.add_argument('--beta2', type=float, default=0.999)
     parse.add_argument('--eps', type=float, default=1e-8)
     parse.add_argument('--weight_decay', type=float, default=1e-4)
+    parse.add_argument('--loss_func', type=str, default="focal")
     args = parse.parse_args()
     return args
                 

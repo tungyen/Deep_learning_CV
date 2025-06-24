@@ -20,6 +20,7 @@ Flickr2K
 results
 ddpm-animefaces-64
 iddpm-animefaces-64
+build
 __pycache__
 .DS_Store
 ckpts
@@ -59,3 +60,4 @@ runs
 *.pt
 *.history
 *.zip
+*.so

@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import os
 
 def rotate_points_around_y(points, angle_deg):
     angle_rad = np.radians(angle_deg)
@@ -44,7 +45,7 @@ def get_color_map(args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
-def visualize_pcloud(args, pcloud, color_map, predict_class, 
+def visualize_pcloud(args, pcloud, color_map, predict_class, save_path,
                     class_dict=None, y_rotate=50, elev=80, azim=-90):
     n_rows = 2
     n_cols = int(np.ceil(args.batch_size / n_rows))
@@ -81,5 +82,5 @@ def visualize_pcloud(args, pcloud, color_map, predict_class,
         
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.05)
-    plt.savefig('img/{}_{}.png'.format(args.model, args.dataset), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(save_path, '{}_{}.png'.format(args.model, args.dataset)), dpi=300, bbox_inches='tight')
     plt.show()

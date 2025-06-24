@@ -8,7 +8,7 @@ __global__ void ball_query_kernel(
     int n_points, int n_centroids, float radius, int n_points_per_group,
     int64_t* __restrict__ batched_indexes) {
   const int bid = blockIdx.x;
-  const int tid = threadIdx.x
+  const int tid = threadIdx.x;
   const int block_size = blockDim.x;
 
   const float* __restrict__ points_xyz = batched_points_xyz + bid * n_points * 3;

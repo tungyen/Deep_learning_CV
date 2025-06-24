@@ -5,7 +5,7 @@
 #define argmaxReduceMacro(arr, arr_idx, idx1, idx2) {\
   if (arr[idx1] <= arr[idx2]) {\
     arr[idx1] = arr[idx2];\
-    arr_idx[idx] = arr_idx[idx2];\
+    arr_idx[idx1] = arr_idx[idx2];\
   }\
 }
 

@@ -1,14 +1,16 @@
 import torch
 import argparse
+import os
 
-from Segmentation_3d.dataset import *
-from Segmentation_3d.PointNet.model import *
-from Segmentation_3d.utils import *
-from Segmentation_3d.vis_utils import *
+from Segmentation_3d.dataset import get_dataset
+from Segmentation_3d.utils import get_model
+from Segmentation_3d.vis_utils import visualize_pcloud, get_color_map
 
 
 def test_model(args):
-    os.makedirs("imgs", exist_ok=True)
+    root = os.path.dirname(os.path.abspath(__file__))
+    save_path = os.path.join(root, "imgs")
+    os.makedirs(save_path, exist_ok=True)
     device = args.device
     model_name = args.model
     dataset_type = args.dataset
@@ -25,7 +27,7 @@ def test_model(args):
     
     print("Start testing model {} on {} dataset!".format(model_name, dataset_type))
     
-    weight_path = "ckpts/{}_{}.pth".format(model_name, dataset_type)
+    weight_path = os.path.join(root, "ckpts", "{}_{}.pth".format(model_name, dataset_type))
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model = model.to(device)
     model.eval()
@@ -36,16 +38,16 @@ def test_model(args):
         for pclouds in test_dataloader:
             with torch.no_grad():
                 outputs = torch.squeeze(model(pclouds.to(device).float()))
-                predict_classes = torch.argmax(outputs, dim=1).numpy()
+                predict_classes = torch.argmax(outputs, dim=1).cpu().numpy()
                 
-            visualize_pcloud(args, pclouds, color_map, predict_classes, class_dict)
+            visualize_pcloud(args, pclouds, color_map, predict_classes, save_path, class_dict)
         
     elif dataset_type == "modelnet40":
         pclouds, _ = next(iter(test_dataloader))
         with torch.no_grad():
             outputs = model(pclouds.to(device))
             predict_classes = torch.argmax(outputs, dim=1).cpu().numpy()    
-        visualize_pcloud(args, pclouds, color_map, predict_classes, class_dict)
+        visualize_pcloud(args, pclouds, color_map, predict_classes, save_path, class_dict)
         
     elif dataset_type == "s3dis":
         pass

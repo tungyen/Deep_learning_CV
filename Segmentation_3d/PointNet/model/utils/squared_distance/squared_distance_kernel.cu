@@ -3,11 +3,11 @@
 
 __global__ void squared_distance_kernel(
     const float* __restrict__ batched_points_xyz_1,
-    const float* __restrict__ batched_points_xyz_1,
+    const float* __restrict__ batched_points_xyz_2,
     int n_batch, int n_points_1, int n_points_2,
     float* __restrict__ batched_dists) {
   constexpr int kMaxBlockSize2D = 32;
-  __share__ float as[kMaxBlockSize2D][3], bs[kMaxBlockSize2D][3];
+  __shared__ float as[kMaxBlockSize2D][3], bs[kMaxBlockSize2D][3];
 
   const int bx = blockIdx.x;
   const int by = blockIdx.y;

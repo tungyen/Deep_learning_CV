@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from omegaconf import ListConfig
 
-from utils import ball_query, furthest_point_sampling, k_nearest_neighbor, batch_indexing
+from Segmentation_3d.PointNet.model.utils import ball_query, furthest_point_sampling, k_nearest_neighbor, batch_indexing
 
 def PointNetPlusSetAbstraction(n_samples, radius, n_points_per_group, in_channels, mlp_out_channels):
     assert isinstance(n_samples, int)

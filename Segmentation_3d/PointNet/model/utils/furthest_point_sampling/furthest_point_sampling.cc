@@ -20,8 +20,7 @@ torch::Tensor furthest_point_sampling_cuda(torch::Tensor points_xyz, int n_sampl
       torch::TensorOptions().dtype(torch::kInt64).device(points_xyz.device()));
   torch::Tensor dists_temp = torch::ones(
       { batch_size, n_points },
-      torch.TensorOptions().dtype=torch::kFloat32)
-          .device(points_xyz.device()) * 1e10;
+      torch::TensorOptions().dtype(torch::kFloat32).device(points_xyz.device())) * 1e10;
   furthest_point_sampling_kernel_wrapper(
       points_xyz.data_ptr<float>(),
       dists_temp.data_ptr<float>(),

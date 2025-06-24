@@ -33,5 +33,6 @@ torch::Tensor ball_query_cuda(torch::Tensor points_xyz,
 
 #ifdef TORCH_EXTENSION_NAME
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-  m.def("_ball_query_cuda", &ball_query_cuda, "CUDA implement of ball-query")
+  m.def("_ball_query_cuda", &ball_query_cuda, "CUDA implement of ball-query");
 }
+#endif

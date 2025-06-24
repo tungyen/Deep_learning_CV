@@ -6,16 +6,16 @@ def get_extension_modules():
     return [
         CUDAExtension(
             name='_ball_query_cuda',
-            source=[
-                'ball_query/ball_query.cpp',
+            sources=[
+                'ball_query/ball_query.cc',
                 'ball_query/ball_query_kernel.cu'
             ],
             include_dirs=['ball_query']
         ),
         CUDAExtension(
             name='_furthest_point_sampling_cuda',
-            source=[
-                'furthest_point_sampling/furthest_point_sampling.cpp',
+            sources=[
+                'furthest_point_sampling/furthest_point_sampling.cc',
                 'furthest_point_sampling/furthest_point_sampling_kernel.cu'
             ],
             include_dirs=['furthest_point_sampling']
@@ -23,7 +23,7 @@ def get_extension_modules():
         CUDAExtension(
             name='_squared_distance_cuda',
             sources=[
-                'squared_distance/squared_distance.cpp',
+                'squared_distance/squared_distance.cc',
                 'squared_distance/squared_distance_kernel.cu'
             ],
             include_dirs=['squared_distance']

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from Segmentation_3d.PointNet.model import *
+from Segmentation_3d.PointNet.model.pointnet import PointNetCls, PointNetSeg
+from Segmentation_3d.PointNet.model.pointnet_plus import PointNetPlusCls, PointNetPlusSeg
 
 class FocalLoss(nn.Module):
     def __init__(self, numClasses=4, alpha=0.25, gamma=2):
@@ -22,14 +23,26 @@ def get_model(args) -> nn.Module:
     device = args.device
     class_num = args.class_num
     
-    if model_name == "pointnet_cls":
-        model = PointNetCls(class_num=class_num).to(device)
-    elif model_name == "pointnet_seg":
-        model = PointNetSeg(class_num=class_num).to(device)
-    else:
+    model_list = ["pointnet_cls", "pointnet_seg", "pointnet_plus_cls", "pointnet_plus_seg"]
+    if model_name not in model_list:
         raise ValueError(f'unknown model {model_name}')
     
-    return model
+    if model_name == "pointnet_cls":
+        return PointNetCls(class_num=class_num).to(device)
+    elif model_name == "pointnet_seg":
+        return PointNetSeg(class_num=class_num).to(device)
+    
+    pointnet_plus_dict = {}
+    pointnet_plus_dict['n_samples_list'] = args.n_samples_list
+    pointnet_plus_dict['radius_list'] = args.radius_list
+    pointnet_plus_dict['n_points_per_group_list'] = args.n_points_per_group_list
+    pointnet_plus_dict['mlp_out_channels_list'] = args.mlp_out_channels_list
+        
+    if model_name == "pointnet_plus_cls":
+        return PointNetPlusCls(class_num, pointnet_plus_dict)
+    else:
+        n_feats = args.n_feats
+        return PointNetPlusSeg(class_num, n_feats, pointnet_plus_dict)
 
 def get_loss(args):
     loss_func = args.loss_func
