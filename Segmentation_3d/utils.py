@@ -28,9 +28,9 @@ def get_model(args) -> nn.Module:
         raise ValueError(f'unknown model {model_name}')
     
     if model_name == "pointnet_cls":
-        return PointNetCls(class_num=class_num).to(device)
+        model = PointNetCls(class_num=class_num).to(device)
     elif model_name == "pointnet_seg":
-        return PointNetSeg(class_num=class_num).to(device)
+        model = PointNetSeg(class_num=class_num).to(device)
     
     pointnet_plus_dict = {}
     pointnet_plus_dict['n_samples_list'] = args.n_samples_list
@@ -39,10 +39,11 @@ def get_model(args) -> nn.Module:
     pointnet_plus_dict['mlp_out_channels_list'] = args.mlp_out_channels_list
         
     if model_name == "pointnet_plus_cls":
-        return PointNetPlusCls(class_num, pointnet_plus_dict)
+        model = PointNetPlusCls(class_num, pointnet_plus_dict).to(device)
     else:
         n_feats = args.n_feats
-        return PointNetPlusSeg(class_num, n_feats, pointnet_plus_dict)
+        model = PointNetPlusSeg(class_num, n_feats, pointnet_plus_dict).to(device)
+    return model
 
 def get_loss(args):
     loss_func = args.loss_func

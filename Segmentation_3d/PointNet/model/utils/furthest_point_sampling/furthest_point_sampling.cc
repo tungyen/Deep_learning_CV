@@ -25,6 +25,7 @@ torch::Tensor furthest_point_sampling_cuda(torch::Tensor points_xyz, int n_sampl
       points_xyz.data_ptr<float>(),
       dists_temp.data_ptr<float>(),
       batch_size, n_points, n_samples, furthest_indexes.data_ptr<int64_t>());
+  return furthest_indexes;
 }
 
 #ifdef TORCH_EXTENSION_NAME

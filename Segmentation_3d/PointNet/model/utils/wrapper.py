@@ -1,9 +1,9 @@
 import torch
 
 try:
-    from ._ball_query_cuda import _ball_query_cuda
-    from ._furthest_point_sampling_cuda import _furthest_point_sampling_cuda
-    from ._squared_distance_cuda import _squared_distance_cuda
+    from Segmentation_3d.PointNet.model.utils._ball_query_cuda import _ball_query_cuda
+    from Segmentation_3d.PointNet.model.utils._furthest_point_sampling_cuda import _furthest_point_sampling_cuda
+    from Segmentation_3d.PointNet.model.utils._squared_distance_cuda import _squared_distance_cuda
 except ImportError:
     raise ImportError('Failed to load one or more extensions')
 
@@ -79,3 +79,21 @@ def batch_indexing(batched_data, batched_index):
     index_of_batch = torch.arange(batch_size, dtype=torch.long, device=batched_data.device)
     index_of_batch = index_of_batch.view(view_shape).expand(expand_shape)
     return batched_data[index_of_batch, batched_index, :]
+
+if __name__ == '__main__':
+    torch.manual_seed(42)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # Shapes
+    B, N, npoint = 2, 20, 5
+    radius = 0.2
+
+    # Create point cloud and centroids
+    points_xyz = torch.rand(B, N, 3, device=device)
+    centroid_idx = torch.randint(0, N, (B, npoint), device=device)
+    centroid_xyz = torch.stack([
+        points_xyz[b, centroid_idx[b]]
+        for b in range(B)
+    ], dim=0)  # shape: (B, npoint, 3)
+    group_idx = _ball_query_cuda(points_xyz, centroid_xyz, radius, 3)
+    print(group_idx.shape)

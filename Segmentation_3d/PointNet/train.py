@@ -94,7 +94,7 @@ def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="modelnet40")
-    parse.add_argument('--n_points', type=int, default=1024)
+    parse.add_argument('--n_points', type=int, default=1500)
     parse.add_argument('--n_feats', type=int, default=0)
     
     # Model

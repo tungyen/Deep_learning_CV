@@ -29,6 +29,7 @@ torch::Tensor ball_query_cuda(torch::Tensor points_xyz,
                             n_points, n_centroids,
                             radius, n_points_per_group,
                             indexes.data_ptr<int64_t>());
+  return indexes;
 }
 
 #ifdef TORCH_EXTENSION_NAME

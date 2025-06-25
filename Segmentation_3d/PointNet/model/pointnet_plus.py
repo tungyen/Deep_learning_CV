@@ -26,7 +26,7 @@ class PointNetPlusCls(nn.Module):
             3+self.sa2.out_channels(),
             pointnet_plus_cls_dict['mlp_out_channels_list'][2])
         
-        self.fc_layers = []
+        self.fc_layers = nn.ModuleList()
         last_channels = self.sa3.out_channels()
         
         for out_channels in fc_out_channels:
@@ -49,7 +49,8 @@ class PointNetPlusCls(nn.Module):
         
         feats = sa3_feats.view([batch_size, -1])
         for mlp in self.fc_layers:
-            feats = mlp(feats)
+            for block in mlp:
+                feats = block(feats)
             feats = F.dropout(feats, p=0.5, training=self.training)
             
         cls_outs = self.cls_head(feats)
