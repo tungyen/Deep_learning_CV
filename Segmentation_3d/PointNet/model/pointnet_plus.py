@@ -93,20 +93,18 @@ class PointNetPlusSeg(nn.Module):
             mlp_out_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][0])
         
         self.fp2 = PointNetPlusFeaturePropagation(
-            in_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][0] +
-                self.sa2.out_channels(),
+            in_channels=self.fp1.out_channels() + self.sa2.out_channels(),
             mlp_out_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][1])
         
         self.fp3 = PointNetPlusFeaturePropagation(
-            in_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][1] +
-                self.sa1.out_channels(),
+            in_channels=self.fp2.out_channels() + self.sa1.out_channels(),
             mlp_out_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][2])
         
         self.fp4 = PointNetPlusFeaturePropagation(
-            in_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][2] + n_feats,
+            in_channels=self.fp3.out_channels() + n_feats,
             mlp_out_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][3])
         
-        self.seg_head = nn.Conv1d(pointnet_plus_seg_dict['mlp_out_channels_list'][3], class_num, 1)
+        self.seg_head = nn.Conv1d(self.fp4.out_channels(), class_num, 1)
         
     def forward(self, x):
         xyz = x[:, :3, :].transpose(1, 2).contiguous()

@@ -93,16 +93,16 @@ def train_model(args):
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="modelnet40")
+    parse.add_argument('--dataset', type=str, default="chair")
     parse.add_argument('--n_points', type=int, default=1500)
     parse.add_argument('--n_feats', type=int, default=0)
     
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_plus_cls")
-    parse.add_argument('--n_samples_list', type=list, default=[512, 128, 1])
-    parse.add_argument('--radius_list', type=list, default=[0.2, 0.4, -1])
-    parse.add_argument('--n_points_per_group_list', type=list, default=[32, 64, -1])
-    parse.add_argument('--mlp_out_channels_list', type=list, default=[[64, 64, 128], [128, 128, 256], [256, 512, 1024]])
+    parse.add_argument('--model', type=str, default="pointnet_plus_seg")
+    parse.add_argument('--n_samples_list', type=list, default=[1024, 256, 64, 16])
+    parse.add_argument('--radius_list', type=list, default=[0.1, 0.2, 0.4, 0.8])
+    parse.add_argument('--n_points_per_group_list', type=list, default=[32, 32, 32, 32])
+    parse.add_argument('--mlp_out_channels_list', type=list, default=[[32, 32, 64], [64, 64, 128], [128, 128, 256], [256, 256, 512]])
     
     # training
     parse.add_argument('--epochs', type=int, default=200)

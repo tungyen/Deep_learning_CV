@@ -69,7 +69,7 @@ def furthest_point_sampling(points_xyz, n_samples, cpp_impl=True):
 def k_nearest_neighbor(points_xyz, centroids_xyz, k, cpp_impl=True):
     dists = squared_distance(centroids_xyz, points_xyz, cpp_impl)
     top_k = dists.topk(k, dim=-1, largest=False)
-    return top_k.values, top_k.index
+    return top_k.values, top_k.indices
 
 def batch_indexing(batched_data, batched_index):
     assert batched_data.shape[0] == batched_index.shape[0]

@@ -49,7 +49,7 @@ After this command, we use ModelNet40_npz as our dataset folder.
 
 
 ### ShapeNet ###
-To be continue.
+Go to [Kaggle](https://www.kaggle.com/datasets/mitkir/shapenet) to download ShapeNet Part Segmentation dataset. Save under Dataset/ShapeNetPart.
 
 
 ### S3DIS ###

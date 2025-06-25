@@ -305,7 +305,9 @@ def get_dataset(args):
         train_dataset = S3DIS(path, "train", test_area, n_points, max_dropout, block_type, block_size)
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         test_dataset = S3DIS(path, "test", test_area, n_points, max_dropout, block_type, block_size)
-        class_dict = None
+        class_names = ['clutter', 'ceiling', 'floor', 'wall', 'beam', 'column', 'door',
+               'window', 'table', 'chair', 'sofa', 'bookcase', 'board', 'stairs']
+        class_dict = dict(zip(class_names, range(len(class_names))))
     else:
         raise ValueError(f'unknown dataset {dataset_type}')
         
