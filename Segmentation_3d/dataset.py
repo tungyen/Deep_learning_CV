@@ -6,6 +6,7 @@ import os
 import random
 import glob
 import math
+import json
 
 def split_dataset_train_val(dataset: Dataset, split=0.9):
     train_size = int(split * len(dataset))
@@ -270,6 +271,72 @@ class S3DIS(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return self.dataset[index]
     
+class ShapeNetPartDataset(Dataset):
+    def __init__(self, root, n_points, split='train', class_choice=None, normal_channel=False):
+        self.n_points = n_points
+        self.root = root
+        self.category_file = os.path.join(root, 'synsetoffset2category.txt')
+        self.class2id = {}
+        self.normal_channel = normal_channel
+        
+        with open(self.category_file, 'r') as f:
+            for line in f:
+                line = line.strip().split()
+                self.class2id[line[0]] = line[1]
+        if class_choice is not None:
+            self.class2id = {k: v for k, v in self.class2id.items() if k in class_choice}
+
+        self.class2label = dict(zip(self.class2id, range(len(self.class2id))))
+
+        self.meta = {}
+        assert split in ["train", "val", "test"], "Unknown split is used."
+        with open(os.path.join(self.root, 'train_test_split', f'shuffled_{split}_file_list.json'), 'r') as f:
+            data_ids = set([str(d.split('/')[2]) for d in json.load(f)])
+            
+        for category in self.class2id:
+            self.meta[category] = []
+            pclouds_dir = os.path.join(self.root, self.class2id[category])
+            pclouds_files = sorted(os.listdir(pclouds_dir))
+            
+            pclouds_files = [file for file in pclouds_files if ((file[0:-4] in data_ids))]
+            for pclouds_file in pclouds_files:
+                file_name = (os.path.splitext(os.path.basename(pclouds_file))[0])
+                self.meta[category].append(os.path.join(pclouds_dir, file_name + '.txt'))
+                
+        self.data_path = []
+        for category in self.class2id:
+            for file_name in self.meta[category]:
+                self.data_path.append((category, file_name))
+                
+        self.seg_category = {'Earphone': [16, 17, 18], 'Motorbike': [30, 31, 32, 33, 34, 35], 'Rocket': [41, 42, 43],
+                            'Car': [8, 9, 10, 11], 'Laptop': [28, 29], 'Cap': [6, 7], 'Skateboard': [44, 45, 46],
+                            'Mug': [36, 37], 'Guitar': [19, 20, 21], 'Bag': [4, 5], 'Lamp': [24, 25, 26, 27],
+                            'Table': [47, 48, 49], 'Airplane': [0, 1, 2, 3], 'Pistol': [38, 39, 40],
+                            'Chair': [12, 13, 14, 15], 'Knife': [22, 23]}
+        self.cache = {}
+        self.cache_size = 20000
+        
+    def __getitem__(self, index):
+        if index in self.cache:
+            return self.cache[index]
+        else:
+            category, file_name = self.data_path[index]
+            category_label = self.class2label[category]
+            category_label = np.array([category_label]).astype(np.float32)
+            data = np.loadtxt(file_name).astype(np.float32)
+            if not self.normal_channel:
+                pclouds = data[:, 0:3]
+            else:
+                pclouds = data[:, 0:6]
+            seg_labels = data[:, -1].astype(np.int32)
+            
+            pclouds = normalize_pcloud(pclouds)
+            sample_indexes = np.random.choice(len(seg_labels), self.n_points, replace=True)
+            pclouds = pclouds[sample_indexes, :]
+            seg_labels = seg_labels[sample_indexes]
+            if len(self.cache) < self.cache_size:
+                self.cache[index] = (pclouds, category_label, seg_labels)
+            return (pclouds, category_label, seg_labels)
     
 def get_dataset(args):
     dataset_type = args.dataset
@@ -305,9 +372,8 @@ def get_dataset(args):
         train_dataset = S3DIS(path, "train", test_area, n_points, max_dropout, block_type, block_size)
         train_dataset, val_dataset = split_dataset_train_val(train_dataset)
         test_dataset = S3DIS(path, "test", test_area, n_points, max_dropout, block_type, block_size)
-        class_names = ['clutter', 'ceiling', 'floor', 'wall', 'beam', 'column', 'door',
+        class_dict = ['clutter', 'ceiling', 'floor', 'wall', 'beam', 'column', 'door',
                'window', 'table', 'chair', 'sofa', 'bookcase', 'board', 'stairs']
-        class_dict = dict(zip(class_names, range(len(class_names))))
     else:
         raise ValueError(f'unknown dataset {dataset_type}')
         
@@ -315,3 +381,6 @@ def get_dataset(args):
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
     return train_dataloader, val_dataloader, test_dataloader, class_dict
+
+if __name__ == '__main__':
+    dataset = ShapeNetPartDataset("Dataset/ShapeNetPart", 1000)

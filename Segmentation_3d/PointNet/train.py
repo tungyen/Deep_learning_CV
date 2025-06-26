@@ -20,6 +20,8 @@ def train_model(args):
         args.class_num = 4
     elif dataset_type == 'modelnet40':
         args.class_num = 40
+    elif dataset_type == 's3dis':
+        args.class_num = 14
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
@@ -93,9 +95,15 @@ def train_model(args):
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="chair")
-    parse.add_argument('--n_points', type=int, default=1500)
-    parse.add_argument('--n_feats', type=int, default=0)
+    parse.add_argument('--dataset', type=str, default="s3dis")
+    parse.add_argument('--n_points', type=int, default=4096)
+    parse.add_argument('--n_feats', type=int, default=6)
+    
+    # S3DIS
+    parse.add_argument('--test_area', type=int, default=5)
+    parse.add_argument('--max_dropout', type=float, default=0.95)
+    parse.add_argument('--block_type', type=str, default='static')
+    parse.add_argument('--block_size', type=float, default=1.0)
     
     # Model
     parse.add_argument('--model', type=str, default="pointnet_plus_seg")
