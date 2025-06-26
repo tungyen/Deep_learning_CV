@@ -26,7 +26,6 @@ def load_txts(room_dir):
         if class_name not in class_names:
             logging.warning('Unknown class "%s" from %s' % (class_name, filename))
             class_name = 'clutter'
-
         logging.info('Loading %s' % filename)
         pcloud = np.loadtxt(filename)  # [n_points, 6] [X, Y, Z, R, G, B]
 
