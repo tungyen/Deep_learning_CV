@@ -8,7 +8,6 @@ from Segmentation_3d.dataset import get_dataset
 from Segmentation_3d.utils import get_model, get_loss
 from Segmentation_3d.metrics import compute_pcloud_seg_metrics, compute_pcloud_cls_metrics
 
-
 def train_model(args):
     root = os.path.dirname(os.path.abspath(__file__))
     os.makedirs(os.path.join(root, "ckpts"), exist_ok=True)
@@ -18,10 +17,16 @@ def train_model(args):
     
     if dataset_type == 'chair':
         args.class_num = 4
+        args.n_points = 1500
+        args.n_feats = 0
     elif dataset_type == 'modelnet40':
         args.class_num = 40
+        args.n_points = 1024
+        args.n_feats = 0
     elif dataset_type == 's3dis':
         args.class_num = 14
+        args.n_points = 4096
+        args.n_feats = 6
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
@@ -96,8 +101,6 @@ def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="s3dis")
-    parse.add_argument('--n_points', type=int, default=4096)
-    parse.add_argument('--n_feats', type=int, default=6)
     
     # S3DIS
     parse.add_argument('--test_area', type=int, default=5)
@@ -106,11 +109,7 @@ def parse_args():
     parse.add_argument('--block_size', type=float, default=1.0)
     
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_plus_seg")
-    parse.add_argument('--n_samples_list', type=list, default=[1024, 256, 64, 16])
-    parse.add_argument('--radius_list', type=list, default=[0.1, 0.2, 0.4, 0.8])
-    parse.add_argument('--n_points_per_group_list', type=list, default=[32, 32, 32, 32])
-    parse.add_argument('--mlp_out_channels_list', type=list, default=[[32, 32, 64], [64, 64, 128], [128, 128, 256], [256, 256, 512]])
+    parse.add_argument('--model', type=str, default="pointnet_plus_msg_seg")
     
     # training
     parse.add_argument('--epochs', type=int, default=200)
@@ -124,8 +123,7 @@ def parse_args():
     parse.add_argument('--loss_func', type=str, default="focal")
     args = parse.parse_args()
     return args
-                
-                
+     
 if __name__ =='__main__':
     args = parse_args()
     train_model(args)

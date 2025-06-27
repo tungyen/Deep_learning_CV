@@ -20,7 +20,6 @@ def normalize_pcloud(pcloud):
     pcloud = pcloud / np.mean(np.sqrt(np.sum(pcloud ** 2, axis=1)))
     return pcloud
 
-
 def random_rotate_pcloud(pcloud):
     rot_angle = np.random.uniform() * 2 * np.pi
     sin, cos = np.sin(rot_angle), np.cos(rot_angle)
@@ -28,10 +27,8 @@ def random_rotate_pcloud(pcloud):
     pcloud = np.dot(pcloud, rot_matrix)
     return pcloud
 
-
 def random_jitter_pcloud(pcloud, sigma=0.01):
     return pcloud + sigma * np.random.randn(*pcloud.shape)
-
 
 def prepare_input(block_xyz, block_rgb, xcenter, ycenter, room_xyz_max):
     block_data = np.zeros([len(block_xyz), 9], dtype=np.float32)
@@ -40,14 +37,12 @@ def prepare_input(block_xyz, block_rgb, xcenter, ycenter, room_xyz_max):
     block_data[:, 6:9] = block_xyz / room_xyz_max
     return block_data
 
-
 def random_dropout(indices, max_dropout=0.95):
     dropout = np.random.random() * max_dropout
     drop_idx = np.where(np.random.random(len(indices)) < dropout)[0]
     if len(drop_idx) > 0:
         indices[drop_idx] = indices[0]
     return indices
-
 
 class ChairDataset(Dataset):
     def __init__(self, data_path, train=True, n_points=1500):
@@ -80,8 +75,6 @@ class ChairDataset(Dataset):
             pcloud, _ = self.load_pcloud(os.path.join(self.data_path, pcd_path))
             return pcloud.float()
             
-        
-    
     def load_pcloud(self, pcdFile):
         pcd = o3d.io.read_point_cloud(pcdFile, format='xyz')
         points = np.asarray(pcd.points)
@@ -98,7 +91,6 @@ class ChairDataset(Dataset):
         label = list(np.array(label)[indices])
         label = torch.tensor(label, dtype=torch.long)
         return label
-    
     
 class ModelNet40(Dataset):
     def __init__(self, data_path, n_points, split, random_rotate=False, random_jitter=False):
@@ -188,7 +180,6 @@ class S3DIS_static(Dataset):
         block_gt = block_gt[indices]
 
         return block_data.astype(np.float32), block_gt.astype(np.int64)
-    
 
 class S3DIS_dynamic(Dataset):
     def __init__(self, dataset_path, area_ids, n_points, max_dropout, block_size=1.0, sample_aug=1):
@@ -237,7 +228,6 @@ class S3DIS_dynamic(Dataset):
         if self.n_points != 'all':
             indices = np.random.choice(indices, self.n_points, indices.size < self.n_points)
         return indices
-    
 
 class S3DIS(torch.utils.data.Dataset):
     def __init__(self, dataset_dir, split, test_area, n_points, max_dropout, block_type='dynamic', block_size=1.0):

@@ -1,5 +1,8 @@
 import torch
 import torch.nn as nn
+import os
+import yaml
+
 from Segmentation_3d.PointNet.model.pointnet import PointNetCls, PointNetSeg
 from Segmentation_3d.PointNet.model.pointnet_plus import PointNetPlusCls, PointNetPlusSeg
 
@@ -23,26 +26,24 @@ def get_model(args) -> nn.Module:
     device = args.device
     class_num = args.class_num
     
-    model_list = ["pointnet_cls", "pointnet_seg", "pointnet_plus_cls", "pointnet_plus_seg"]
-    if model_name not in model_list:
-        raise ValueError(f'unknown model {model_name}')
-    
+    model = None
     if model_name == "pointnet_cls":
         model = PointNetCls(class_num=class_num).to(device)
     elif model_name == "pointnet_seg":
         model = PointNetSeg(class_num=class_num).to(device)
     
-    pointnet_plus_dict = {}
-    pointnet_plus_dict['n_samples_list'] = args.n_samples_list
-    pointnet_plus_dict['radius_list'] = args.radius_list
-    pointnet_plus_dict['n_points_per_group_list'] = args.n_points_per_group_list
-    pointnet_plus_dict['mlp_out_channels_list'] = args.mlp_out_channels_list
+    root = os.path.dirname(os.path.abspath(__file__))
+    if model_name + ".yaml" in os.listdir(os.path.join(root, "config")):
+        with open(os.path.join(root, "config", model_name + ".yaml")) as f:
+            config = yaml.safe_load(f)
         
-    if model_name == "pointnet_plus_cls":
-        model = PointNetPlusCls(class_num, pointnet_plus_dict).to(device)
-    else:
-        n_feats = args.n_feats
-        model = PointNetPlusSeg(class_num, n_feats, pointnet_plus_dict).to(device)
+        if model_name[-3:] == "cls":
+            model = PointNetPlusCls(class_num, config).to(device)
+        elif model_name[-3:] == "seg":
+            n_feats = args.n_feats
+            model = PointNetPlusSeg(class_num, n_feats, config).to(device)
+
+    assert model is not None, f"Unknown model {model_name}."
     return model
 
 def get_loss(args):

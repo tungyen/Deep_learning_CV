@@ -1,5 +1,11 @@
-# PointNet #
-First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the chair dataset.
+# PointNet/PointNet++ #
+First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the chair dataset, ModelNet40, S3DIS, ShapeNet, and ScanNet.
+
+For PointNet++, you need to compile the CUDA code:
+```bash
+cd model/utils
+python setup.py build_ext --inplace
+```
 
 ## Classification ##
 

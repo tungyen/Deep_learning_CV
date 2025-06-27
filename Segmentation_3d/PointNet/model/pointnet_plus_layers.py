@@ -64,6 +64,7 @@ class PointNetPlusSetAbstractionSSG(nn.Module):
     
 class PointNetPlusSetAbstractionMSG(nn.Module):
     def __init__(self, n_samples, radius_list, n_points_per_group_list, in_channels, mlp_out_channels_list):
+        super().__init__()
         self.n_samples = n_samples
         self.radius_list = radius_list
         self.n_points_per_group_list = n_points_per_group_list
@@ -112,6 +113,9 @@ class PointNetPlusSetAbstractionMSG(nn.Module):
             
         multi_scale_features = torch.cat(multi_scale_features, dim=-1)
         return centroids, multi_scale_features
+    
+    def out_channels(self):
+        return sum(mlp_out_channels[-1] for mlp_out_channels in self.mlp_out_channels_list)
     
 class PointNetPlusFeaturePropagation(nn.Module):
     def __init__(self, in_channels, mlp_out_channels):

@@ -10,24 +10,24 @@ class PointNetPlusCls(nn.Module):
             pointnet_plus_cls_dict['n_samples_list'][0],
             pointnet_plus_cls_dict['radius_list'][0],
             pointnet_plus_cls_dict['n_points_per_group_list'][0], 3,
-            pointnet_plus_cls_dict['mlp_out_channels_list'][0])
+            pointnet_plus_cls_dict['sa_mlp_out_channels_list'][0])
         
         self.sa2 = PointNetPlusSetAbstraction(
             pointnet_plus_cls_dict['n_samples_list'][1],
             pointnet_plus_cls_dict['radius_list'][1],
             pointnet_plus_cls_dict['n_points_per_group_list'][1],
             3+self.sa1.out_channels(),
-            pointnet_plus_cls_dict['mlp_out_channels_list'][1])
+            pointnet_plus_cls_dict['sa_mlp_out_channels_list'][1])
         
         self.sa3 = PointNetPlusSetAbstraction(
             pointnet_plus_cls_dict['n_samples_list'][2],
             pointnet_plus_cls_dict['radius_list'][2],
             pointnet_plus_cls_dict['n_points_per_group_list'][2],
             3+self.sa2.out_channels(),
-            pointnet_plus_cls_dict['mlp_out_channels_list'][2])
+            pointnet_plus_cls_dict['sa_mlp_out_channels_list'][2])
         
         self.fc_layers = nn.ModuleList()
-        last_channels = self.sa3.out_channels()
+        last_channels = self.sa3.out_channels() * pointnet_plus_cls_dict['n_samples_list'][2]
         
         for out_channels in fc_out_channels:
             mlp = nn.ModuleList()
@@ -46,7 +46,6 @@ class PointNetPlusCls(nn.Module):
         sa1_xyz, sa1_feats = self.sa1(x)
         sa2_xyz, sa2_feats = self.sa2(sa1_xyz, sa1_feats)
         _, sa3_feats = self.sa3(sa2_xyz, sa2_feats)
-        
         feats = sa3_feats.view([batch_size, -1])
         for mlp in self.fc_layers:
             for block in mlp:
@@ -65,44 +64,44 @@ class PointNetPlusSeg(nn.Module):
             pointnet_plus_seg_dict['radius_list'][0],
             pointnet_plus_seg_dict['n_points_per_group_list'][0],
             3 + n_feats,
-            pointnet_plus_seg_dict['mlp_out_channels_list'][0])
+            pointnet_plus_seg_dict['sa_mlp_out_channels_list'][0])
         
         self.sa2 = PointNetPlusSetAbstraction(
             pointnet_plus_seg_dict['n_samples_list'][1],
             pointnet_plus_seg_dict['radius_list'][1],
             pointnet_plus_seg_dict['n_points_per_group_list'][1],
             3+self.sa1.out_channels(),
-            pointnet_plus_seg_dict['mlp_out_channels_list'][1])
+            pointnet_plus_seg_dict['sa_mlp_out_channels_list'][1])
         
         self.sa3 = PointNetPlusSetAbstraction(
             pointnet_plus_seg_dict['n_samples_list'][2],
             pointnet_plus_seg_dict['radius_list'][2],
             pointnet_plus_seg_dict['n_points_per_group_list'][2],
             3+self.sa2.out_channels(),
-            pointnet_plus_seg_dict['mlp_out_channels_list'][2])
+            pointnet_plus_seg_dict['sa_mlp_out_channels_list'][2])
         
         self.sa4 = PointNetPlusSetAbstraction(
             pointnet_plus_seg_dict['n_samples_list'][3],
             pointnet_plus_seg_dict['radius_list'][3],
             pointnet_plus_seg_dict['n_points_per_group_list'][3],
             3+self.sa3.out_channels(),
-            pointnet_plus_seg_dict['mlp_out_channels_list'][3])
+            pointnet_plus_seg_dict['sa_mlp_out_channels_list'][3])
         
         self.fp1 = PointNetPlusFeaturePropagation(
             in_channels=self.sa4.out_channels() + self.sa3.out_channels(),
-            mlp_out_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][0])
+            mlp_out_channels=pointnet_plus_seg_dict['fp_mlp_out_channels_list'][0])
         
         self.fp2 = PointNetPlusFeaturePropagation(
             in_channels=self.fp1.out_channels() + self.sa2.out_channels(),
-            mlp_out_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][1])
+            mlp_out_channels=pointnet_plus_seg_dict['fp_mlp_out_channels_list'][1])
         
         self.fp3 = PointNetPlusFeaturePropagation(
             in_channels=self.fp2.out_channels() + self.sa1.out_channels(),
-            mlp_out_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][2])
+            mlp_out_channels=pointnet_plus_seg_dict['fp_mlp_out_channels_list'][2])
         
         self.fp4 = PointNetPlusFeaturePropagation(
             in_channels=self.fp3.out_channels() + n_feats,
-            mlp_out_channels=pointnet_plus_seg_dict['mlp_out_channels_list'][3])
+            mlp_out_channels=pointnet_plus_seg_dict['fp_mlp_out_channels_list'][3])
         
         self.seg_head = nn.Conv1d(self.fp4.out_channels(), class_num, 1)
         

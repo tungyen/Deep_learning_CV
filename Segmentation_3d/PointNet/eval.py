@@ -7,7 +7,6 @@ from Segmentation_3d.dataset import get_dataset
 from Segmentation_3d.utils import get_model
 from Segmentation_3d.metrics import compute_pcloud_seg_metrics, compute_pcloud_cls_metrics
 
-
 def eval_model(args):
     root = os.path.dirname(os.path.abspath(__file__))
     device = args.device
@@ -16,8 +15,16 @@ def eval_model(args):
     
     if dataset_type == 'chair':
         args.class_num = 4
+        args.n_points = 1500
+        args.n_feats = 0
     elif dataset_type == 'modelnet40':
         args.class_num = 40
+        args.n_points = 1024
+        args.n_feats = 0
+    elif dataset_type == 's3dis':
+        args.class_num = 14
+        args.n_points = 4096
+        args.n_feats = 6
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
@@ -63,10 +70,15 @@ def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="modelnet40")
-    parse.add_argument('--n_points', type=int, default=1500)
+    
+    # S3DIS
+    parse.add_argument('--test_area', type=int, default=5)
+    parse.add_argument('--max_dropout', type=float, default=0.95)
+    parse.add_argument('--block_type', type=str, default='static')
+    parse.add_argument('--block_size', type=float, default=1.0)
     
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_cls")
+    parse.add_argument('--model', type=str, default="pointnet_plus_ssg_cls")
     
     # Eval
     parse.add_argument('--batch_size', type=int, default=16)

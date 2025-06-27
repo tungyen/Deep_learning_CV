@@ -6,7 +6,6 @@ from Segmentation_3d.dataset import get_dataset
 from Segmentation_3d.utils import get_model
 from Segmentation_3d.vis_utils import visualize_pcloud, get_color_map
 
-
 def test_model(args):
     root = os.path.dirname(os.path.abspath(__file__))
     save_path = os.path.join(root, "imgs")
@@ -17,8 +16,16 @@ def test_model(args):
     
     if dataset_type == 'chair':
         args.class_num = 4
+        args.n_points = 1500
+        args.n_feats = 0
     elif dataset_type == 'modelnet40':
         args.class_num = 40
+        args.n_points = 1024
+        args.n_feats = 0
+    elif dataset_type == 's3dis':
+        args.class_num = 14
+        args.n_points = 4096
+        args.n_feats = 6
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
 
@@ -59,18 +66,16 @@ def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="chair")
-    parse.add_argument('--n_points', type=int, default=1500)
     
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_seg")
+    parse.add_argument('--model', type=str, default="pointnet_plus_seg")
     
     # testing
     parse.add_argument('--batch_size', type=int, default=6)
     parse.add_argument('--device', type=str, default="cuda")
     args = parse.parse_args()
     return args
-                
-                
+    
 if __name__ =='__main__':
     args = parse_args()
     test_model(args)
