@@ -1,7 +1,7 @@
 import numpy as np
 
 def compute_pcloud_seg_metrics(args, all_preds, all_labels):
-    class_num = args.class_num
+    class_num = args.seg_class_num
         
     all_preds = all_preds.reshape(-1)
     all_labels = all_labels.reshape(-1)
@@ -18,19 +18,14 @@ def compute_pcloud_seg_metrics(args, all_preds, all_labels):
             iou = 0.0
         else:
             iou = intersection / union
-        
         class_ious.append(iou)
 
     # Compute mean IoU for each class
-
     miou = np.mean(class_ious)
     return class_ious, miou
 
-
-
-
 def compute_pcloud_cls_metrics(args, all_preds, all_labels):
-    class_num = args.class_num
+    class_num = args.cls_class_num
     
     accuracy = (all_preds == all_labels).sum() / len(all_labels)
 

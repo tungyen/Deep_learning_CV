@@ -16,16 +16,23 @@ def test_model(args):
     
     if dataset_type == 'chair':
         args.class_num = 4
-        args.n_points = 1500
+        args.n_points = 1600
         args.n_feats = 0
     elif dataset_type == 'modelnet40':
         args.class_num = 40
-        args.n_points = 1024
+        args.n_points = 2048
         args.n_feats = 0
     elif dataset_type == 's3dis':
         args.class_num = 14
         args.n_points = 4096
         args.n_feats = 6
+    elif dataset_type == "shapenet":
+        args.class_num = 16
+        args.n_points = 1024
+        if args.normal_channel:
+            args.n_feats = 3
+        else:
+            args.n_feats = 0
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
 
@@ -42,20 +49,17 @@ def test_model(args):
     _, _, test_dataloader, class_dict = get_dataset(args)
     
     if dataset_type == "chair":
-        for pclouds in test_dataloader:
-            with torch.no_grad():
-                outputs = torch.squeeze(model(pclouds.to(device).float()))
-                predict_classes = torch.argmax(outputs, dim=1).cpu().numpy()
-                
-            visualize_pcloud(args, pclouds, color_map, predict_classes, save_path, class_dict)
-        
+        pclouds = next(iter(test_dataloader))
+        with torch.no_grad():
+            outputs = torch.squeeze(model(pclouds.to(device).float()))
+            predict_classes = torch.argmax(outputs, dim=1).cpu().numpy()
+        visualize_pcloud(args, pclouds, color_map, predict_classes, save_path, class_dict)
     elif dataset_type == "modelnet40":
         pclouds, _ = next(iter(test_dataloader))
         with torch.no_grad():
             outputs = model(pclouds.to(device))
             predict_classes = torch.argmax(outputs, dim=1).cpu().numpy()    
         visualize_pcloud(args, pclouds, color_map, predict_classes, save_path, class_dict)
-        
     elif dataset_type == "s3dis":
         pass
     else:

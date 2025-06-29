@@ -3,7 +3,7 @@ import torch.nn as nn
 import os
 import yaml
 
-from Segmentation_3d.PointNet.model.pointnet import PointNetCls, PointNetSeg
+from Segmentation_3d.PointNet.model.pointnet import PointNetCls, PointNetSemseg, PointNetPartseg
 from Segmentation_3d.PointNet.model.pointnet_plus import PointNetPlusCls, PointNetPlusSeg
 
 class FocalLoss(nn.Module):
@@ -24,24 +24,28 @@ class FocalLoss(nn.Module):
 def get_model(args) -> nn.Module:
     model_name = args.model
     device = args.device
-    class_num = args.class_num
+    cls_class_num = args.cls_class_num
+    seg_class_num = args.seg_class_num
+    n_feats = args.n_feats
     
     model = None
     if model_name == "pointnet_cls":
-        model = PointNetCls(class_num=class_num).to(device)
-    elif model_name == "pointnet_seg":
-        model = PointNetSeg(class_num=class_num).to(device)
+        model = PointNetCls(cls_class_num, n_feats).to(device)
+    elif model_name == "pointnet_semseg":
+        model = PointNetSemseg(cls_class_num, n_feats).to(device)
+    elif model_name == "pointnet_partseg":
+        model = PointNetPartseg(seg_class_num, cls_class_num, n_feats).to(device)
     
     root = os.path.dirname(os.path.abspath(__file__))
-    if model_name + ".yaml" in os.listdir(os.path.join(root, "config")):
-        with open(os.path.join(root, "config", model_name + ".yaml")) as f:
+    if model_name[:18] + model_name[-3:] + ".yaml" in os.listdir(os.path.join(root, "config")):
+        with open(os.path.join(root, "config", model_name[:18] + model_name[-3:] + ".yaml")) as f:
             config = yaml.safe_load(f)
         
         if model_name[-3:] == "cls":
-            model = PointNetPlusCls(class_num, config).to(device)
-        elif model_name[-3:] == "seg":
+            model = PointNetPlusCls(cls_class_num, config).to(device)
+        elif model_name[-6:] == "semseg":
             n_feats = args.n_feats
-            model = PointNetPlusSeg(class_num, n_feats, config).to(device)
+            model = PointNetPlusSeg(seg_class_num, n_feats, config).to(device)
 
     assert model is not None, f"Unknown model {model_name}."
     return model

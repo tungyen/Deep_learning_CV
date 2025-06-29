@@ -3,7 +3,7 @@ from tqdm import tqdm
 import os
 import argparse
 
-from Segmentation_3d.dataset import get_dataset
+from Segmentation_3d.dataset.utils import get_dataset
 from Segmentation_3d.utils import get_model
 from Segmentation_3d.metrics import compute_pcloud_seg_metrics, compute_pcloud_cls_metrics
 
@@ -14,21 +14,31 @@ def eval_model(args):
     dataset_type = args.dataset
     
     if dataset_type == 'chair':
-        args.class_num = 4
-        args.n_points = 1500
+        args.cls_class_num = 4
+        args.seg_class_num = 4
+        args.n_points = 1600
         args.n_feats = 0
     elif dataset_type == 'modelnet40':
-        args.class_num = 40
-        args.n_points = 1024
+        args.cls_class_num = 40
+        args.seg_class_num = 40
+        args.n_points = 2048
         args.n_feats = 0
     elif dataset_type == 's3dis':
-        args.class_num = 14
+        args.cls_class_num = 14
+        args.seg_class_num = 14
         args.n_points = 4096
         args.n_feats = 6
+    elif dataset_type == "shapenet_cls" or dataset_type == "shapenet_seg":
+        args.cls_class_num = 16
+        args.seg_class_num = 50
+        args.n_points = 2048
+        if args.normal_channel:
+            args.n_feats = 3
+        else:
+            args.n_feats = 0
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
-    
-    class_num = args.class_num
+
     weight_path = os.path.join(root, "ckpts", '{}_{}.pth'.format(model_name, dataset_type))
     task = model_name[-3:]
     
@@ -62,14 +72,14 @@ def eval_model(args):
     elif task == "seg":    
         class_ious, miou = compute_pcloud_seg_metrics(args, all_preds, all_labels)
         print("Validation mIoU===>{:.4f}".format(miou))
-        for cls in range(class_num):
+        for cls in class_dict:
             print("{} IoU: {:.4f}".format(class_dict[cls], class_ious[cls]))
 
             
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="modelnet40")
+    parse.add_argument('--dataset', type=str, default="chair")
     
     # S3DIS
     parse.add_argument('--test_area', type=int, default=5)
@@ -78,7 +88,7 @@ def parse_args():
     parse.add_argument('--block_size', type=float, default=1.0)
     
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_plus_ssg_cls")
+    parse.add_argument('--model', type=str, default="pointnet_semseg")
     
     # Eval
     parse.add_argument('--batch_size', type=int, default=16)
