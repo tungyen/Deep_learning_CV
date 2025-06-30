@@ -59,6 +59,8 @@ To download S3DIS dataset, please follow [this link](https://github.com/open-mml
 python prepare_s3dis.py
 ```
 
+Then you might need to change the line 180389 in Annotation/Area5/hallway_6/ceiling_1 to make it 6 columns.
+
 ## 6D Pose ##
 
 ### PROPS-Pose-Dataset ###
