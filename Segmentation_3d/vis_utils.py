@@ -27,7 +27,6 @@ def generate_color_map(class_num):
 
 
 def get_color_map(args):
-    dataset_type = args.dataset
     task = args.task
     if task == "cls":
         class_num = args.cls_class_num
@@ -35,32 +34,19 @@ def get_color_map(args):
         class_num = args.seg_class_num
     else:
         raise ValueError(f'Unknown task {task}.')
-
-    if dataset_type == "chair":
-        return {
-            0: [1, 0, 0],  # Class 0: Red
-            1: [0, 1, 0],  # Class 1: Green
-            2: [0, 0, 1],   # Class 2: Blue
-            3: [1, 1, 0]
-        }
-        
-    elif dataset_type == "modelnet40":
-        return generate_color_map(class_num)
+    return generate_color_map(class_num)
     
-    elif dataset_type == "s3dis":
-        return generate_color_map(class_num)
-    else:
-        raise ValueError(f'Unknown dataset {dataset_type}.')
-    
-def visualize_pcloud(args, pcloud, color_map, predict_class, save_path,
+def visualize_pcloud(args, pcloud, color_maps, predict_class, save_path,
                     class_dict=None, y_rotate=50, elev=80, azim=-90):
     n_rows = 2
-    n_cols = int(np.ceil(args.batch_size / n_rows))
+    n_cols = int(np.ceil(args.test_batch_size / n_rows))
     fig = plt.figure(figsize=(4 * n_cols, 4 * n_rows))
     task = args.task
-        
-    for i in range(args.batch_size):
-        points_np = pcloud[i].T.numpy()
+    if not isinstance(color_maps, list):
+        color_maps = [color_maps.copy() for _ in range(args.test_batch_size)]
+    for i in range(args.test_batch_size):
+        color_map = color_maps[i]
+        points_np = pcloud[i, :3, :].T.numpy()
         points_np = rotate_points_around_y(points_np, y_rotate)
         
         if task in ["semseg", "partseg"]:
@@ -86,8 +72,10 @@ def visualize_pcloud(args, pcloud, color_map, predict_class, save_path,
                             markerfacecolor=rgb_to_hex(color),
                             markersize=10))
         fig.legend(handles=legend_elements, loc='lower center', ncol=len(color_map), fontsize='large')
-        
+    
+    model2title = {"pointnet": "PointNet", "pointnet_plus_ssg": "PointNet++ SSG", "pointnet_plus_msg": "PointNet++ MSG"} 
     plt.tight_layout()
-    plt.subplots_adjust(bottom=0.05)
+    plt.subplots_adjust(top=0.9, bottom=0.05)
+    fig.suptitle(model2title[args.model], fontsize=16)
     plt.savefig(os.path.join(save_path, '{}_{}_{}.png'.format(args.model, args.dataset, task)), dpi=300, bbox_inches='tight')
-    # plt.show()
+    plt.show()

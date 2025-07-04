@@ -3,7 +3,7 @@ import torch
 from tqdm import tqdm
 
 def compute_pcloud_partseg_metrics(all_preds, all_labels, class_dict):
-    instance2parts, parts2instance = class_dict
+    instance2parts, parts2instance, _ = class_dict
     instance_ious = {cls: [] for cls in instance2parts.keys()}
 
     for preds, labels in zip(all_preds, all_labels):

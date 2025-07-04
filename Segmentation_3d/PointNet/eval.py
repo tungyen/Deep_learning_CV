@@ -38,12 +38,12 @@ def eval_model(args):
             # Part Segmentation
             elif len(labels) == 2:
                 cls_labels, labels = labels
-                instance2parts, parts2instance = class_dict
+                instance2parts, _, label2class = class_dict
                 outputs, _ = model(pclouds.to(device), cls_labels.to(device))
                 outputs = outputs.cpu().numpy()
                 pred_classes = np.zeros((outputs.shape[0], outputs.shape[2])).astype(np.int32)
                 for i in range(outputs.shape[0]):
-                    instance = parts2instance[labels[i, 0].item()]
+                    instance = label2class[cls_labels[i].item()]
                     logits = outputs[i, :, :]
                     pred_classes[i, :] = np.argmax(logits[instance2parts[instance], :], 0) + instance2parts[instance][0]
             else:
@@ -88,7 +88,7 @@ def parse_args():
     parse.add_argument('--block_type', type=str, default='static')
     parse.add_argument('--block_size', type=float, default=1.0)
     
-     # ShapeNet
+    # ShapeNet
     parse.add_argument('--normal_channel', type=bool, default=True)
     parse.add_argument('--class_choice', type=list, default=None)
     
@@ -96,7 +96,6 @@ def parse_args():
     parse.add_argument('--model', type=str, default="pointnet")
     
     # Eval
-    parse.add_argument('--batch_size', type=int, default=16)
     parse.add_argument('--device', type=str, default="cuda")
     args = parse.parse_args()
     return args

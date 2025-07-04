@@ -54,6 +54,7 @@ class ShapeNetDataset(Dataset):
                 self.parts2instance[label] = cls
 
         self.class2label = dict(zip(self.class2id, range(len(self.class2id))))
+        self.label2class = {label: cls for cls, label in self.class2label.items()}
         
     def __len__(self):
         return len(self.data_path)

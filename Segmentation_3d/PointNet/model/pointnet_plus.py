@@ -1,5 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
+
 from Segmentation_3d.PointNet.model.pointnet_plus_layers import PointNetPlusSetAbstraction, PointNetPlusFeaturePropagation
 
 class PointNetPlusCls(nn.Module):
@@ -55,7 +57,7 @@ class PointNetPlusCls(nn.Module):
         cls_outs = self.cls_head(feats)
         return cls_outs, None
 
-class PointNetPlusSeg(nn.Module):
+class PointNetPlusSemseg(nn.Module):
     def __init__(self, class_num, n_feats, pointnet_plus_seg_dict):
         super().__init__()
         
@@ -118,6 +120,76 @@ class PointNetPlusSeg(nn.Module):
         f2_feats = self.fp2(sa3_xyz, f1_feats, sa2_xyz, sa2_feats, k=3)
         f3_feats = self.fp3(sa2_xyz, f2_feats, sa1_xyz, sa1_feats, k=3)
         f4_feats = self.fp4(sa1_xyz, f3_feats, xyz, feats, k=3)
+        
+        seg_outs = self.seg_head(f4_feats.transpose(1, 2))
+        return seg_outs, None
+    
+class PointNetPlusPartseg(nn.Module):
+    def __init__(self, seg_class_num, cls_class_num, n_feats, pointnet_plus_seg_dict):
+        super().__init__()
+        self.cls_class_num = cls_class_num
+        self.sa1 = PointNetPlusSetAbstraction(
+            pointnet_plus_seg_dict['n_samples_list'][0],
+            pointnet_plus_seg_dict['radius_list'][0],
+            pointnet_plus_seg_dict['n_points_per_group_list'][0],
+            3 + n_feats,
+            pointnet_plus_seg_dict['sa_mlp_out_channels_list'][0])
+        
+        self.sa2 = PointNetPlusSetAbstraction(
+            pointnet_plus_seg_dict['n_samples_list'][1],
+            pointnet_plus_seg_dict['radius_list'][1],
+            pointnet_plus_seg_dict['n_points_per_group_list'][1],
+            3+self.sa1.out_channels(),
+            pointnet_plus_seg_dict['sa_mlp_out_channels_list'][1])
+        
+        self.sa3 = PointNetPlusSetAbstraction(
+            pointnet_plus_seg_dict['n_samples_list'][2],
+            pointnet_plus_seg_dict['radius_list'][2],
+            pointnet_plus_seg_dict['n_points_per_group_list'][2],
+            3+self.sa2.out_channels(),
+            pointnet_plus_seg_dict['sa_mlp_out_channels_list'][2])
+        
+        self.sa4 = PointNetPlusSetAbstraction(
+            pointnet_plus_seg_dict['n_samples_list'][3],
+            pointnet_plus_seg_dict['radius_list'][3],
+            pointnet_plus_seg_dict['n_points_per_group_list'][3],
+            3+self.sa3.out_channels(),
+            pointnet_plus_seg_dict['sa_mlp_out_channels_list'][3])
+        
+        self.fp1 = PointNetPlusFeaturePropagation(
+            in_channels=self.sa4.out_channels() + self.sa3.out_channels(),
+            mlp_out_channels=pointnet_plus_seg_dict['fp_mlp_out_channels_list'][0])
+        
+        self.fp2 = PointNetPlusFeaturePropagation(
+            in_channels=self.fp1.out_channels() + self.sa2.out_channels(),
+            mlp_out_channels=pointnet_plus_seg_dict['fp_mlp_out_channels_list'][1])
+        
+        self.fp3 = PointNetPlusFeaturePropagation(
+            in_channels=self.fp2.out_channels() + self.sa1.out_channels(),
+            mlp_out_channels=pointnet_plus_seg_dict['fp_mlp_out_channels_list'][2])
+        
+        self.fp4 = PointNetPlusFeaturePropagation(
+            in_channels=self.fp3.out_channels() + n_feats,
+            mlp_out_channels=pointnet_plus_seg_dict['fp_mlp_out_channels_list'][3])
+        
+        self.seg_head = nn.Conv1d(self.fp4.out_channels() + cls_class_num, seg_class_num, 1)
+        
+    def forward(self, x, cls_label):
+        xyz = x[:, :3, :].transpose(1, 2).contiguous()
+        feats = x[:, 3:, :].transpose(1, 2).contiguous()
+        
+        sa1_xyz, sa1_feats = self.sa1(xyz, feats)
+        sa2_xyz, sa2_feats = self.sa2(sa1_xyz, sa1_feats)
+        sa3_xyz, sa3_feats = self.sa3(sa2_xyz, sa2_feats)
+        sa4_xyz, sa4_feats = self.sa4(sa3_xyz, sa3_feats)
+        
+        f1_feats = self.fp1(sa4_xyz, sa4_feats, sa3_xyz, sa3_feats, k=3)
+        f2_feats = self.fp2(sa3_xyz, f1_feats, sa2_xyz, sa2_feats, k=3)
+        f3_feats = self.fp3(sa2_xyz, f2_feats, sa1_xyz, sa1_feats, k=3)
+        f4_feats = self.fp4(sa1_xyz, f3_feats, xyz, feats, k=3)
+        one_hot = F.one_hot(cls_label, num_classes=self.cls_class_num).float()
+        one_hot = one_hot.unsqueeze(1).repeat(1, f4_feats.shape[1], 1)
+        f4_feats = torch.cat([f4_feats, one_hot], dim=2)
         
         seg_outs = self.seg_head(f4_feats.transpose(1, 2))
         return seg_outs, None

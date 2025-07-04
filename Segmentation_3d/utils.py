@@ -3,12 +3,15 @@ import torch.nn as nn
 import os
 import yaml
 
-from Segmentation_3d.PointNet.model.pointnet import PointNetCls, PointNetSemseg, PointNetPartseg, PointNetPartseg2
-from Segmentation_3d.PointNet.model.pointnet_plus import PointNetPlusCls, PointNetPlusSeg
+from Segmentation_3d.PointNet.model.pointnet import PointNetCls, PointNetSemseg, PointNetPartseg
+from Segmentation_3d.PointNet.model.pointnet_plus import PointNetPlusCls, PointNetPlusSemseg, PointNetPlusPartseg
 
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv2d') != -1:
+        torch.nn.init.xavier_normal_(m.weight.data)
+        torch.nn.init.constant_(m.bias.data, 0.0)
+    elif classname.find('Conv1d') != -1:
         torch.nn.init.xavier_normal_(m.weight.data)
         torch.nn.init.constant_(m.bias.data, 0.0)
     elif classname.find('Linear') != -1:
@@ -80,7 +83,10 @@ def get_model(args) -> nn.Module:
                 model = PointNetPlusCls(cls_class_num, config)
             elif task == "semseg":
                 n_feats = args.n_feats
-                model = PointNetPlusSeg(seg_class_num, n_feats, config)
+                model = PointNetPlusSemseg(seg_class_num, n_feats, config)
+            elif task == "partseg":
+                n_feats = args.n_feats
+                model = PointNetPlusPartseg(seg_class_num, cls_class_num, n_feats, config)
     else:
         raise ValueError(f'Unknown model {model_name}.')
     model.apply(weights_init)
@@ -103,18 +109,27 @@ def setup_args_with_dataset(dataset_type, args):
         args.n_points = 1600
         args.n_feats = 0
         args.task = 'semseg'
+        args.train_batch_size = 64
+        args.eval_batch_size = 16
+        args.test_batch_size = 6
     elif dataset_type == 'modelnet40':
         args.cls_class_num = 40
         args.seg_class_num = 40
         args.n_points = 2048
         args.n_feats = 0
         args.task = 'cls'
+        args.train_batch_size = 32
+        args.eval_batch_size = 16
+        args.test_batch_size = 6
     elif dataset_type == 's3dis':
         args.cls_class_num = 14
         args.seg_class_num = 14
         args.n_points = 4096
         args.n_feats = 6
         args.task = 'semseg'
+        args.train_batch_size = 32
+        args.eval_batch_size = 16
+        args.test_batch_size = 1
     elif dataset_type == "shapenet":
         args.cls_class_num = 16
         args.seg_class_num = 50
@@ -124,6 +139,9 @@ def setup_args_with_dataset(dataset_type, args):
             args.n_feats = 3
         else:
             args.n_feats = 0
+        args.train_batch_size = 32
+        args.eval_batch_size = 16
+        args.test_batch_size = 6
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     return args

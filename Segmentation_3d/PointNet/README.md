@@ -1,5 +1,5 @@
 # PointNet/PointNet++ #
-First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the chair dataset, ModelNet40, S3DIS, ShapeNet, and ScanNet.
+First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the chair dataset, ModelNet40, S3DIS, and ShapeNet.
 
 For ShapeNet, there are two default arguments, class_choice and normal_channel. The first one control the category included in the dataset, while normal vector feature will be used when normal_channel is set as True.
 
@@ -70,7 +70,12 @@ python Segmentation_3d/PointNet/test.py --dataset shapenet --model pointnet_plus
 ```
 
 ### Result of Shapenet Dataset ###
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_shapenet_partseg.png)
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_ssg_shapenet_partseg.png)
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_msg_shapenet_partseg.png)
 
 ## Semantic Segmentation ##
 
@@ -98,11 +103,17 @@ python Segmentation_3d/PointNet/test.py --dataset chair --model pointnet_plus_ms
 
 ### Result of Chair Dataset ###
 
-#### PointNet ####
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_chair_semseg.png)
 
-#### PointNet++ SSG ####
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_ssg_chair_semseg.png)
 
-#### PointNet++ MSG ####
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_msg_chair_semseg.png)
+
+
+### Result of S3DIS ###
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_s3dis_semseg.png)
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_ssg_s3dis_semseg.png)
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_msg_s3dis_semseg.png)

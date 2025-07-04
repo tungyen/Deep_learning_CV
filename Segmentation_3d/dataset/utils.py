@@ -14,7 +14,9 @@ def split_dataset_train_val(dataset: Dataset, split=0.9):
     
 def get_dataset(args):
     dataset_type = args.dataset
-    batch_size = args.batch_size
+    train_batch_size = args.train_batch_size
+    eval_batch_size = args.eval_batch_size
+    test_batch_size = args.test_batch_size
     n_points = args.n_points
     
     if dataset_type == "chair":
@@ -55,11 +57,11 @@ def get_dataset(args):
         train_dataset = ShapeNetDataset(root=path, n_points=n_points, split="train", class_choice=class_choice, normal_channel=normal_channel)
         val_dataset = ShapeNetDataset(root=path, n_points=n_points, split="val", class_choice=class_choice, normal_channel=normal_channel)
         test_dataset = ShapeNetDataset(root=path, n_points=n_points, split="test", class_choice=class_choice, normal_channel=normal_channel)
-        class_dict = (train_dataset.instance2parts, train_dataset.parts2instance)
+        class_dict = (train_dataset.instance2parts, train_dataset.parts2instance, train_dataset.label2class)
     else:
         raise ValueError(f'unknown dataset {dataset_type}')
         
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=eval_batch_size, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=True)
     return train_dataloader, val_dataloader, test_dataloader, class_dict
