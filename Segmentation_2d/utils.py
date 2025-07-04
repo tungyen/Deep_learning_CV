@@ -1,5 +1,6 @@
 import torch.nn as nn
 from torch.optim.lr_scheduler import _LRScheduler, StepLR
+import os
 
 from Segmentation_2d.DeepLabV3.model import DeepLabV3, DeepLabV3Plus
 
@@ -49,3 +50,14 @@ def set_bn_momentum(model, momentum=0.1):
     for m in model.modules():
         if isinstance(m, nn.BatchNorm2d):
             m.momentum = momentum
+            
+def setup_args_with_dataset(dataset_type, args):
+    if dataset_type == 'cityscapes':
+        args.class_num = 19
+        args.ignore_idx = 19
+    elif dataset_type == 'voc':
+        args.class_num = 21
+        args.ignore_idx = 255
+    else:
+        raise ValueError(f'Unknown dataset {dataset_type}.')
+    return args

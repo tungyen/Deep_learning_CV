@@ -33,7 +33,8 @@ class ChairDataset(Dataset):
             return to_tensor(pclouds, seg_labels)
         else:
             pclouds, _ = self.load_pclouds(os.path.join(self.data_path, pclouds_path))
-            return to_tensor(pclouds)
+            pclouds, _ = to_tensor(pclouds)
+            return pclouds
             
     def load_pclouds(self, pclouds_file):
         pclouds = o3d.io.read_point_cloud(pclouds_file, format='xyz')

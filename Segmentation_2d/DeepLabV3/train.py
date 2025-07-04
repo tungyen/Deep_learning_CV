@@ -5,7 +5,7 @@ from tqdm import tqdm
 import argparse
 
 from Segmentation_2d.dataset.utils import get_dataset
-from Segmentation_2d.utils import get_model, get_criterion, get_scheduler
+from Segmentation_2d.utils import get_model, get_criterion, get_scheduler, setup_args_with_dataset
 from Segmentation_2d.metrics import compute_image_seg_metrics
 
 def train_model(args):
@@ -13,14 +13,11 @@ def train_model(args):
     os.makedirs(os.path.join(root, "ckpts"), exist_ok=True)
     model_name = args.model
     dataset_type = args.dataset
+    args = setup_args_with_dataset(dataset_type, args)
     
     if dataset_type == 'cityscapes':
-        args.class_num = 19
-        args.ignore_idx = 19
         weight_path = os.path.join(root, "ckpts", "{}_{}.pth".format(model_name, dataset_type))
     elif dataset_type == 'voc':
-        args.class_num = 21
-        args.ignore_idx = 255
         weight_path = os.path.join(root, "ckpts", "{}_{}_{}.pth".format(model_name, dataset_type, args.voc_year))
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')

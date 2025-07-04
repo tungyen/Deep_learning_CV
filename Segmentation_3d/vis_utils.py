@@ -28,7 +28,14 @@ def generate_color_map(class_num):
 
 def get_color_map(args):
     dataset_type = args.dataset
-    class_num = args.class_num
+    task = args.task
+    if task == "cls":
+        class_num = args.cls_class_num
+    elif task in ["semseg", "partseg"]:
+        class_num = args.seg_class_num
+    else:
+        raise ValueError(f'Unknown task {task}.')
+
     if dataset_type == "chair":
         return {
             0: [1, 0, 0],  # Class 0: Red
@@ -50,13 +57,13 @@ def visualize_pcloud(args, pcloud, color_map, predict_class, save_path,
     n_rows = 2
     n_cols = int(np.ceil(args.batch_size / n_rows))
     fig = plt.figure(figsize=(4 * n_cols, 4 * n_rows))
-    task = args.model[-3:]
+    task = args.task
         
     for i in range(args.batch_size):
         points_np = pcloud[i].T.numpy()
         points_np = rotate_points_around_y(points_np, y_rotate)
         
-        if task == "seg":
+        if task in ["semseg", "partseg"]:
             colors = np.array([color_map[label] for label in predict_class[i]])
         elif task == "cls":
             colors = np.array([color_map[predict_class[i]] for _ in range(args.n_points)])
@@ -71,7 +78,7 @@ def visualize_pcloud(args, pcloud, color_map, predict_class, save_path,
             ax.set_title(f'{class_dict[predict_class[i]]}')
         plt.axis('off')
 
-    if task == "seg":
+    if task == "semseg":
         legend_elements = []
         for class_id, color in color_map.items():
             legend_elements.append(Line2D([0], [0], marker='o', color='w',
@@ -82,5 +89,5 @@ def visualize_pcloud(args, pcloud, color_map, predict_class, save_path,
         
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.05)
-    plt.savefig(os.path.join(save_path, '{}_{}.png'.format(args.model, args.dataset)), dpi=300, bbox_inches='tight')
-    plt.show()
+    plt.savefig(os.path.join(save_path, '{}_{}_{}.png'.format(args.model, args.dataset, task)), dpi=300, bbox_inches='tight')
+    # plt.show()

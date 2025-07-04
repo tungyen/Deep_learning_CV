@@ -2,84 +2,85 @@ import torch
 from tqdm import tqdm
 import os
 import argparse
+import numpy as np
 
 from Segmentation_3d.dataset.utils import get_dataset
-from Segmentation_3d.utils import get_model
-from Segmentation_3d.metrics import compute_pcloud_seg_metrics, compute_pcloud_cls_metrics
+from Segmentation_3d.utils import get_model, setup_args_with_dataset
+from Segmentation_3d.metrics import compute_pcloud_semseg_metrics, compute_pcloud_cls_metrics, compute_pcloud_partseg_metrics
 
 def eval_model(args):
     root = os.path.dirname(os.path.abspath(__file__))
     device = args.device
     model_name = args.model
     dataset_type = args.dataset
-    
-    if dataset_type == 'chair':
-        args.cls_class_num = 4
-        args.seg_class_num = 4
-        args.n_points = 1600
-        args.n_feats = 0
-    elif dataset_type == 'modelnet40':
-        args.cls_class_num = 40
-        args.seg_class_num = 40
-        args.n_points = 2048
-        args.n_feats = 0
-    elif dataset_type == 's3dis':
-        args.cls_class_num = 14
-        args.seg_class_num = 14
-        args.n_points = 4096
-        args.n_feats = 6
-    elif dataset_type == "shapenet_cls" or dataset_type == "shapenet_seg":
-        args.cls_class_num = 16
-        args.seg_class_num = 50
-        args.n_points = 2048
-        if args.normal_channel:
-            args.n_feats = 3
-        else:
-            args.n_feats = 0
-    else:
-        raise ValueError(f'Unknown dataset {dataset_type}.')
-
-    weight_path = os.path.join(root, "ckpts", '{}_{}.pth'.format(model_name, dataset_type))
-    task = model_name[-3:]
+    args = setup_args_with_dataset(dataset_type, args)
+    task = args.task
+    ckpts_path = "ckpts"
+    weight_path = os.path.join(root, ckpts_path, "{}_{}_{}.pth".format(model_name, dataset_type, task))
     
     print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
-    
     _, val_dataloader, _, class_dict = get_dataset(args)
     model = get_model(args)
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model.eval()
     
+    # Validation
     all_preds = []
     all_labels = []
     
     with torch.no_grad():
-        for pclouds, labels in tqdm(val_dataloader):
-            outputs = model(pclouds.to(device))
-            pred_classes = torch.argmax(outputs, dim=1)
-            
-            all_preds.append(pred_classes.cpu())
+        for pclouds, *labels in tqdm(val_dataloader):
+            # Semantic Segmentation or Classification
+            if len(labels) == 1:
+                labels = labels[0]
+                outputs, _ = model(pclouds.to(device))
+                pred_classes = torch.argmax(outputs, dim=1).cpu()
+            # Part Segmentation
+            elif len(labels) == 2:
+                cls_labels, labels = labels
+                instance2parts, parts2instance = class_dict
+                outputs, _ = model(pclouds.to(device), cls_labels.to(device))
+                outputs = outputs.cpu().numpy()
+                pred_classes = np.zeros((outputs.shape[0], outputs.shape[2])).astype(np.int32)
+                for i in range(outputs.shape[0]):
+                    instance = parts2instance[labels[i, 0].item()]
+                    logits = outputs[i, :, :]
+                    pred_classes[i, :] = np.argmax(logits[instance2parts[instance], :], 0) + instance2parts[instance][0]
+            else:
+                raise ValueError(f'Too much input data.')
+
+            all_preds.append(pred_classes)
             all_labels.append(labels)
-        
+
+    if task == "cls":
         all_preds = torch.cat(all_preds).numpy()
         all_labels = torch.cat(all_labels).numpy()
-
-    if task == "cls":   
         accuracy, precision, recall = compute_pcloud_cls_metrics(args, all_preds, all_labels)
         print("Validation Accuracy===>{:.4f}".format(accuracy))
         print("Validation Precision===>{:.4f}".format(precision))
         print("Validation Recall===>{:.4f}".format(recall))
-        
-    elif task == "seg":    
-        class_ious, miou = compute_pcloud_seg_metrics(args, all_preds, all_labels)
+
+    elif task == "semseg":
+        all_preds = torch.cat(all_preds).numpy()
+        all_labels = torch.cat(all_labels).numpy()
+        class_ious, miou = compute_pcloud_semseg_metrics(args, all_preds, all_labels)
         print("Validation mIoU===>{:.4f}".format(miou))
         for cls in class_dict:
             print("{} IoU: {:.4f}".format(class_dict[cls], class_ious[cls]))
-
             
+    elif task == 'partseg':
+        instance_ious, instance_mious, class_mious = compute_pcloud_partseg_metrics(all_preds, all_labels, class_dict)
+        print("Validation instance mIoU===>{:.4f}".format(instance_mious))
+        print("Validation class mIoU===>{:.4f}".format(class_mious))
+        for instance, miou in instance_ious.items():
+            print("{} instance mIoU: {:.4f}".format(instance, miou))
+    else:
+        raise ValueError(f'Unknown segmentation task {task}.')  
+
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="chair")
+    parse.add_argument('--dataset', type=str, default="shapenet")
     
     # S3DIS
     parse.add_argument('--test_area', type=int, default=5)
@@ -87,8 +88,12 @@ def parse_args():
     parse.add_argument('--block_type', type=str, default='static')
     parse.add_argument('--block_size', type=float, default=1.0)
     
+     # ShapeNet
+    parse.add_argument('--normal_channel', type=bool, default=True)
+    parse.add_argument('--class_choice', type=list, default=None)
+    
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_semseg")
+    parse.add_argument('--model', type=str, default="pointnet")
     
     # Eval
     parse.add_argument('--batch_size', type=int, default=16)

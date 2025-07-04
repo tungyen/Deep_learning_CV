@@ -21,8 +21,6 @@ class ShapeNetDataset(Dataset):
         if class_choice is not None:
             self.class2id = {k: v for k, v in self.class2id.items() if k in class_choice}
 
-        self.class2label = dict(zip(self.class2id, range(len(self.class2id))))
-
         self.meta = {}
         assert split in ["train", "val", "test"], "Unknown split is used."
         with open(os.path.join(self.root, 'train_test_split', f'shuffled_{split}_file_list.json'), 'r') as f:
@@ -45,16 +43,21 @@ class ShapeNetDataset(Dataset):
         self.cache = {}
         self.cache_size = 20000
         
+        self.instance2parts = {'Earphone': [16, 17, 18], 'Motorbike': [30, 31, 32, 33, 34, 35], 'Rocket': [41, 42, 43],
+            'Car': [8, 9, 10, 11], 'Laptop': [28, 29], 'Cap': [6, 7], 'Skateboard': [44, 45, 46],
+            'Mug': [36, 37], 'Guitar': [19, 20, 21], 'Bag': [4, 5], 'Lamp': [24, 25, 26, 27],
+            'Table': [47, 48, 49], 'Airplane': [0, 1, 2, 3], 'Pistol': [38, 39, 40],
+            'Chair': [12, 13, 14, 15], 'Knife': [22, 23]}
+        self.parts2instance = {}
+        for cls in self.instance2parts.keys():
+            for label in self.instance2parts[cls]:
+                self.parts2instance[label] = cls
+
+        self.class2label = dict(zip(self.class2id, range(len(self.class2id))))
+        
     def __len__(self):
         return len(self.data_path)
     
-    def __getitem__(self, index):
-        pass
-        
-class ShapeNetClsDataset(ShapeNetDataset):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        
     def __getitem__(self, index):
         if index in self.cache:
             return self.cache[index]
@@ -66,47 +69,14 @@ class ShapeNetClsDataset(ShapeNetDataset):
                 pclouds = data[:, 0:3]
             else:
                 pclouds = data[:, 0:6]
+            seg_labels = data[:, -1]
             pclouds = normalize_pclouds(pclouds)
             pclouds = np.transpose(pclouds)
             sample_indexes = np.random.choice(pclouds.shape[1], self.n_points, replace=True)
             pclouds = pclouds[:, sample_indexes]
-            pclouds, cls_labels = to_tensor(pclouds, cls_labels)
-            if len(self.cache) < self.cache_size:
-                self.cache[index] = (pclouds, cls_labels)
-            return (pclouds, cls_labels)
-        
-class ShapeNetSegDataset(ShapeNetDataset):
-    def __init__(self, **kwargs):
-        super().__init__(kwargs)
-        
-        seg_category = {'Earphone': [16, 17, 18], 'Motorbike': [30, 31, 32, 33, 34, 35], 'Rocket': [41, 42, 43],
-                    'Car': [8, 9, 10, 11], 'Laptop': [28, 29], 'Cap': [6, 7], 'Skateboard': [44, 45, 46],
-                    'Mug': [36, 37], 'Guitar': [19, 20, 21], 'Bag': [4, 5], 'Lamp': [24, 25, 26, 27],
-                    'Table': [47, 48, 49], 'Airplane': [0, 1, 2, 3], 'Pistol': [38, 39, 40],
-                    'Chair': [12, 13, 14, 15], 'Knife': [22, 23]}
-        self.seg_category = {}
-        for cls in seg_category.keys():
-            for label in seg_category[cls]:
-                self.seg_category[label] = cls
-        
-    def __getitem__(self, index):
-        if index in self.cache:
-            return self.cache[index]
-        else:
-            _, file_name = self.data_path[index]
-            data = np.loadtxt(file_name).astype(np.float32)
-            if not self.normal_channel:
-                pclouds = data[:, 0:3]
-            else:
-                pclouds = data[:, 0:6]
-            seg_labels = data[:, -1]
-            
-            pclouds = normalize_pclouds(pclouds)
-            sample_indexes = np.random.choice(len(seg_labels), self.n_points, replace=True)
-            pclouds = pclouds[sample_indexes, :]
-            pclouds = np.transpose(pclouds)
             seg_labels = seg_labels[sample_indexes]
+            pclouds, cls_labels = to_tensor(pclouds, cls_labels)
             pclouds, seg_labels = to_tensor(pclouds, seg_labels)
             if len(self.cache) < self.cache_size:
-                self.cache[index] = (pclouds, seg_labels)
-            return (pclouds, seg_labels) 
+                self.cache[index] = (pclouds, cls_labels, seg_labels)
+            return (pclouds, cls_labels, seg_labels)

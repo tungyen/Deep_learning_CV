@@ -2,8 +2,8 @@ import torch
 import argparse
 import os
 
-from Segmentation_3d.dataset import get_dataset
-from Segmentation_3d.utils import get_model
+from Segmentation_3d.dataset.utils import get_dataset
+from Segmentation_3d.utils import get_model, setup_args_with_dataset
 from Segmentation_3d.vis_utils import visualize_pcloud, get_color_map
 
 def test_model(args):
@@ -14,34 +14,16 @@ def test_model(args):
     model_name = args.model
     dataset_type = args.dataset
     
-    if dataset_type == 'chair':
-        args.class_num = 4
-        args.n_points = 1600
-        args.n_feats = 0
-    elif dataset_type == 'modelnet40':
-        args.class_num = 40
-        args.n_points = 2048
-        args.n_feats = 0
-    elif dataset_type == 's3dis':
-        args.class_num = 14
-        args.n_points = 4096
-        args.n_feats = 6
-    elif dataset_type == "shapenet":
-        args.class_num = 16
-        args.n_points = 1024
-        if args.normal_channel:
-            args.n_feats = 3
-        else:
-            args.n_feats = 0
-    else:
-        raise ValueError(f'Unknown dataset {dataset_type}.')
-
+    args = setup_args_with_dataset(dataset_type, args)
     model = get_model(args)
     color_map = get_color_map(args)
     
     print("Start testing model {} on {} dataset!".format(model_name, dataset_type))
     
-    weight_path = os.path.join(root, "ckpts", "{}_{}.pth".format(model_name, dataset_type))
+    task = args.task
+    ckpts_path = "ckpts"
+    weight_path = os.path.join(root, ckpts_path, "{}_{}_{}.pth".format(model_name, dataset_type, task))
+    
     model.load_state_dict(torch.load(weight_path, map_location=device))
     model = model.to(device)
     model.eval()
@@ -51,13 +33,13 @@ def test_model(args):
     if dataset_type == "chair":
         pclouds = next(iter(test_dataloader))
         with torch.no_grad():
-            outputs = torch.squeeze(model(pclouds.to(device).float()))
+            outputs, _ = model(pclouds.to(device).float())
             predict_classes = torch.argmax(outputs, dim=1).cpu().numpy()
         visualize_pcloud(args, pclouds, color_map, predict_classes, save_path, class_dict)
     elif dataset_type == "modelnet40":
         pclouds, _ = next(iter(test_dataloader))
         with torch.no_grad():
-            outputs = model(pclouds.to(device))
+            outputs, _ = model(pclouds.to(device))
             predict_classes = torch.argmax(outputs, dim=1).cpu().numpy()    
         visualize_pcloud(args, pclouds, color_map, predict_classes, save_path, class_dict)
     elif dataset_type == "s3dis":
@@ -72,7 +54,7 @@ def parse_args():
     parse.add_argument('--dataset', type=str, default="chair")
     
     # Model
-    parse.add_argument('--model', type=str, default="pointnet_plus_seg")
+    parse.add_argument('--model', type=str, default="pointnet_plus_ssg")
     
     # testing
     parse.add_argument('--batch_size', type=int, default=6)

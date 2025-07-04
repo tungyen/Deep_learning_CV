@@ -53,7 +53,7 @@ class PointNetPlusCls(nn.Module):
             feats = F.dropout(feats, p=0.5, training=self.training)
             
         cls_outs = self.cls_head(feats)
-        return cls_outs
+        return cls_outs, None
 
 class PointNetPlusSeg(nn.Module):
     def __init__(self, class_num, n_feats, pointnet_plus_seg_dict):
@@ -120,4 +120,4 @@ class PointNetPlusSeg(nn.Module):
         f4_feats = self.fp4(sa1_xyz, f3_feats, xyz, feats, k=3)
         
         seg_outs = self.seg_head(f4_feats.transpose(1, 2))
-        return seg_outs
+        return seg_outs, None

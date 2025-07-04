@@ -12,61 +12,97 @@ python setup.py build_ext --inplace
 
 ## Classification ##
 
-For classification task, ShapeNet and ModelNet40 are used. The following command is based on ModelNet40.
+For classification task, ModelNet40 is used.
 ### Training ###
 ```bash
-python train.py --dataset modelnet40 --model pointnet_cls
-python train.py --dataset modelnet40 --model pointnet_plus_ssg_cls
-python train.py --dataset modelnet40 --model pointnet_plus_msg_cls
+python Segmentation_3d/PointNet/train.py --dataset modelnet40 --model pointnet
+python Segmentation_3d/PointNet/train.py --dataset modelnet40 --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/train.py --dataset modelnet40 --model pointnet_plus_msg
 ```
 
 ### Evaluation ###
 ```bash
-python eval.py --dataset modelnet40 --model pointnet_cls
-python eval.py --dataset modelnet40 --model pointnet_plus_ssg_cls
-python eval.py --dataset modelnet40 --model pointnet_plus_msg_cls
+python Segmentation_3d/PointNet/eval.py --dataset modelnet40 --model pointnet
+python Segmentation_3d/PointNet/eval.py --dataset modelnet40 --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/eval.py --dataset modelnet40 --model pointnet_plus_msg
 ```
 
 ### Testing ###
 ```bash
-python test.py --dataset modelnet40 --model pointnet_cls
-python test.py --dataset modelnet40 --model pointnet_plus_ssg_cls
-python test.py --dataset modelnet40 --model pointnet_plus_msg_cls
+python Segmentation_3d/PointNet/test.py --dataset modelnet40 --model pointnet
+python Segmentation_3d/PointNet/test.py --dataset modelnet40 --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/test.py --dataset modelnet40 --model pointnet_plus_msg
 ```
 
 ### Result of Modelnet40 Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_cls_modelnet40.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_ssg_cls_modelnet40.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_msg_cls_modelnet40.png)
 
-### Result of ShapeNet Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_cls_shapenet.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_ssg_cls_shapenet.png)
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_msg_cls_shapenet.png)
+#### PointNet ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_modelnet40_cls.png)
+
+#### PointNet++ SSG ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_ssg_modelnet40_cls.png)
+
+#### PointNet++ MSG####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_msg_modelnet40_cls.png)
 
 ## Part Segmentation ##
 
-In this part, Chair and ShapeNetPart are used. The following command is based on Chair Dataset.
+In this part, ShapeNetPart is used.
 ### Training ###
 ```bash
-python train.py --dataset chair --model pointnet_seg
-python train.py --dataset chair --model pointnet_plus_ssg_seg
-python train.py --dataset chair --model pointnet_plus_msg_seg
+python Segmentation_3d/PointNet/train.py --dataset shapenet --model pointnet
+python Segmentation_3d/PointNet/train.py --dataset shapenet --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/train.py --dataset shapenet --model pointnet_plus_msg
 ```
 
 ### Evaluation ###
 ```bash
-python eval.py --dataset chair --model pointnet_seg
-python eval.py --dataset chair --model pointnet_plus_ssg_seg
-python eval.py --dataset chair --model pointnet_plus_msg_seg
+python Segmentation_3d/PointNet/eval.py --dataset shapenet --model pointnet
+python Segmentation_3d/PointNet/eval.py --dataset shapenet --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/eval.py --dataset shapenet --model pointnet_plus_msg
 ```
 
 ### Testing ###
 ```bash
-python test.py --dataset chair --model pointnet_seg
-python test.py --dataset chair --model pointnet_plus_ssg_seg
-python test.py --dataset chair --model pointnet_plus_msg_seg
+python Segmentation_3d/PointNet/test.py --dataset shapenet --model pointnet
+python Segmentation_3d/PointNet/test.py --dataset shapenet --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/test.py --dataset shapenet --model pointnet_plus_msg
+```
+
+### Result of Shapenet Dataset ###
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_shapenet_partseg.png)
+
+## Semantic Segmentation ##
+
+In this part, Chair Dataset and S3DIS are used. Following command is based on Chair Dataset.
+### Training ###
+```bash
+python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet
+python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet_plus_msg
+```
+
+### Evaluation ###
+```bash
+python Segmentation_3d/PointNet/eval.py --dataset chair --model pointnet
+python Segmentation_3d/PointNet/eval.py --dataset chair --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/eval.py --dataset chair --model pointnet_plus_msg
+```
+
+### Testing ###
+```bash
+python Segmentation_3d/PointNet/test.py --dataset chair --model pointnet
+python Segmentation_3d/PointNet/test.py --dataset chair --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/test.py --dataset chair --model pointnet_plus_msg
 ```
 
 ### Result of Chair Dataset ###
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_seg_chair.png)
+
+#### PointNet ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_chair_semseg.png)
+
+#### PointNet++ SSG ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_ssg_chair_semseg.png)
+
+#### PointNet++ MSG ####
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_msg_chair_semseg.png)

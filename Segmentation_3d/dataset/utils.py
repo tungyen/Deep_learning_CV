@@ -4,7 +4,7 @@ import os
 from Segmentation_3d.dataset.chair import ChairDataset
 from Segmentation_3d.dataset.modelnet40 import ModelNet40Dataset
 from Segmentation_3d.dataset.s3dis import S3disDataset
-from Segmentation_3d.dataset.shapenet import ShapeNetClsDataset, ShapeNetSegDataset
+from Segmentation_3d.dataset.shapenet import ShapeNetDataset
 
 def split_dataset_train_val(dataset: Dataset, split=0.9):
     train_size = int(split * len(dataset))
@@ -48,24 +48,14 @@ def get_dataset(args):
         test_dataset = S3disDataset(path, "test", test_area, n_points, max_dropout, block_type, block_size)
         class_dict = ['clutter', 'ceiling', 'floor', 'wall', 'beam', 'column', 'door',
                'window', 'table', 'chair', 'sofa', 'bookcase', 'board', 'stairs']
-
-    elif dataset_type == 'shapenet_cls':
+    elif dataset_type =='shapenet':
         class_choice = args.class_choice
         normal_channel = args.normal_channel
         path = os.path.join("Dataset", "ShapeNetPart")
-        train_dataset = ShapeNetClsDataset(root=path, n_points=n_points, split="train", class_choice=class_choice, normal_channel=normal_channel)
-        val_dataset = ShapeNetClsDataset(root=path, n_points=n_points, split="val", class_choice=class_choice, normal_channel=normal_channel)
-        test_dataset = ShapeNetClsDataset(root=path, n_points=n_points, split="test", class_choice=class_choice, normal_channel=normal_channel)
-        class_dict = train_dataset.class2label
-
-    elif dataset_type == 'shapenet_seg':
-        class_choice = args.class_choice
-        normal_channel = args.normal_channel
-        path = os.path.join("Dataset", "ShapeNetPart")
-        train_dataset = ShapeNetSegDataset(root=path, n_points=n_points, split="train", class_choice=class_choice, normal_channel=normal_channel)
-        val_dataset = ShapeNetSegDataset(root=path, n_points=n_points, split="val", class_choice=class_choice, normal_channel=normal_channel)
-        test_dataset = ShapeNetSegDataset(root=path, n_points=n_points, split="test", class_choice=class_choice, normal_channel=normal_channel)
-        class_dict = train_dataset.seg_category
+        train_dataset = ShapeNetDataset(root=path, n_points=n_points, split="train", class_choice=class_choice, normal_channel=normal_channel)
+        val_dataset = ShapeNetDataset(root=path, n_points=n_points, split="val", class_choice=class_choice, normal_channel=normal_channel)
+        test_dataset = ShapeNetDataset(root=path, n_points=n_points, split="test", class_choice=class_choice, normal_channel=normal_channel)
+        class_dict = (train_dataset.instance2parts, train_dataset.parts2instance)
     else:
         raise ValueError(f'unknown dataset {dataset_type}')
         
