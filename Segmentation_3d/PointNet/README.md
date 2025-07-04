@@ -36,13 +36,10 @@ python Segmentation_3d/PointNet/test.py --dataset modelnet40 --model pointnet_pl
 
 ### Result of Modelnet40 Dataset ###
 
-#### PointNet ####
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_modelnet40_cls.png)
 
-#### PointNet++ SSG ####
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_ssg_modelnet40_cls.png)
 
-#### PointNet++ MSG####
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_msg_modelnet40_cls.png)
 
 ## Part Segmentation ##
