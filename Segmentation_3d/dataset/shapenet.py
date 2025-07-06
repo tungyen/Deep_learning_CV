@@ -3,7 +3,8 @@ import numpy as np
 import os
 import json
 
-from Segmentation_3d.dataset.transforms import normalize_pclouds, to_tensor
+from Segmentation_3d.dataset.transforms import normalize_pclouds, to_tensor, random_jitter_pclouds, \
+    random_rotate_pclouds, random_shift_pclouds, random_scale_pclouds, get_fps_indexes
     
 class ShapeNetDataset(Dataset):
     def __init__(self, root, n_points, split='train', class_choice=None, normal_channel=False):
@@ -13,6 +14,7 @@ class ShapeNetDataset(Dataset):
         self.category_file = os.path.join(root, 'synsetoffset2category.txt')
         self.class2id = {}
         self.normal_channel = normal_channel
+        self.split = split
         
         with open(self.category_file, 'r') as f:
             for line in f:
@@ -71,11 +73,19 @@ class ShapeNetDataset(Dataset):
             else:
                 pclouds = data[:, 0:6]
             seg_labels = data[:, -1]
-            pclouds = normalize_pclouds(pclouds)
+            
+            farthest_indexes = get_fps_indexes(pclouds[:, :3], self.n_points)
+            pclouds = pclouds[farthest_indexes, :]
+            pclouds[:, :3] = normalize_pclouds(pclouds[:, :3])
+            if self.split == "train":
+                # pclouds[:, :3], rotate_matrix = random_rotate_pclouds(pclouds[:, :3])
+                # if self.normal_channel:
+                #     pclouds[:, 3:] = np.dot(pclouds[:, 3:], rotate_matrix)
+                pclouds[:, :3] = random_scale_pclouds(pclouds[:, :3])
+                pclouds[:, :3] = random_shift_pclouds(pclouds[:, :3])
+
             pclouds = np.transpose(pclouds)
-            sample_indexes = np.random.choice(pclouds.shape[1], self.n_points, replace=True)
-            pclouds = pclouds[:, sample_indexes]
-            seg_labels = seg_labels[sample_indexes]
+            seg_labels = seg_labels[farthest_indexes]
             pclouds, cls_labels = to_tensor(pclouds, cls_labels)
             pclouds, seg_labels = to_tensor(pclouds, seg_labels)
             if len(self.cache) < self.cache_size:

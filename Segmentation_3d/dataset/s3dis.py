@@ -4,7 +4,7 @@ import os
 import glob
 import math
 
-from Segmentation_3d.dataset.transforms import to_tensor
+from Segmentation_3d.dataset.transforms import get_fps_indexes, to_tensor
 
 def prepare_input(block_xyz, block_rgb, xcenter, ycenter, room_xyz_max):
     block_data = np.zeros([len(block_xyz), 9], dtype=np.float32)
@@ -46,11 +46,12 @@ class S3disStatic(Dataset):
         xcenter, ycenter = np.amin(block_xyz, axis=0)[:2] + block_size / 2
         block_data = prepare_input(block_xyz, block_rgb, xcenter, ycenter, room_xyz_max)
 
-        indexes = np.random.choice(len(block_xyz), self.n_points, len(block_xyz) < self.n_points)
-        indexes = random_dropout(indexes, self.max_dropout)
+        farthest_indexes = get_fps_indexes(block_data[:, :3], self.n_points)
+        # indexes = np.random.choice(len(block_xyz), self.n_points, len(block_xyz) < self.n_points)
+        farthest_indexes = random_dropout(farthest_indexes, self.max_dropout)
 
-        pclouds = block_data[indexes].transpose()
-        seg_labels = block_gt[indexes]
+        pclouds = block_data[farthest_indexes].transpose()
+        seg_labels = block_gt[farthest_indexes]
         return to_tensor(pclouds, seg_labels)
 
 class S3disDynamic(Dataset):

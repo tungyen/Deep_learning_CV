@@ -6,11 +6,11 @@ import os
 import numpy as np
 
 from Segmentation_3d.dataset.utils import get_dataset
-from Segmentation_3d.utils import get_model, get_loss, setup_args_with_dataset
+from Segmentation_3d.utils import get_model, get_loss, setup_args_with_dataset, get_scheduler
 from Segmentation_3d.metrics import compute_pcloud_semseg_metrics, compute_pcloud_cls_metrics, compute_pcloud_partseg_metrics
 
 def train_model(args):
-    ckpts_path = "ckpts"
+    ckpts_path = "ckpts3"
     root = os.path.dirname(os.path.abspath(__file__))
     os.makedirs(os.path.join(root, ckpts_path), exist_ok=True)
     model_name = args.model
@@ -32,6 +32,7 @@ def train_model(args):
     train_dataloader, val_dataloader, _, class_dict = get_dataset(args)
     model = get_model(args)
     opt = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay, betas=(beta1, beta2), eps=eps)
+    scheduler = get_scheduler(args, opt)
     criterion = get_loss(args)
     best_metric = 0.0
             
@@ -39,7 +40,7 @@ def train_model(args):
         print("Epoch {} start now!".format(epoch+1))
         for pclouds, *labels in tqdm(train_dataloader):
             pclouds = pclouds.to(device).float()
-            
+
             if len(labels) == 1:
                 labels = labels[0].to(device)
                 outputs, trans_feats = model(pclouds)
@@ -54,7 +55,8 @@ def train_model(args):
             loss = criterion(outputs, labels, trans_feats)
             opt.zero_grad()
             loss.backward()
-            opt.step()     
+            opt.step()
+        scheduler.step()    
         print("Epoch {}-training loss===>{:.4f}".format(epoch+1, loss.item()))
         
         # Validation
@@ -147,6 +149,7 @@ def parse_args():
     parse.add_argument('--beta2', type=float, default=0.999)
     parse.add_argument('--eps', type=float, default=1e-8)
     parse.add_argument('--weight_decay', type=float, default=1e-4)
+    parse.add_argument('--scheduler', type=str, default="exp")
     parse.add_argument('--loss_func', type=str, default="focal")
     args = parse.parse_args()
     return args

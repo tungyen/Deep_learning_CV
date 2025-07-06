@@ -1,6 +1,5 @@
 import torch.nn as nn
 from torch.optim.lr_scheduler import _LRScheduler, StepLR
-import os
 
 from Segmentation_2d.DeepLabV3.model import DeepLabV3, DeepLabV3Plus
 

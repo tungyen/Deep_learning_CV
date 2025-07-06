@@ -2,9 +2,38 @@ import torch
 import torch.nn as nn
 import os
 import yaml
+from torch.optim.lr_scheduler import _LRScheduler, StepLR, ExponentialLR
 
 from Segmentation_3d.PointNet.model.pointnet import PointNetCls, PointNetSemseg, PointNetPartseg
 from Segmentation_3d.PointNet.model.pointnet_plus import PointNetPlusCls, PointNetPlusSemseg, PointNetPlusPartseg
+
+
+
+class PolyLR(_LRScheduler):
+    def __init__(self, optimizer, max_iters, power=0.9, last_epoch=-1, min_lr=1e-6):
+        self.power = power
+        self.max_iters = max_iters  # avoid zero lr
+        self.min_lr = min_lr
+        super(PolyLR, self).__init__(optimizer, last_epoch)
+    
+    def get_lr(self):
+        return [ max( base_lr * ( 1 - self.last_epoch/self.max_iters )**self.power, self.min_lr)
+                for base_lr in self.base_lrs]
+
+def weights_init2(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv2d') != -1:
+        torch.nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
+        if m.bias is not None:
+            torch.nn.init.constant_(m.bias.data, 0.0)
+    elif classname.find('Conv1d') != -1:
+        torch.nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
+        if m.bias is not None:
+            torch.nn.init.constant_(m.bias.data, 0.0)
+    elif classname.find('Linear') != -1:
+        torch.nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
+        if m.bias is not None:
+            torch.nn.init.constant_(m.bias.data, 0.0)
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -40,7 +69,7 @@ class FocalLoss(nn.Module):
         focal_loss = self.alpha * (1-pt) ** self.gamma * CE_loss
         if trans_feats is not None:
             mat_diff_loss = feature_transform_reguliarzer(trans_feats)
-            focal_loss += mat_diff_loss
+            focal_loss += mat_diff_loss * self.mat_diff_loss_scale
         return focal_loss
     
 class CrossEntropyLoss(nn.Module):
@@ -68,7 +97,7 @@ def get_model(args) -> nn.Module:
         if task == "cls":
             model = PointNetCls(cls_class_num, n_feats)
         elif task == "semseg":
-            model = PointNetSemseg(cls_class_num, n_feats)
+            model = PointNetSemseg(seg_class_num, n_feats)
         elif task == "partseg":
             model = PointNetPartseg(seg_class_num, cls_class_num, n_feats)
         else:
@@ -92,6 +121,16 @@ def get_model(args) -> nn.Module:
     model.apply(weights_init)
     model = model.to(device)
     return model
+
+def get_scheduler(args, optimizer):
+    if args.scheduler == "poly":
+        return PolyLR(optimizer, args.epochs)
+    elif args.scheduler == "step":
+        return StepLR(optimizer, step_size=args.step_size, gamma=0.1)
+    elif args.scheduler == "exp":
+        return ExponentialLR(optimizer, gamma=0.9)
+    else:
+        raise ValueError(f'Unknown scheduler {args.scheduler}')
 
 def get_loss(args):
     loss_func = args.loss_func
