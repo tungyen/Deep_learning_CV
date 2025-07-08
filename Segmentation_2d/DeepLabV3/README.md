@@ -5,40 +5,40 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 ## Training ##
 ```bash
 # DeepLabV3
-python Segmentation_2d/DeepLabV3/train.py --dataset cityspaces --model deeplabv3 --backbone resnet101 
-python Segmentation_2d/DeepLabV3/train.py --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
-python Segmentation_2d/DeepLabV3/train.py --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
+python Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset cityspaces --model deeplabv3 --backbone resnet101 
+python Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
+python Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
 
 # DeepLabV3+
-python Segmentation_2d/DeepLabV3/train.py --dataset cityspaces --model deeplabv3plus --backbone resnet101 
-python Segmentation_2d/DeepLabV3/train.py --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
-python Segmentation_2d/DeepLabV3/train.py --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
+python Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset cityspaces --model deeplabv3plus --backbone resnet101 
+python Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
+python Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
 ```
 
 ## Evaluation ##
 ```bash
 # DeepLabV3
-python Segmentation_2d/DeepLabV3/eval.py --dataset cityspaces --model deeplabv3 --backbone resnet101 
-python Segmentation_2d/DeepLabV3/eval.py --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
-python Segmentation_2d/DeepLabV3/eval.py --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
+python Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset cityspaces --model deeplabv3 --backbone resnet101 
+python Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
+python Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
 
 # DeepLabV3+
-python Segmentation_2d/DeepLabV3/eval.py --dataset cityspaces --model deeplabv3plus --backbone resnet101 
-python Segmentation_2d/DeepLabV3/eval.py --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
-python Segmentation_2d/DeepLabV3/eval.py --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
+python Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset cityspaces --model deeplabv3plus --backbone resnet101 
+python Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
+python Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
 ```
 
 ## Test ##
 ```bash
 # DeepLabV3
-python Segmentation_2d/DeepLabV3/test.py --dataset cityspaces --model deeplabv3 --backbone resnet101 
-python Segmentation_2d/DeepLabV3/test.py --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
-python Segmentation_2d/DeepLabV3/test.py --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
+python Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset cityspaces --model deeplabv3 --backbone resnet101 
+python Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
+python Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
 
 # DeepLabV3+
-python Segmentation_2d/DeepLabV3/test.py --dataset cityspaces --model deeplabv3plus --backbone resnet101 
-python Segmentation_2d/DeepLabV3/test.py --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
-python Segmentation_2d/DeepLabV3/test.py --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
+python Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset cityspaces --model deeplabv3plus --backbone resnet101 
+python Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
+python Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
 ```
 
 ## Result ##

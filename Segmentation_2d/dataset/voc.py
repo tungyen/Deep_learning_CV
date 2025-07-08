@@ -5,7 +5,6 @@ import tarfile
 import numpy as np
 from torchvision.datasets.utils import download_url
 
-
 voc_class_dict = {
     0: 'background',
     1: 'aeroplane',
@@ -29,8 +28,6 @@ voc_class_dict = {
     19: 'train',
     20: 'tvmonitor',
 }
-
-
 
 VOC_DATASET_YEAR_DICT = {
     '2012': {
@@ -70,8 +67,7 @@ VOC_DATASET_YEAR_DICT = {
         'base_dir': 'VOCdevkit/VOC2007'
     }
 }
-    
-    
+
 def voc_cmap(N=256, normalized=False):
     def bitget(byteval, idx):
         return ((byteval & (1 << idx)) != 0)
@@ -91,7 +87,6 @@ def voc_cmap(N=256, normalized=False):
 
     cmap = cmap/255 if normalized else cmap
     return cmap
-
 
 class VocDataset(Dataset):
     cmap = voc_cmap()
@@ -138,8 +133,7 @@ class VocDataset(Dataset):
         self.images = [os.path.join(img_dir, x + ".jpg") for x in file_names]
         self.masks = [os.path.join(mask_dir, x + ".png") for x in file_names]
         assert (len(self.images) == len(self.masks))
-        
-        
+
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
         target = Image.open(self.masks[index])

@@ -22,7 +22,7 @@ def test_model(args):
     print("Start testing model {} on {} dataset!".format(model_name, dataset_type))
     
     task = args.task
-    ckpts_path = "ckpts"
+    ckpts_path = args.experiment
     weight_path = os.path.join(root, ckpts_path, "{}_{}_{}.pth".format(model_name, dataset_type, task))
     
     model.load_state_dict(torch.load(weight_path, map_location=device))
@@ -82,6 +82,7 @@ def parse_args():
     parse.add_argument('--model', type=str, default="pointnet")
     
     # testing
+    parse.add_argument('--experiment', type=str, required=True)
     parse.add_argument('--device', type=str, default="cuda")
     args = parse.parse_args()
     return args

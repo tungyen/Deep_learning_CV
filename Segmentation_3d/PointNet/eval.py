@@ -15,7 +15,7 @@ def eval_model(args):
     dataset_type = args.dataset
     args = setup_args_with_dataset(dataset_type, args)
     task = args.task
-    ckpts_path = "ckpts"
+    ckpts_path = args.experiment
     weight_path = os.path.join(root, ckpts_path, "{}_{}_{}.pth".format(model_name, dataset_type, task))
     
     print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
@@ -96,6 +96,7 @@ def parse_args():
     parse.add_argument('--model', type=str, default="pointnet")
     
     # Eval
+    parse.add_argument('--experiment', type=str, required=True)
     parse.add_argument('--device', type=str, default="cuda")
     args = parse.parse_args()
     return args

@@ -4,21 +4,24 @@ import numpy as np
 from tqdm import tqdm
 import argparse
 
+from Segmentation_2d.optimizer import get_scheduler
+from Segmentation_2d.loss import get_loss
 from Segmentation_2d.dataset.utils import get_dataset
-from Segmentation_2d.utils import get_model, get_criterion, get_scheduler, setup_args_with_dataset
+from Segmentation_2d.utils import get_model, setup_args_with_dataset
 from Segmentation_2d.metrics import compute_image_seg_metrics
 
 def train_model(args):
+    ckpts_path = args.experiment
     root = os.path.dirname(os.path.abspath(__file__))
-    os.makedirs(os.path.join(root, "ckpts"), exist_ok=True)
+    os.makedirs(os.path.join(root, ckpts_path), exist_ok=True)
     model_name = args.model
     dataset_type = args.dataset
     args = setup_args_with_dataset(dataset_type, args)
     
     if dataset_type == 'cityscapes':
-        weight_path = os.path.join(root, "ckpts", "{}_{}.pth".format(model_name, dataset_type))
+        weight_path = os.path.join(root, ckpts_path, "{}_{}.pth".format(model_name, dataset_type))
     elif dataset_type == 'voc':
-        weight_path = os.path.join(root, "ckpts", "{}_{}_{}.pth".format(model_name, dataset_type, args.voc_year))
+        weight_path = os.path.join(root, ckpts_path, "{}_{}_{}.pth".format(model_name, dataset_type, args.voc_year))
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
 
@@ -35,7 +38,7 @@ def train_model(args):
         {'params': model.classifier.parameters(), 'lr': lr},
     ], lr=lr, momentum=momentum, weight_decay=weight_decay)
     scheduler = get_scheduler(args, optimizer)
-    criterion = get_criterion(args)
+    criterion = get_loss(args)
     
     print("Start training model {} on {} dataset!".format(model_name, dataset_type))
 
@@ -93,9 +96,9 @@ def train_model(args):
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="cityscapes")
+    parse.add_argument('--dataset', type=str, default="voc")
     parse.add_argument('--crop_size', type=int, default=513)
-    parse.add_argument('--voc_data_root', type=str, default="../../Dataset/VOC")
+    parse.add_argument('--voc_data_root', type=str, default="Dataset/VOC")
     parse.add_argument('--voc_year', type=str, default="2012_aug")
     parse.add_argument('--voc_download', type=bool, default=False)
     parse.add_argument('--voc_crop_val', type=bool, default=True)
@@ -107,14 +110,16 @@ def parse_args():
     parse.add_argument('--bn_momentum', type=float, default=0.1)
     
     # Training
+    parse.add_argument('--experiment', type=str, required=True)
     parse.add_argument('--epochs', type=int, default=200)
-    parse.add_argument('--batch_size', type=int, default=16)
     parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--scheduler', type=str, default="poly")
     parse.add_argument('--lr', type=float, default=0.01)
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--momentum', type=float, default=0.9)
     parse.add_argument('--step_size', type=int, default=70)
+    parse.add_argument('--loss_func', type=str, default="ce_lovasz")
+    parse.add_argument('--lovasz_alpha', type=float, default=0.5)
     args = parse.parse_args()
     return args
 

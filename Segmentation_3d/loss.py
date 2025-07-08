@@ -25,8 +25,6 @@ class FocalLoss(nn.Module):
         focal_loss = self.alpha * (1-pt) ** self.gamma * CE_loss
         if self.lovasz_alpha is not None:
             lovasz_loss = LovaszSoftmaxLoss(logits, labels)
-            # print("Lovasz Softmax Loss: ", lovasz_loss)
-            # print("Focal Loss: ", focal_loss)
             focal_loss = (1.0 - self.lovasz_alpha) * focal_loss + self.lovasz_alpha * lovasz_loss
         if trans_feats is not None:
             mat_diff_loss = transform_reguliarzer(trans_feats)
@@ -43,9 +41,6 @@ class CrossEntropyLoss(nn.Module):
         loss = nn.CrossEntropyLoss()
         ce_loss = loss(logits, labels)
         if self.lovasz_alpha is not None:
-            lovasz_loss = LovaszSoftmaxLoss(logits, labels)
-            # print("Lovasz Softmax Loss: ", lovasz_loss)
-            # print("Cross Entropy Loss: ", ce_loss)
             ce_loss = (1.0 - self.lovasz_alpha) * ce_loss + self.lovasz_alpha * LovaszSoftmaxLoss(logits, labels)
         if trans_feats is not None:
             mat_diff_loss = transform_reguliarzer(trans_feats)

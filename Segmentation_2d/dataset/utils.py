@@ -6,8 +6,10 @@ from Segmentation_2d.dataset.voc import VocDataset, voc_class_dict
 
 def get_dataset(args):
     dataset_type = args.dataset
-    batch_size = args.batch_size
     crop_size = args.crop_size
+    train_batch_size = args.train_batch_size
+    eval_batch_size = args.eval_batch_size
+    test_batch_size = args.test_batch_size
     
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
@@ -75,9 +77,9 @@ def get_dataset(args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
         
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=eval_batch_size, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=True)
     
     mean = torch.tensor(mean).view(1, 3, 1, 1)
     std = torch.tensor(std).view(1, 3, 1, 1)

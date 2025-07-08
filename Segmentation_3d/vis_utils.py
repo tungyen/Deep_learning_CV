@@ -77,5 +77,5 @@ def visualize_pcloud(args, pcloud, color_maps, predict_class, save_path,
     plt.tight_layout()
     plt.subplots_adjust(top=0.9, bottom=0.05)
     fig.suptitle(model2title[args.model], fontsize=16)
-    plt.savefig(os.path.join(save_path, '{}_{}_{}2.png'.format(args.model, args.dataset, task)), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(save_path, '{}_{}_{}.png'.format(args.model, args.dataset, task)), dpi=300, bbox_inches='tight')
     plt.show()

@@ -12,7 +12,7 @@ from Segmentation_3d.loss import get_loss
 from Segmentation_3d.metrics import compute_pcloud_semseg_metrics, compute_pcloud_cls_metrics, compute_pcloud_partseg_metrics
 
 def train_model(args):
-    ckpts_path = "ckpts"
+    ckpts_path = args.experiment
     root = os.path.dirname(os.path.abspath(__file__))
     os.makedirs(os.path.join(root, ckpts_path), exist_ok=True)
     model_name = args.model
@@ -144,6 +144,7 @@ def parse_args():
     parse.add_argument('--model', type=str, default="pointnet")
     
     # training
+    parse.add_argument('--experiment', type=str, required=True)
     parse.add_argument('--epochs', type=int, default=200)
     parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--lr', type=float, default=1e-3)

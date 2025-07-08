@@ -13,11 +13,12 @@ def eval_model(args):
     dataset_type = args.dataset
     root = os.path.dirname(os.path.abspath(__file__))
     args = setup_args_with_dataset(dataset_type, args)
+    ckpts_path = args.experiment
     
     if dataset_type == 'cityscapes':
-        weight_path = os.path.join(root, "ckpts", "{}_{}.pth".format(model_name, dataset_type))
+        weight_path = os.path.join(root, ckpts_path, "{}_{}.pth".format(model_name, dataset_type))
     elif dataset_type == 'voc':
-        weight_path = os.path.join(root, "ckpts", "{}_{}_{}.pth".format(model_name, dataset_type, args.voc_year))
+        weight_path = os.path.join(root, ckpts_path, "{}_{}_{}.pth".format(model_name, dataset_type, args.voc_year))
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
@@ -53,7 +54,7 @@ def parse_args():
     # Dataset
     parse.add_argument('--dataset', type=str, default="cityscapes")
     parse.add_argument('--crop_size', type=int, default=513)
-    parse.add_argument('--voc_data_root', type=str, default="../../Dataset/VOC")
+    parse.add_argument('--voc_data_root', type=str, default="Dataset/VOC")
     parse.add_argument('--voc_year', type=str, default="2012_aug")
     parse.add_argument('--voc_download', type=bool, default=False)
     parse.add_argument('--voc_crop_val', type=bool, default=True)
@@ -65,7 +66,7 @@ def parse_args():
     parse.add_argument('--bn_momentum', type=float, default=0.1)
     
     # Validation
-    parse.add_argument('--batch_size', type=int, default=32)
+    parse.add_argument('--experiment', type=str, required=True)
     parse.add_argument('--device', type=str, default="cuda")
     args = parse.parse_args()
     return args

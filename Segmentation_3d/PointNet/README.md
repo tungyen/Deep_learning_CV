@@ -15,23 +15,23 @@ python setup.py build_ext --inplace
 For classification task, ModelNet40 is used.
 ### Training ###
 ```bash
-python Segmentation_3d/PointNet/train.py --dataset modelnet40 --model pointnet
-python Segmentation_3d/PointNet/train.py --dataset modelnet40 --model pointnet_plus_ssg
-python Segmentation_3d/PointNet/train.py --dataset modelnet40 --model pointnet_plus_msg
+python Segmentation_3d/PointNet/train.py --experiment ckpts --dataset modelnet40 --model pointnet
+python Segmentation_3d/PointNet/train.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/train.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_msg
 ```
 
 ### Evaluation ###
 ```bash
-python Segmentation_3d/PointNet/eval.py --dataset modelnet40 --model pointnet
-python Segmentation_3d/PointNet/eval.py --dataset modelnet40 --model pointnet_plus_ssg
-python Segmentation_3d/PointNet/eval.py --dataset modelnet40 --model pointnet_plus_msg
+python Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset modelnet40 --model pointnet
+python Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_msg
 ```
 
 ### Testing ###
 ```bash
-python Segmentation_3d/PointNet/test.py --dataset modelnet40 --model pointnet
-python Segmentation_3d/PointNet/test.py --dataset modelnet40 --model pointnet_plus_ssg
-python Segmentation_3d/PointNet/test.py --dataset modelnet40 --model pointnet_plus_msg
+python Segmentation_3d/PointNet/test.py --experiment ckpts --dataset modelnet40 --model pointnet
+python Segmentation_3d/PointNet/test.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/test.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_msg
 ```
 
 ### Result of Modelnet40 Dataset ###
@@ -47,23 +47,23 @@ python Segmentation_3d/PointNet/test.py --dataset modelnet40 --model pointnet_pl
 In this part, ShapeNetPart is used.
 ### Training ###
 ```bash
-python Segmentation_3d/PointNet/train.py --dataset shapenet --model pointnet
-python Segmentation_3d/PointNet/train.py --dataset shapenet --model pointnet_plus_ssg
-python Segmentation_3d/PointNet/train.py --dataset shapenet --model pointnet_plus_msg
+python Segmentation_3d/PointNet/train.py --experiment ckpts --dataset shapenet --model pointnet
+python Segmentation_3d/PointNet/train.py --experiment ckpts --dataset shapenet --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/train.py --experiment ckpts --dataset shapenet --model pointnet_plus_msg
 ```
 
 ### Evaluation ###
 ```bash
-python Segmentation_3d/PointNet/eval.py --dataset shapenet --model pointnet
-python Segmentation_3d/PointNet/eval.py --dataset shapenet --model pointnet_plus_ssg
-python Segmentation_3d/PointNet/eval.py --dataset shapenet --model pointnet_plus_msg
+python Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset shapenet --model pointnet
+python Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset shapenet --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset shapenet --model pointnet_plus_msg
 ```
 
 ### Testing ###
 ```bash
-python Segmentation_3d/PointNet/test.py --dataset shapenet --model pointnet
-python Segmentation_3d/PointNet/test.py --dataset shapenet --model pointnet_plus_ssg
-python Segmentation_3d/PointNet/test.py --dataset shapenet --model pointnet_plus_msg
+python Segmentation_3d/PointNet/test.py --experiment ckpts --dataset shapenet --model pointnet
+python Segmentation_3d/PointNet/test.py --experiment ckpts --dataset shapenet --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/test.py --experiment ckpts --dataset shapenet --model pointnet_plus_msg
 ```
 
 ### Result of Shapenet Dataset ###
@@ -79,23 +79,23 @@ python Segmentation_3d/PointNet/test.py --dataset shapenet --model pointnet_plus
 In this part, Chair Dataset and S3DIS are used. Following command is based on Chair Dataset. In semantic segmentation task, we use Lovasz Softmax Loss and Focal Loss:
 ### Training ###
 ```bash
-python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet --loss_func focal_lovasz
-python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet_plus_ssg --loss_func focal_lovasz
-python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet_plus_msg --loss_func focal_lovasz
+python Segmentation_3d/PointNet/train.py --experiment ckpts --dataset chair --model pointnet --loss_func focal_lovasz
+python Segmentation_3d/PointNet/train.py --experiment ckpts --dataset chair --model pointnet_plus_ssg --loss_func focal_lovasz
+python Segmentation_3d/PointNet/train.py --experiment ckpts --dataset chair --model pointnet_plus_msg --loss_func focal_lovasz
 ```
 
 ### Evaluation ###
 ```bash
-python Segmentation_3d/PointNet/eval.py --dataset chair --model pointnet
-python Segmentation_3d/PointNet/eval.py --dataset chair --model pointnet_plus_ssg
-python Segmentation_3d/PointNet/eval.py --dataset chair --model pointnet_plus_msg
+python Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset chair --model pointnet
+python Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset chair --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset chair --model pointnet_plus_msg
 ```
 
 ### Testing ###
 ```bash
-python Segmentation_3d/PointNet/test.py --dataset chair --model pointnet
-python Segmentation_3d/PointNet/test.py --dataset chair --model pointnet_plus_ssg
-python Segmentation_3d/PointNet/test.py --dataset chair --model pointnet_plus_msg
+python Segmentation_3d/PointNet/test.py --experiment ckpts --dataset chair --model pointnet
+python Segmentation_3d/PointNet/test.py --experiment ckpts --dataset chair --model pointnet_plus_ssg
+python Segmentation_3d/PointNet/test.py --experiment ckpts --dataset chair --model pointnet_plus_msg
 ```
 
 ### Result of Chair Dataset ###
