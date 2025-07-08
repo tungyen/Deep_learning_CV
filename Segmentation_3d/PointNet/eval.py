@@ -15,7 +15,7 @@ def eval_model(args):
     dataset_type = args.dataset
     args = setup_args_with_dataset(dataset_type, args)
     task = args.task
-    ckpts_path = "ckpts2"
+    ckpts_path = "ckpts"
     weight_path = os.path.join(root, ckpts_path, "{}_{}_{}.pth".format(model_name, dataset_type, task))
     
     print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))

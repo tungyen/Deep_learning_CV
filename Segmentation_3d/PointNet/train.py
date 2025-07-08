@@ -6,11 +6,13 @@ import os
 import numpy as np
 
 from Segmentation_3d.dataset.utils import get_dataset
-from Segmentation_3d.utils import get_model, get_loss, setup_args_with_dataset, get_scheduler
+from Segmentation_3d.utils import get_model, setup_args_with_dataset
+from Segmentation_3d.optimizer import get_scheduler
+from Segmentation_3d.loss import get_loss
 from Segmentation_3d.metrics import compute_pcloud_semseg_metrics, compute_pcloud_cls_metrics, compute_pcloud_partseg_metrics
 
 def train_model(args):
-    ckpts_path = "ckpts3"
+    ckpts_path = "ckpts"
     root = os.path.dirname(os.path.abspath(__file__))
     os.makedirs(os.path.join(root, ckpts_path), exist_ok=True)
     model_name = args.model
@@ -151,6 +153,7 @@ def parse_args():
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--scheduler', type=str, default="exp")
     parse.add_argument('--loss_func', type=str, default="focal")
+    parse.add_argument('--lovasz_alpha', type=float, default=0.6)
     args = parse.parse_args()
     return args
      

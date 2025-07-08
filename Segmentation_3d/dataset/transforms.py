@@ -24,7 +24,7 @@ def random_rotate_pclouds(pclouds):
     pclouds = np.dot(pclouds, rot_matrix)
     return pclouds, rot_matrix
 
-def random_jitter_pclouds(pclouds, sigma=0.01, clip=0.05):
+def random_jitter_pclouds(pclouds, sigma=0.01, clip=0.02):
     return pclouds + np.clip(sigma * np.random.randn(*pclouds.shape), -clip, clip)
 
 def random_dropout(indices, max_dropout=0.95):

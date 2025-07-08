@@ -76,12 +76,12 @@ python Segmentation_3d/PointNet/test.py --dataset shapenet --model pointnet_plus
 
 ## Semantic Segmentation ##
 
-In this part, Chair Dataset and S3DIS are used. Following command is based on Chair Dataset.
+In this part, Chair Dataset and S3DIS are used. Following command is based on Chair Dataset. In semantic segmentation task, we use Lovasz Softmax Loss and Focal Loss:
 ### Training ###
 ```bash
-python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet
-python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet_plus_ssg
-python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet_plus_msg
+python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet --loss_func focal_lovasz
+python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet_plus_ssg --loss_func focal_lovasz
+python Segmentation_3d/PointNet/train.py --dataset chair --model pointnet_plus_msg --loss_func focal_lovasz
 ```
 
 ### Evaluation ###

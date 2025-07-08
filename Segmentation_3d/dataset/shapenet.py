@@ -82,7 +82,7 @@ class ShapeNetDataset(Dataset):
                 # if self.normal_channel:
                 #     pclouds[:, 3:] = np.dot(pclouds[:, 3:], rotate_matrix)
                 pclouds[:, :3] = random_scale_pclouds(pclouds[:, :3])
-                pclouds[:, :3] = random_shift_pclouds(pclouds[:, :3])
+                pclouds[:, :3] = random_jitter_pclouds(pclouds[:, :3])
 
             pclouds = np.transpose(pclouds)
             seg_labels = seg_labels[farthest_indexes]
