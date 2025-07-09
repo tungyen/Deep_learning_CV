@@ -47,7 +47,7 @@ class S3disStatic(Dataset):
         block_data = prepare_input(block_xyz, block_rgb, xcenter, ycenter, room_xyz_max)
 
         farthest_indexes = get_fps_indexes(block_data[:, :3], self.n_points)
-        farthest_indexes = random_dropout(farthest_indexes, self.max_dropout)
+        farthest_indexes = random_dropout(farthest_indexes.numpy(), self.max_dropout)
 
         pclouds = block_data[farthest_indexes].transpose()
         seg_labels = block_gt[farthest_indexes]
