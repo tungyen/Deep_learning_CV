@@ -118,7 +118,7 @@ class AtrousSeparableConvolution(nn.Module):
             nn.Conv2d(in_channel, out_channel, kernel_size=1, stride=1, padding=0, bias=bias)
         )
         
-        self.init_weight()
+        self._init_weight()
         
     def forward(self, x):
         return self.layer(x)

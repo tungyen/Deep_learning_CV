@@ -154,7 +154,7 @@ def parse_args():
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--scheduler', type=str, default="exp")
     parse.add_argument('--loss_func', type=str, default="focal")
-    parse.add_argument('--lovasz_alpha', type=float, default=0.6)
+    parse.add_argument('--lovasz_weight', type=float, default=1.5)
     args = parse.parse_args()
     return args
      

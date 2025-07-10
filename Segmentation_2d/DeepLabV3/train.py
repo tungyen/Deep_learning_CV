@@ -118,8 +118,9 @@ def parse_args():
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--momentum', type=float, default=0.9)
     parse.add_argument('--step_size', type=int, default=70)
-    parse.add_argument('--loss_func', type=str, default="ce_lovasz")
-    parse.add_argument('--lovasz_alpha', type=float, default=0.5)
+    parse.add_argument('--loss_func', type=str, default="ce")
+    parse.add_argument('--lovasz_weight', type=float, default=1.5)
+    parse.add_argument('--boundary_weight', type=float, default=1.0)
     args = parse.parse_args()
     return args
 

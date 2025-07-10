@@ -35,7 +35,7 @@ def setup_args_with_dataset(dataset_type, args):
     elif dataset_type == 'voc':
         args.class_num = 21
         args.ignore_idx = 255
-        args.train_batch_size = 32
+        args.train_batch_size = 12
         args.eval_batch_size = 16
         args.test_batch_size = 4
     else:

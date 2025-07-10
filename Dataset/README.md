@@ -6,8 +6,11 @@ This is the introduction for every dataset used in this repo, and the guideline 
 ## Image ##
 
 ### Cityscapes ###
-Go to the official website [CityScapes](https://www.cityscapes-dataset.com/downloads/) for downloading. Unzip it under `Dataset/cityscapes`.
-
+Go to the official website [CityScapes](https://www.cityscapes-dataset.com/downloads/) for downloading. Unzip it under `Dataset/cityscapes`. And then run the following command:
+```bash
+cd Dataset
+python prepare_cityscapes.py
+```
 
 ### LandScape ###
 Go to the [Landscape Dataset](https://www.kaggle.com/datasets/arnaud58/landscape-pictures) for downloading, and unzip it as `Dataset/landscape`
