@@ -1,12 +1,11 @@
-import torch
 from tqdm import tqdm
-import os
 import argparse
 import numpy as np
+import os
+import torch
 
-from Segmentation_3d.dataset.utils import get_dataset
-from Segmentation_3d.utils import get_model, setup_args_with_dataset
-from Segmentation_3d.metrics import compute_pcloud_semseg_metrics, compute_pcloud_cls_metrics, compute_pcloud_partseg_metrics
+from Object_detection_2d.dataset.utils import get_dataset
+from Object_detection_2d.utils import get_model, setup_args_with_dataset
 
 def eval_model(args):
     root = os.path.dirname(os.path.abspath(__file__))
@@ -29,7 +28,7 @@ def eval_model(args):
     all_labels = []
     
     with torch.no_grad():
-        for pclouds, *labels in tqdm(val_dataloader, desc="Evaluation"):
+        for pclouds, *labels in tqdm(val_dataloader):
             # Semantic Segmentation or Classification
             if len(labels) == 1:
                 labels = labels[0]

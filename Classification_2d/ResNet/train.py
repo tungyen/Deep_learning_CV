@@ -43,14 +43,14 @@ def train_model(args):
         
         # Train
         model.train()
-        for imgs, labels in tqdm(train_dataloader):
-            optimizer.zero_grad()
-            logits = model(imgs.to(device))
-            loss = criterion(logits, labels.to(device))
-            loss.backward()
-            optimizer.step()
-
-        print("Epoch {}-training loss===>{:.4f}".format(epoch+1, loss.item()))
+        with tqdm(train_dataloader, desc="Training") as pbar:
+            for imgs, labels in tqdm(train_dataloader):
+                optimizer.zero_grad()
+                logits = model(imgs.to(device))
+                loss = criterion(logits, labels.to(device))
+                loss.backward()
+                optimizer.step()
+                pbar.set_postfix(loss=f"{loss.item():.4f}")
 
         # Validation
         model.eval()
@@ -58,7 +58,7 @@ def train_model(args):
         all_labels = []
         
         with torch.no_grad():
-            for imgs, labels in tqdm(val_dataloader):
+            for imgs, labels in tqdm(val_dataloader, desc="Evaluation"):
                 outputs = model(imgs.to(device))
                 pred_classes = torch.argmax(outputs, dim=1)
                 

@@ -88,7 +88,7 @@ def voc_cmap(N=256, normalized=False):
     cmap = cmap/255 if normalized else cmap
     return cmap
 
-class VocDataset(Dataset):
+class VocSegmentationDataset(Dataset):
     cmap = voc_cmap()
     def __init__(self, root, year='2012', split='train', download=False, transform=None):
         is_aug = False

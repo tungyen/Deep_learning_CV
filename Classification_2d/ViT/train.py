@@ -54,22 +54,23 @@ def train_model(args):
     for epoch in range(epochs):
         print("Epoch {} start now!".format(epoch+1))
         # Train
-        for imgs, labels in tqdm(train_dataloader):
-            imgs, labels = imgs.to(device), labels.to(device)
-            outputs = model(imgs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            opt.step()  
-            opt.zero_grad()
-        scheduler.step()
-        print("Epoch {}-training loss===>{:.4f}".format(epoch+1, loss.item()))
+        with tqdm(train_dataloader, desc="Training") as pbar:
+            for imgs, labels in pbar:
+                imgs, labels = imgs.to(device), labels.to(device)
+                outputs = model(imgs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                opt.step()  
+                opt.zero_grad()
+                pbar.set_postfix(loss=f"{loss.item():.4f}")
+            scheduler.step()
         
         # Validation
         all_preds = []
         all_labels = []
         
         with torch.no_grad():
-            for imgs, labels in tqdm(val_dataloader):
+            for imgs, labels in tqdm(val_dataloader, desc="Evaluation"):
                 output = model(imgs.to(device))
                 pred_classes = torch.argmax(output, dim=1)
                 

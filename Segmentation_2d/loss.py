@@ -76,39 +76,41 @@ class LovaszSoftmaxLoss(nn.Module):
         return probs[valid], labels[valid]
 
 class BoundaryLoss(nn.Module):
-    def __init__(self, kernel_size=3, ignore_index=None):
+    def __init__(self, kernel_size=3, ignore_index=None, eps=1e-7):
         super().__init__()
-        self.pool = nn.MaxPool2d(kernel_size=kernel_size, stride=1, padding=kernel_size//2)
+        self.kernel_size = kernel_size
         self.ignore_index = ignore_index
+        self.eps = eps
     
     def get_boundary(self, mask: torch.Tensor) -> torch.Tensor:
-        pool_result = self.pool(mask)
-        boundary = pool_result - mask
-        return boundary.clamp(min=0, max=1)
+        boundary_map = F.max_pool2d(1 - mask, kernel_size=self.kernel_size, stride=1, padding=(self.kernel_size-1) // 2)
+        boundary_map = boundary_map - (1 - mask)
+        return boundary_map
     
     def forward(self, logits, labels):
         cls_num = logits.shape[1]
-        probs = F.softmax(logits, dim=1)
         
-        if self.ignore_index is not None:
-            valid_mask = (labels != self.ignore_index).unsqueeze(1).long()
-            labels = labels.clone()
-            labels *= valid_mask.squeeze()
+        valid_mask = (labels != self.ignore_index)
+        labels_clamped = labels.clone()
+        labels_clamped[~valid_mask] = 0
+        labels_onehot = F.one_hot(labels_clamped, cls_num).permute(0, 3, 1, 2).float()
+        labels_onehot = labels_onehot * valid_mask.unsqueeze(1).float()
+            
+        logits_boundary_map = self.get_boundary(logits)
+        labels_boundary_map = self.get_boundary(labels_onehot)
+        true_positive = torch.sum(labels_boundary_map * logits_boundary_map, dim=[2, 3])
+        precision = true_positive / (torch.sum(logits_boundary_map, dim=[2, 3]) + self.eps)
+        recall = true_positive / (torch.sum(labels_boundary_map, dim=[2, 3]) + self.eps)
+        
+        boundary_f1_score = 2 * precision * recall / (precision + recall + self.eps)
+        if self.ignore_index is not None and 0 <= self.ignore_index < cls_num:
+            boundary_f1_score[:, self.ignore_index] = 0
+            boundary_f1_score = torch.sum(boundary_f1_score, dim=1) / (cls_num - 1)
         else:
-            valid_mask = torch.ones_like(labels, dtype=torch.long).unsqueeze(1)
+            boundary_f1_score = torch.mean(boundary_f1_score, dim=1)
             
-        labels_onehot = F.one_hot(labels.clamp(min=0), num_classes=cls_num).permute(0, 3, 1, 2).float()
-        labels_onehot *= valid_mask
-        probs *= valid_mask
+        return torch.mean(1 - boundary_f1_score)
             
-        pred_boundary = self.get_boundary(probs)
-        labels_boundary = self.get_boundary(labels_onehot)
-        
-        smooth = 1.0
-        intersection = (pred_boundary * labels_boundary).sum(dim=(2, 3))
-        union = pred_boundary.sum(dim=(2, 3)) + labels_boundary.sum(dim=(2, 3))
-        dice_loss = 1 - (2.0 * intersection + smooth) / (union + smooth)
-        return dice_loss.mean()
     
 def get_loss(args):
     ignore_idx = args.ignore_idx

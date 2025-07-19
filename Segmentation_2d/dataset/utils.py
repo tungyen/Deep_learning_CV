@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader
 
 from Segmentation_2d.transforms import *
 from Segmentation_2d.dataset.cityscapes import CityScapesDataset, cityscapes_class_dict
-from Segmentation_2d.dataset.voc import VocDataset, voc_class_dict
+from Segmentation_2d.dataset.voc import VocSegmentationDataset, voc_class_dict
 
 def get_dataset(args):
     dataset_type = args.dataset
@@ -70,9 +70,9 @@ def get_dataset(args):
                 Normalize(mean=mean, std=std),
             ])
         
-        train_dataset = VocDataset(root=voc_data_root, year=voc_year, split='train', download=voc_download, transform=train_transform)
-        val_dataset = VocDataset(root=voc_data_root, year=voc_year, split='val', download=False, transform=val_transform)
-        test_dataset = VocDataset(root=voc_data_root, year=voc_year, split='val', download=False, transform=val_transform)
+        train_dataset = VocSegmentationDataset(root=voc_data_root, year=voc_year, split='train', download=voc_download, transform=train_transform)
+        val_dataset = VocSegmentationDataset(root=voc_data_root, year=voc_year, split='val', download=False, transform=val_transform)
+        test_dataset = VocSegmentationDataset(root=voc_data_root, year=voc_year, split='val', download=False, transform=val_transform)
         class_dict = voc_class_dict
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')

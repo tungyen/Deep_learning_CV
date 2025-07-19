@@ -32,6 +32,7 @@ def train_model(args):
     momentum = args.momentum
     
     model = get_model(args)
+    model.load_state_dict(torch.load(weight_path, map_location=device))
     train_dataloader, val_dataloader, _, class_dict, _, _ = get_dataset(args)
     optimizer = torch.optim.SGD(params=[
         {'params': model.backbone.parameters(), 'lr': 0.1 * lr},
@@ -46,33 +47,27 @@ def train_model(args):
     for epoch in range(epochs):
         print("Epoch {} start now!".format(epoch+1))
         model.train()
-        batch_losses = []
         
         # Train
-        for imgs, labels in tqdm(train_dataloader):
+        with tqdm(train_dataloader, desc="Training") as pbar:
+            for imgs, labels in pbar:
+                imgs = imgs.to(device)
+                labels = labels.type(torch.LongTensor).to(device)
+                outputs = model(imgs)
 
-            imgs = imgs.to(device)
-            labels = labels.type(torch.LongTensor).to(device)
-            outputs = model(imgs)
-
-            loss = criterion(outputs, labels)
-            loss_value = loss.data.cpu().numpy()
-            batch_losses.append(loss_value)
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            
-        scheduler.step()
-        epoch_loss = np.mean(batch_losses)
-        print("Epoch {}-training loss===>{:.4f}".format(epoch+1, epoch_loss))
+                loss = criterion(outputs, labels)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                pbar.set_postfix(loss=f"{loss.item():.4f}")
+            scheduler.step()
 
         # Validation
         model.eval()
         all_preds = []
         all_labels = []
         
-        for imgs, labels in tqdm(val_dataloader):
+        for imgs, labels in tqdm(val_dataloader, desc="Evaluation"):
             with torch.no_grad():
                 outputs = model(imgs.to(device))
                 pred_class = torch.argmax(outputs, dim=1)
@@ -105,7 +100,7 @@ def parse_args():
     parse.add_argument('--cityscapes_crop_val', type=bool, default=True)
     
     # Model
-    parse.add_argument('--model', type=str, default="deeplabv3plus")
+    parse.add_argument('--model', type=str, default="deeplabv3")
     parse.add_argument('--backbone', type=str, default="resnet101")
     parse.add_argument('--bn_momentum', type=float, default=0.1)
     

@@ -37,7 +37,7 @@ def eval_model(args):
     all_labels = []
     
     with torch.no_grad():
-        for imgs, labels in tqdm(val_dataloader):
+        for imgs, labels in tqdm(val_dataloader, desc="Evaluation"):
             outputs = model(imgs.to(device))
             pred_classes = torch.argmax(outputs, dim=1)
             

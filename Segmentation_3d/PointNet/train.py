@@ -40,33 +40,35 @@ def train_model(args):
             
     for epoch in range(epochs):
         print("Epoch {} start now!".format(epoch+1))
-        for pclouds, *labels in tqdm(train_dataloader):
-            pclouds = pclouds.to(device).float()
+        
+        with tqdm(train_dataloader, desc="Training") as pbar:
+            for pclouds, *labels in pbar:
+                pclouds = pclouds.to(device).float()
 
-            if len(labels) == 1:
-                labels = labels[0].to(device)
-                outputs, trans_feats = model(pclouds)
-            elif len(labels) == 2:
-                cls_labels, labels = labels
-                cls_labels = cls_labels.to(device)
-                labels = labels.to(device)
-                outputs, trans_feats = model(pclouds, cls_labels)
-            else:
-                raise ValueError(f'Too much input data.')
+                if len(labels) == 1:
+                    labels = labels[0].to(device)
+                    outputs, trans_feats = model(pclouds)
+                elif len(labels) == 2:
+                    cls_labels, labels = labels
+                    cls_labels = cls_labels.to(device)
+                    labels = labels.to(device)
+                    outputs, trans_feats = model(pclouds, cls_labels)
+                else:
+                    raise ValueError(f'Too much input data.')
 
-            loss = criterion(outputs, labels, trans_feats)
-            opt.zero_grad()
-            loss.backward()
-            opt.step()
-        scheduler.step()    
-        print("Epoch {}-training loss===>{:.4f}".format(epoch+1, loss.item()))
+                loss = criterion(outputs, labels, trans_feats)
+                opt.zero_grad()
+                loss.backward()
+                opt.step()
+                pbar.set_postfix(loss=f"{loss.item():.4f}")
+            scheduler.step()    
         
         # Validation
         all_preds = []
         all_labels = []
         
         with torch.no_grad():
-            for pclouds, *labels in tqdm(val_dataloader):
+            for pclouds, *labels in tqdm(val_dataloader, desc="Evaluation"):
                 # Semantic Segmentation or Classification
                 if len(labels) == 1:
                     labels = labels[0]
