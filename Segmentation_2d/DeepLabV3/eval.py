@@ -3,12 +3,20 @@ from tqdm import tqdm
 import argparse
 import os
 
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+
 from Segmentation_2d.dataset.utils import get_dataset
-from Segmentation_2d.utils import get_model, setup_args_with_dataset
+from Segmentation_2d.utils import get_model, setup_args_with_dataset, gather_tensor
 from Segmentation_2d.metrics import compute_image_seg_metrics
 
 
 def eval_model(args):
+    local_rank = int(os.environ["LOCAL_RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    rank = int(os.environ["RANK"])
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+
     model_name = args.model
     dataset_type = args.dataset
     root = os.path.dirname(os.path.abspath(__file__))
@@ -22,33 +30,39 @@ def eval_model(args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
-    device = args.device
     _, val_dataloader, _, class_dict, _, _ = get_dataset(args)
     model = get_model(args)
-    model.load_state_dict(torch.load(weight_path, map_location=device))
+    model.load_state_dict(torch.load(weight_path, map_location=local_rank))
+    model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     model.eval()
     
-    print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
+    if dist.get_rank() == 0:
+        print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
     
     all_preds = []
     all_labels = []
     
     with torch.no_grad():
-        for imgs, labels in tqdm(val_dataloader, desc="Evaluation"):
-            output = model(imgs.to(device))
+        for imgs, labels in tqdm(val_dataloader, desc="Evaluate", disable=dist.get_rank() != 0):
+            output = model(imgs.to(local_rank))
             pred_class = torch.argmax(output, dim=1)
             
-            all_preds.append(pred_class.cpu())
-            all_labels.append(labels)
+            all_preds.append(pred_class)
+            all_labels.append(labels.to(local_rank))
         
-    all_preds = torch.cat(all_preds).numpy()
-    all_labels = torch.cat(all_labels).numpy()
+    all_preds = torch.cat(all_preds)
+    all_labels = torch.cat(all_labels)
+
+    all_preds = gather_tensor(all_preds, world_size).cpu().numpy()
+    all_labels = gather_tensor(all_labels, world_size).cpu().numpy()
     
-    class_ious_dict, miou = compute_image_seg_metrics(args, all_preds, all_labels)
-    print("Validation mIoU===>{:.4f}".format(miou))
-    for cls, iou in class_ious_dict.items():
-        print("{} IoU: {:.4f}".format(class_dict[cls], iou))
-    
+    if dist.get_rank() == 0:
+        class_ious_dict, miou = compute_image_seg_metrics(args, all_preds, all_labels)
+        print("Validation mIoU===>{:.4f}".format(miou))
+        for cls, iou in class_ious_dict.items():
+            print("{} IoU: {:.4f}".format(class_dict[cls], iou))
+    dist.destroy_process_group()
+
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
@@ -67,7 +81,6 @@ def parse_args():
     
     # Validation
     parse.add_argument('--experiment', type=str, required=True)
-    parse.add_argument('--device', type=str, default="cuda")
     args = parse.parse_args()
     return args
 

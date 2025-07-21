@@ -1,20 +1,26 @@
 import torch.nn as nn
+import torch
+import torch.distributed as dist
 
 from Segmentation_2d.DeepLabV3.model import DeepLabV3, DeepLabV3Plus
+
+def gather_tensor(tensor, world_size):
+    gather_list = [torch.zeros_like(tensor) for _ in range(world_size)]
+    dist.all_gather(gather_list, tensor)
+    return torch.cat(gather_list, dim=0)
 
 def get_model(args):
     model_name = args.model
     class_num = args.class_num
-    device = args.device
     backbone = args.backbone
     momemtum = args.bn_momentum
     
     if model_name == "deeplabv3":
-        model = DeepLabV3(class_num=class_num, in_channel=2048, backbone=backbone).to(device)
+        model = DeepLabV3(class_num=class_num, in_channel=2048, backbone=backbone)
         set_bn_momentum(model.backbone, momentum=momemtum)
         return model
     elif model_name == "deeplabv3plus":
-        model = DeepLabV3Plus(class_num=class_num, in_channel=2048, backbone=backbone).to(device)
+        model = DeepLabV3Plus(class_num=class_num, in_channel=2048, backbone=backbone)
         set_bn_momentum(model.backbone, momentum=momemtum)
         return model
     else:
@@ -29,8 +35,8 @@ def setup_args_with_dataset(dataset_type, args):
     if dataset_type == 'cityscapes':
         args.class_num = 19
         args.ignore_idx = 19
-        args.train_batch_size = 16
-        args.eval_batch_size = 16
+        args.train_batch_size = 32
+        args.eval_batch_size = 32
         args.test_batch_size = 4
     elif dataset_type == 'voc':
         args.class_num = 21

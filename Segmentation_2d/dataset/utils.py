@@ -1,4 +1,6 @@
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
+import os
 
 from Segmentation_2d.transforms import *
 from Segmentation_2d.dataset.cityscapes import CityScapesDataset, cityscapes_class_dict
@@ -76,10 +78,17 @@ def get_dataset(args):
         class_dict = voc_class_dict
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
-        
-    train_dataloader = DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=eval_batch_size, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=True)
+    
+    local_rank = int(os.environ["LOCAL_RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    rank = int(os.environ["RANK"])
+    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+    val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, shuffle=False)
+    test_sampler = DistributedSampler(test_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+
+    train_dataloader = DataLoader(train_dataset, batch_size=train_batch_size // world_size, sampler=train_sampler)
+    val_dataloader = DataLoader(val_dataset, batch_size=eval_batch_size // world_size, sampler=val_sampler) 
+    test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size // world_size, sampler=test_sampler)
     
     mean = torch.tensor(mean).view(1, 3, 1, 1)
     std = torch.tensor(std).view(1, 3, 1, 1)

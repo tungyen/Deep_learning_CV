@@ -10,17 +10,25 @@ class CrossEntropyLoss(nn.Module):
         self.ignore_index = ignore_index
 
     def forward(self, logits, labels):
-        loss = nn.CrossEntropyLoss(ignore_index=self.ignore_index)
-        ce_loss = loss(logits, labels)
+        loss_dict = {}
+        CE = nn.CrossEntropyLoss(ignore_index=self.ignore_index)
+        ce_loss = CE(logits, labels)
+        total_loss = ce_loss
+        loss_dict['ce_loss'] = ce_loss
 
         if self.lovasz_weight is not None:
-            lovasz_loss = LovaszSoftmaxLoss(ignore_index=self.ignore_index)
-            ce_loss += self.lovasz_weight * lovasz_loss(logits, labels)
+            lovasz_softmax = LovaszSoftmaxLoss(ignore_index=self.ignore_index)
+            lovasz_softmax_loss = self.lovasz_weight * lovasz_softmax(logits, labels)
+            loss_dict['lovasz_softmax_loss'] = lovasz_softmax_loss
+            total_loss += lovasz_softmax_loss
             
         if self.boundary_weight is not None:
-            boundary_loss = BoundaryLoss(ignore_index=self.ignore_index)
-            ce_loss += self.boundary_weight * boundary_loss(logits, labels) 
-        return ce_loss
+            boundary = BoundaryLoss(ignore_index=self.ignore_index)
+            boundary_loss = self.boundary_weight * boundary(logits, labels)
+            loss_dict['boundary_loss'] = boundary_loss
+            total_loss += boundary_loss
+        loss_dict['loss'] = total_loss
+        return loss_dict
 
 class LovaszSoftmaxLoss(nn.Module):
     def __init__(self, classes='present', per_image=False, ignore_index=None):

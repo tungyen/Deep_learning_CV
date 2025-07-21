@@ -4,13 +4,21 @@ import numpy as np
 from tqdm import tqdm
 import argparse
 
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+
 from Segmentation_2d.optimizer import get_scheduler
 from Segmentation_2d.loss import get_loss
 from Segmentation_2d.dataset.utils import get_dataset
-from Segmentation_2d.utils import get_model, setup_args_with_dataset
+from Segmentation_2d.utils import get_model, setup_args_with_dataset, gather_tensor
 from Segmentation_2d.metrics import compute_image_seg_metrics
 
 def train_model(args):
+    local_rank = int(os.environ["LOCAL_RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    rank = int(os.environ["RANK"])
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+
     ckpts_path = args.experiment
     root = os.path.dirname(os.path.abspath(__file__))
     os.makedirs(os.path.join(root, ckpts_path), exist_ok=True)
@@ -25,41 +33,49 @@ def train_model(args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
 
-    device = args.device
     lr = args.lr
     epochs = args.epochs
     weight_decay = args.weight_decay
     momentum = args.momentum
     
-    model = get_model(args)
-    model.load_state_dict(torch.load(weight_path, map_location=device))
+    model = get_model(args).to(local_rank)
+    # model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
+    model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+    
     train_dataloader, val_dataloader, _, class_dict, _, _ = get_dataset(args)
     optimizer = torch.optim.SGD(params=[
-        {'params': model.backbone.parameters(), 'lr': 0.1 * lr},
-        {'params': model.classifier.parameters(), 'lr': lr},
+        {'params': model.module.backbone.parameters(), 'lr': 0.1 * lr},
+        {'params': model.module.classifier.parameters(), 'lr': lr},
     ], lr=lr, momentum=momentum, weight_decay=weight_decay)
     scheduler = get_scheduler(args, optimizer)
     criterion = get_loss(args)
     
-    print("Start training model {} on {} dataset!".format(model_name, dataset_type))
+    if dist.get_rank() == 0:
+        print("Start training model {} on {} dataset!".format(model_name, dataset_type))
 
     best_metric = 0.0
+    world_size = dist.get_world_size()
+
     for epoch in range(epochs):
-        print("Epoch {} start now!".format(epoch+1))
+        train_dataloader.sampler.set_epoch(epoch)
         model.train()
         
         # Train
-        with tqdm(train_dataloader, desc="Training") as pbar:
+        with tqdm(train_dataloader, desc=f"Train Epoch {epoch+1}", disable=dist.get_rank() != 0) as pbar:
             for imgs, labels in pbar:
-                imgs = imgs.to(device)
-                labels = labels.type(torch.LongTensor).to(device)
+                imgs = imgs.to(local_rank)
+                labels = labels.type(torch.LongTensor).to(local_rank)
                 outputs = model(imgs)
 
                 loss = criterion(outputs, labels)
                 optimizer.zero_grad()
-                loss.backward()
+                loss['loss'].backward()
                 optimizer.step()
-                pbar.set_postfix(loss=f"{loss.item():.4f}")
+                if dist.get_rank() == 0:
+                    pbar.set_postfix(total_loss=f"{loss['loss'].item():.4f}",
+                                     ce_loss=f"{loss['ce_loss'].item():.4f}",
+                                     lovasz_softmax_loss=f"{loss.get('lovasz_softmax_loss', 0).item():.4f}",
+                                     boundary_loss=f"{loss.get('boundary_loss', 0).item():.4f}")
             scheduler.step()
 
         # Validation
@@ -67,26 +83,29 @@ def train_model(args):
         all_preds = []
         all_labels = []
         
-        for imgs, labels in tqdm(val_dataloader, desc="Evaluation"):
+        for imgs, labels in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=dist.get_rank() != 0):
             with torch.no_grad():
-                outputs = model(imgs.to(device))
+                outputs = model(imgs.to(local_rank))
                 pred_class = torch.argmax(outputs, dim=1)
                 
-                all_preds.append(pred_class.cpu())
-                all_labels.append(labels)
+                all_preds.append(pred_class)
+                all_labels.append(labels.to(local_rank))
                 
-        all_preds = torch.cat(all_preds).numpy()
-        all_labels = torch.cat(all_labels).numpy()
+        all_preds = torch.cat(all_preds)
+        all_labels = torch.cat(all_labels)
+        all_preds = gather_tensor(all_preds, world_size).cpu().numpy()
+        all_labels = gather_tensor(all_labels, world_size).cpu().numpy()
 
-        class_ious_dict, miou = compute_image_seg_metrics(args, all_preds, all_labels)
-        print("Validation mIoU===>{:.4f}".format(miou))
-        for cls, iou in class_ious_dict.items():
-            print("{} IoU: {:.4f}".format(class_dict[cls], iou))
-            
-        if miou > best_metric:
-            best_metric = miou
-            torch.save(model.state_dict(), weight_path)
-    
+        if dist.get_rank() == 0:
+            class_ious_dict, miou = compute_image_seg_metrics(args, all_preds, all_labels)
+            print("Validation mIoU===>{:.4f}".format(miou))
+            for cls, iou in class_ious_dict.items():
+                print("{} IoU: {:.4f}".format(class_dict[cls], iou))
+                
+            if miou > best_metric:
+                best_metric = miou
+                torch.save(model.module.state_dict(), weight_path)
+    dist.destroy_process_group()
     
 def parse_args():
     parse = argparse.ArgumentParser()
@@ -107,15 +126,14 @@ def parse_args():
     # Training
     parse.add_argument('--experiment', type=str, required=True)
     parse.add_argument('--epochs', type=int, default=200)
-    parse.add_argument('--device', type=str, default="cuda")
     parse.add_argument('--scheduler', type=str, default="poly")
     parse.add_argument('--lr', type=float, default=0.01)
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--momentum', type=float, default=0.9)
     parse.add_argument('--step_size', type=int, default=70)
     parse.add_argument('--loss_func', type=str, default="ce")
-    parse.add_argument('--lovasz_weight', type=float, default=1.5)
-    parse.add_argument('--boundary_weight', type=float, default=1.0)
+    parse.add_argument('--lovasz_weight', type=float, default=0.5)
+    parse.add_argument('--boundary_weight', type=float, default=0.3)
     args = parse.parse_args()
     return args
 
