@@ -28,7 +28,7 @@ python setup.py build_ext --inplace
 
 ### ShapeNetPart ###
 | Model  | CE Weight| Lovasz Weight   | Instance mIoUs   | Class mIoUs
-|-------|-----|--------|----------|
+|-------|-----|--------|----------|--------|
 | PointNet | 1.0  | 1.5   | 68.28%   | 59.88%
 | PointNet++ SSG   | 1.0  | 1.5      | 68.24% | 63.31%
 | PointNet++ MSG | 1.0  | 1.5    | 70.33%   | 59.62%
