@@ -72,11 +72,13 @@ def train_model(args):
                 loss['loss'].backward()
                 optimizer.step()
                 if dist.get_rank() == 0:
-                    pbar.set_postfix(total_loss=f"{loss['loss'].item():.4f}",
-                                     ce_loss=f"{loss['ce_loss'].item():.4f}",
-                                     lovasz_softmax_loss=f"{loss.get('lovasz_softmax_loss', 0).item():.4f}",
-                                     boundary_loss=f"{loss.get('boundary_loss', 0).item():.4f}")
-            scheduler.step()
+                    pbar.set_postfix(
+                        total_loss=f"{loss['loss'].item():.4f}",
+                        ce_loss=f"{loss['ce_loss'].item():.4f}",
+                        lovasz_softmax_loss=f"{loss['lovasz_softmax_loss'].item():.4f}" if 'lovasz_softmax_loss' in loss else "0.0000",
+                        boundary_loss=f"{loss['boundary_loss'].item():.4f}" if 'boundary_loss' in loss else "0.0000"
+                    )
+                scheduler.step()
 
         # Validation
         model.eval()
@@ -110,8 +112,8 @@ def train_model(args):
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="voc")
-    parse.add_argument('--crop_size', type=int, default=513)
+    parse.add_argument('--dataset', type=str, default="cityscapes")
+    parse.add_argument('--crop_size', type=list, default=[512, 1024])
     parse.add_argument('--voc_data_root', type=str, default="Dataset/VOC")
     parse.add_argument('--voc_year', type=str, default="2012_aug")
     parse.add_argument('--voc_download', type=bool, default=False)
@@ -125,15 +127,16 @@ def parse_args():
     
     # Training
     parse.add_argument('--experiment', type=str, required=True)
-    parse.add_argument('--epochs', type=int, default=200)
+    parse.add_argument('--epochs', type=int, default=100)
     parse.add_argument('--scheduler', type=str, default="poly")
     parse.add_argument('--lr', type=float, default=0.01)
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--momentum', type=float, default=0.9)
     parse.add_argument('--step_size', type=int, default=70)
+    parse.add_argument('--max_iters', type=int, default=2e4)
     parse.add_argument('--loss_func', type=str, default="ce")
     parse.add_argument('--lovasz_weight', type=float, default=0.5)
-    parse.add_argument('--boundary_weight', type=float, default=0.3)
+    parse.add_argument('--boundary_weight', type=float, default=None)
     args = parse.parse_args()
     return args
 

@@ -10,6 +10,36 @@ cd model/utils
 python setup.py build_ext --inplace
 ```
 
+## Experiment ##
+
+### Chair ###
+| Model  | CE Weight| Lovasz Weight   | mIoUs   |
+|-------|-----|--------|----------|
+| PointNet | 1.0  | 1.5   | 78.45%   |
+| PointNet++ SSG   | 1.0  | 1.5      | 85.51% |
+| PointNet++ MSG | 1.0  | 1.5    | 87.15%   |
+
+### ModelNet40 ###
+| Model  | CE Weight| Lovasz Weight   | mIoUs   | Precision | Recall
+|-------|-----|--------|----------|--------|---------|
+| PointNet | 1.0  | 1.5   | 95.52%   |||
+| PointNet++ SSG   | 1.0  | 1.5      | 92.53% |||
+| PointNet++ MSG | 1.0  | 1.5    | 95.52%   |||
+
+### ShapeNetPart ###
+| Model  | CE Weight| Lovasz Weight   | Instance mIoUs   | Class mIoUs
+|-------|-----|--------|----------|
+| PointNet | 1.0  | 1.5   | 68.28%   | 59.88%
+| PointNet++ SSG   | 1.0  | 1.5      | 68.24% | 63.31%
+| PointNet++ MSG | 1.0  | 1.5    | 70.33%   | 59.62%
+
+### S3DIS ###
+| Model  | CE Weight| Lovasz Weight   | mIoUs   |
+|-------|-----|--------|----------|
+| PointNet | 1.0  | 1.5   | 92.44%   |
+| PointNet++ SSG   | 1.0  | 1.5      | 92.53% |
+| PointNet++ MSG | 1.0  | 1.5    | 95.52%   |
+
 ## Classification ##
 
 For classification task, ModelNet40 is used.

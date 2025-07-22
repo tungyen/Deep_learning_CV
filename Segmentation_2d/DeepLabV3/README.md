@@ -1,6 +1,15 @@
 # DeepLabV3 #
 First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the cityscapes dataset. This part includes DeepLabV3 and DeepLabV3+ model for image semantic segmentation. For the first time use of Paskal VOC dataset, please add argument --voc_download True to download dataset under Dataset folder.To download different year of Paskal VOC dataset, change voc_year in argument. And remember to add train_aug.txt under Dataset/VOC/VOCdevkit/VOC2012/train_aug.txt. The detail is also in the link above.
 
+## Experiment ##
+
+### CityScapes dataset ###
+| Model  | CE | Lovasz     | Boundary             | mIoUs   |
+|-------|-----|----------|-------------------|----------|
+| DeepLabV3 | 1.0  | None | None   | 57.71%   |
+| DeepLabV3   | 1.0  | 0.5   | None      | 58.9% |
+| DeepLabV3 | 1.0  | 1.0    | None    | 59.52%   |
+| DeepLabV3 | 1.0  | 1.0    | 0.3    | 59.52%   |
 
 ## Training ##
 ```bash

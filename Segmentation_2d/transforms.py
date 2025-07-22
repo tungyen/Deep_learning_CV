@@ -53,7 +53,7 @@ class CenterCrop(object):
         if isinstance(size, numbers.Number):
             self.size = (int(size), int(size))
         else:
-            self.size = size
+            self.size = tuple(size)
 
     def __call__(self, img, label):
         return F.center_crop(img, self.size), F.center_crop(label, self.size)
@@ -208,8 +208,7 @@ class RandomCrop(object):
     
 class Resize(object):
     def __init__(self, size, interpolation=Image.BILINEAR):
-        assert isinstance(size, int) or (isinstance(size, collections.Iterable) and len(size) == 2)
-        self.size = size
+        self.size = tuple(size)
         self.interpolation = interpolation
 
     def __call__(self, img, label):

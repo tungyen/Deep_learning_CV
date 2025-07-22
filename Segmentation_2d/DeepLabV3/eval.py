@@ -31,8 +31,8 @@ def eval_model(args):
         raise ValueError(f'Unknown dataset {dataset_type}.')
     
     _, val_dataloader, _, class_dict, _, _ = get_dataset(args)
-    model = get_model(args)
-    model.load_state_dict(torch.load(weight_path, map_location=local_rank))
+    model = get_model(args).to(local_rank)
+    model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     model.eval()
     
@@ -67,7 +67,7 @@ def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="cityscapes")
-    parse.add_argument('--crop_size', type=int, default=513)
+    parse.add_argument('--crop_size', type=list, default=[512, 1024])
     parse.add_argument('--voc_data_root', type=str, default="Dataset/VOC")
     parse.add_argument('--voc_year', type=str, default="2012_aug")
     parse.add_argument('--voc_download', type=bool, default=False)

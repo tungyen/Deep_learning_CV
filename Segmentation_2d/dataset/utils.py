@@ -21,7 +21,7 @@ def get_dataset(args):
         meta_path = "Dataset/cityscapes/meta"
         
         train_transform = Compose([
-            RandomCrop(size=(crop_size, crop_size)),
+            RandomCrop(size=crop_size),
             ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
             RandomHorizontalFlip(),
             ToTensor(),
