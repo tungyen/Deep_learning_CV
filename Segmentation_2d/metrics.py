@@ -1,27 +1,43 @@
-import numpy as np
+import torch
 
-def compute_image_seg_metrics(args, all_preds, all_labels):
-    class_num = args.class_num
-    all_preds = all_preds.reshape(-1)
-    all_labels = all_labels.reshape(-1)
-    class_ious = []
-    class_ious_dict = {}
+class ConfusionMatrix:
+    def __init__(self, class_num, ignore_index=None, eps=1e-7, device='cpu'):
+        self.class_num = class_num
+        self.ignore_index = ignore_index
+        self.eps = eps
+        self.device = device
+        self.confusion_matrix = torch.zeros((class_num, class_num), dtype=torch.int64, device=device)
 
-    for cls in range(class_num):
-        pred_mask = (all_preds == cls)
-        target_mask = (all_labels == cls)
+    def update(self, preds, labels):
+        preds = preds.view(-1).to(torch.int64)
+        labels = labels.view(-1).to(torch.int64)
 
-        intersection = np.logical_and(pred_mask, target_mask).sum()
-        union = np.logical_or(pred_mask, target_mask).sum()
+        if self.ignore_index is not None:
+            mask = labels != self.ignore_index
+            preds = preds[mask]
+            labels = labels[mask]
 
-        if union == 0:
-            iou = 0.0
-        else:
-            iou = intersection / union
-        
-        class_ious.append(iou)
-        class_ious_dict[cls] = iou
+        indexes = self.class_num * labels + preds
+        cm = torch.bincount(indexes, minlength=self.class_num ** 2)
+        cm = cm.reshape(self.class_num, self.class_num)
+        self.confusion_matrix += cm
 
-    # Compute mean IoU for each class
-    miou = np.mean(class_ious)
-    return class_ious_dict, miou
+    def compute_metrics(self):
+        TP = self.confusion_matrix.diag()
+        FP = self.confusion_matrix.sum(0) - TP
+        FN = self.confusion_matrix.sum(1) - TP
+        ious = TP.float() / (TP + FP + FN + self.eps)
+        precision = TP.float() / (TP + FP + self.eps)
+        recall = TP.float() / (TP + FN + self.eps)
+
+        return {
+            'ious': ious,
+            'mious': ious.mean(),
+            'precision': precision,
+            'mean_precision': precision.mean(),
+            'recall': recall,
+            'mean_recall': recall.mean(),
+        }
+    
+    def reset(self):
+        self.confusion_matrix.zero_()

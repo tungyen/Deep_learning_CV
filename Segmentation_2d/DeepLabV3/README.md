@@ -4,12 +4,13 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 ## Experiment ##
 
 ### CityScapes dataset ###
-| Model  | CE | Lovasz     | Boundary             | mIoUs   |
+| Model  | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
 |-------|-----|----------|-------------------|----------|
-| DeepLabV3 | 1.0  | None | None   | 57.71%   |
-| DeepLabV3   | 1.0  | 0.5   | None      | 58.9% |
-| DeepLabV3 | 1.0  | 1.0    | None    | 59.52%   |
-| DeepLabV3 | 1.0  | 1.0    | 0.3    | 59.52%   |
+| DeepLabV3 | 1.0  | None | None   | 63.43%   |
+| DeepLabV3   | 1.0  | 0.5   | None      | 64.92% |
+| DeepLabV3 | 1.0  | 1.0    | None    | 65.38%   |
+| DeepLabV3 | 1.0  | 1.0    | 0.3    | 65.49%   |
+| DeepLabV3 | 1.0  | 1.5   | 0.5    | 66.55%   |
 
 ## Training ##
 ```bash

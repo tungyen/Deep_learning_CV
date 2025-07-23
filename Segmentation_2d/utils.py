@@ -1,13 +1,7 @@
 import torch.nn as nn
 import torch
-import torch.distributed as dist
 
 from Segmentation_2d.DeepLabV3.model import DeepLabV3, DeepLabV3Plus
-
-def gather_tensor(tensor, world_size):
-    gather_list = [torch.zeros_like(tensor) for _ in range(world_size)]
-    dist.all_gather(gather_list, tensor)
-    return torch.cat(gather_list, dim=0)
 
 def weights_init_xavier(m):
     classname = m.__class__.__name__

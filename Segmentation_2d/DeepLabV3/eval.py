@@ -7,8 +7,8 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from Segmentation_2d.dataset.utils import get_dataset
-from Segmentation_2d.utils import get_model, setup_args_with_dataset, gather_tensor
-from Segmentation_2d.metrics import compute_image_seg_metrics
+from Segmentation_2d.utils import get_model, setup_args_with_dataset
+from Segmentation_2d.metrics import ConfusionMatrix
 
 
 def eval_model(args):
@@ -36,31 +36,21 @@ def eval_model(args):
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     model.eval()
     
+    confusion_matrix = ConfusionMatrix(class_num=args.class_num, ignore_index=args.ignore_idx)
     if dist.get_rank() == 0:
         print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
-    
-    all_preds = []
-    all_labels = []
     
     with torch.no_grad():
         for imgs, labels in tqdm(val_dataloader, desc="Evaluate", disable=dist.get_rank() != 0):
             output = model(imgs.to(local_rank))
             pred_class = torch.argmax(output, dim=1)
-            
-            all_preds.append(pred_class)
-            all_labels.append(labels.to(local_rank))
-        
-    all_preds = torch.cat(all_preds)
-    all_labels = torch.cat(all_labels)
-
-    all_preds = gather_tensor(all_preds, world_size).cpu().numpy()
-    all_labels = gather_tensor(all_labels, world_size).cpu().numpy()
+            confusion_matrix.update(pred_class.cpu(), labels)
     
     if dist.get_rank() == 0:
-        class_ious_dict, miou = compute_image_seg_metrics(args, all_preds, all_labels)
-        print("Validation mIoU===>{:.4f}".format(miou))
-        for cls, iou in class_ious_dict.items():
-            print("{} IoU: {:.4f}".format(class_dict[cls], iou))
+        metrics = confusion_matrix.compute_metrics()
+        print("Validation mIoU of {} on {} ===>{:.4f}".format(model_name, dataset_type, metrics['mious'].item()))
+        for i, iou in enumerate(metrics['ious']):
+            print("{} IoU: {:.4f}".format(class_dict[i], iou))
     dist.destroy_process_group()
 
 def parse_args():

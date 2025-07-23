@@ -2,15 +2,22 @@ import torch
 from tqdm import tqdm
 import os
 import argparse
-import numpy as np
+
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 from Segmentation_3d.dataset.utils import get_dataset
 from Segmentation_3d.utils import get_model, setup_args_with_dataset
 from Segmentation_3d.metrics import compute_pcloud_semseg_metrics, compute_pcloud_cls_metrics, compute_pcloud_partseg_metrics
+from Segmentation_3d.metrics import ConfusionMatrix
 
 def eval_model(args):
+    local_rank = int(os.environ["LOCAL_RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    rank = int(os.environ["RANK"])
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+
     root = os.path.dirname(os.path.abspath(__file__))
-    device = args.device
     model_name = args.model
     dataset_type = args.dataset
     args = setup_args_with_dataset(dataset_type, args)
@@ -18,64 +25,61 @@ def eval_model(args):
     ckpts_path = args.experiment
     weight_path = os.path.join(root, ckpts_path, "{}_{}_{}.pth".format(model_name, dataset_type, task))
     
-    print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
+    if dist.get_rank() == 0:
+        print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
     _, val_dataloader, _, class_dict = get_dataset(args)
-    model = get_model(args)
-    model.load_state_dict(torch.load(weight_path, map_location=device))
+    model = get_model(args).to(local_rank)
+    model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
+    model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     model.eval()
     
-    # Validation
-    all_preds = []
-    all_labels = []
+    if args.task[-3:] == "seg":
+        confusion_matrix = ConfusionMatrix(class_num=args.seg_class_num)
+    else:
+        confusion_matrix = ConfusionMatrix(class_num=args.cls_class_num)
     
     with torch.no_grad():
-        for pclouds, *labels in tqdm(val_dataloader, desc="Evaluation"):
+        for pclouds, *labels in tqdm(val_dataloader, desc="Evaluation", disable=dist.get_rank() != 0):
             # Semantic Segmentation or Classification
             if len(labels) == 1:
                 labels = labels[0]
-                outputs, _ = model(pclouds.to(device))
+                outputs, _ = model(pclouds.to(local_rank))
                 pred_classes = torch.argmax(outputs, dim=1).cpu()
             # Part Segmentation
             elif len(labels) == 2:
                 cls_labels, labels = labels
                 instance2parts, _, label2class = class_dict
-                outputs, _ = model(pclouds.to(device), cls_labels.to(device))
-                outputs = outputs.cpu().numpy()
-                pred_classes = np.zeros((outputs.shape[0], outputs.shape[2])).astype(np.int32)
+                outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
+                outputs = outputs.cpu()
+                pred_classes = torch.zeros((outputs.shape[0], outputs.shape[2])).astype(torch.int64)
                 for i in range(outputs.shape[0]):
                     instance = label2class[cls_labels[i].item()]
                     logits = outputs[i, :, :]
-                    pred_classes[i, :] = np.argmax(logits[instance2parts[instance], :], 0) + instance2parts[instance][0]
+                    pred_classes[i, :] = torch.argmax(logits[instance2parts[instance], :], 0) + instance2parts[instance][0]
             else:
                 raise ValueError(f'Too much input data.')
+            confusion_matrix.update(pred_classes.cpu(), labels)
 
-            all_preds.append(pred_classes)
-            all_labels.append(labels)
+    if dist.get_rank() == 0:
+        metrics = confusion_matrix.compute_metrics()
+        if task == "cls":
+            precision = metrics['mean_precision']
+            recall = metrics['mean_recall']
+            print("Validation Precision of {} on {} ===> {:.4f}".format(model_name, dataset_type, precision))
+            print("Validation Recall of {} on {} ===> {:.4f}".format(model_name, dataset_type, recall))
 
-    if task == "cls":
-        all_preds = torch.cat(all_preds).numpy()
-        all_labels = torch.cat(all_labels).numpy()
-        accuracy, precision, recall = compute_pcloud_cls_metrics(args, all_preds, all_labels)
-        print("Validation Accuracy===>{:.4f}".format(accuracy))
-        print("Validation Precision===>{:.4f}".format(precision))
-        print("Validation Recall===>{:.4f}".format(recall))
+        elif task == "semseg":
+            ious = metrics['ious']
+            mious = metrics['mious']
+            print("Validation mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, mious))
+            for cls in class_dict:
+                print("{} IoU: {:.4f}".format(class_dict[cls], ious[cls]))
 
-    elif task == "semseg":
-        all_preds = torch.cat(all_preds).numpy()
-        all_labels = torch.cat(all_labels).numpy()
-        class_ious, miou = compute_pcloud_semseg_metrics(args, all_preds, all_labels)
-        print("Validation mIoU===>{:.4f}".format(miou))
-        for cls in class_dict:
-            print("{} IoU: {:.4f}".format(class_dict[cls], class_ious[cls]))
-            
-    elif task == 'partseg':
-        instance_ious, instance_mious, class_mious = compute_pcloud_partseg_metrics(all_preds, all_labels, class_dict)
-        print("Validation instance mIoU===>{:.4f}".format(instance_mious))
-        print("Validation class mIoU===>{:.4f}".format(class_mious))
-        for instance, miou in instance_ious.items():
-            print("{} instance mIoU: {:.4f}".format(instance, miou))
-    else:
-        raise ValueError(f'Unknown segmentation task {task}.')  
+        elif task == 'partseg':
+            pass
+        else:
+            raise ValueError(f'Unknown segmentation task {task}.')  
+    dist.destroy_process_group()
 
 def parse_args():
     parse = argparse.ArgumentParser()
@@ -97,7 +101,6 @@ def parse_args():
     
     # Eval
     parse.add_argument('--experiment', type=str, required=True)
-    parse.add_argument('--device', type=str, default="cuda")
     args = parse.parse_args()
     return args
         

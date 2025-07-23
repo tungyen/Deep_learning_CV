@@ -15,8 +15,8 @@ python setup.py build_ext --inplace
 ### Chair ###
 | Model  | CE Weight| Lovasz Weight   | mIoUs   |
 |-------|-----|--------|----------|
-| PointNet | 1.0  | 1.5   | 78.45%   |
-| PointNet++ SSG   | 1.0  | 1.5      | 85.51% |
+| PointNet | 1.0  | 1.5   | 79.67%   |
+| PointNet++ SSG   | 1.0  | 1.5      | % |
 | PointNet++ MSG | 1.0  | 1.5    | 87.15%   |
 
 ### ModelNet40 ###

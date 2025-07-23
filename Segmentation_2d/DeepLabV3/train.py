@@ -10,8 +10,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from Segmentation_2d.optimizer import get_scheduler
 from Segmentation_2d.loss import get_loss
 from Segmentation_2d.dataset.utils import get_dataset
-from Segmentation_2d.utils import get_model, setup_args_with_dataset, gather_tensor
-from Segmentation_2d.metrics import compute_image_seg_metrics
+from Segmentation_2d.utils import get_model, setup_args_with_dataset
+from Segmentation_2d.metrics import ConfusionMatrix
 
 def train_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -49,6 +49,7 @@ def train_model(args):
     ], lr=lr, momentum=momentum, weight_decay=weight_decay)
     scheduler = get_scheduler(args, optimizer)
     criterion = get_loss(args)
+    confusion_matrix = ConfusionMatrix(class_num=args.class_num, ignore_index=args.ignore_idx)
     
     if dist.get_rank() == 0:
         print("Start training model {} on {} dataset!".format(model_name, dataset_type))
@@ -82,30 +83,21 @@ def train_model(args):
 
         # Validation
         model.eval()
-        all_preds = []
-        all_labels = []
         
         for imgs, labels in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=dist.get_rank() != 0):
             with torch.no_grad():
                 outputs = model(imgs.to(local_rank))
                 pred_class = torch.argmax(outputs, dim=1)
-                
-                all_preds.append(pred_class)
-                all_labels.append(labels.to(local_rank))
-                
-        all_preds = torch.cat(all_preds)
-        all_labels = torch.cat(all_labels)
-        all_preds = gather_tensor(all_preds, world_size).cpu().numpy()
-        all_labels = gather_tensor(all_labels, world_size).cpu().numpy()
+                confusion_matrix.update(pred_class.cpu(), labels)
 
         if dist.get_rank() == 0:
-            class_ious_dict, miou = compute_image_seg_metrics(args, all_preds, all_labels)
-            print("Validation mIoU===>{:.4f}".format(miou))
-            for cls, iou in class_ious_dict.items():
-                print("{} IoU: {:.4f}".format(class_dict[cls], iou))
+            metrics = confusion_matrix.compute_metrics()
+            print("Validation mIoU of {} on {} ===>{:.4f}".format(model_name, dataset_type, metrics['mious'].item()))
+            for i, iou in enumerate(metrics['ious']):
+                print("{} IoU: {:.4f}".format(class_dict[i], iou))
                 
-            if miou > best_metric:
-                best_metric = miou
+            if metrics['mious'] > best_metric:
+                best_metric = metrics['mious']
                 torch.save(model.module.state_dict(), weight_path)
     dist.destroy_process_group()
     
@@ -135,8 +127,8 @@ def parse_args():
     parse.add_argument('--step_size', type=int, default=70)
     parse.add_argument('--max_iters', type=int, default=2e4)
     parse.add_argument('--loss_func', type=str, default="ce")
-    parse.add_argument('--lovasz_weight', type=float, default=0.5)
-    parse.add_argument('--boundary_weight', type=float, default=None)
+    parse.add_argument('--lovasz_weight', type=float, default=1.5)
+    parse.add_argument('--boundary_weight', type=float, default=0.5)
     args = parse.parse_args()
     return args
 

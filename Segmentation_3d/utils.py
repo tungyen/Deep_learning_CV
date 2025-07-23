@@ -37,7 +37,6 @@ def weights_init_xavier(m):
 
 def get_model(args) -> nn.Module:
     model_name = args.model
-    device = args.device
     cls_class_num = args.cls_class_num
     seg_class_num = args.seg_class_num
     n_feats = args.n_feats
@@ -69,7 +68,6 @@ def get_model(args) -> nn.Module:
     else:
         raise ValueError(f'Unknown model {model_name}.')
     model.apply(weights_init_xavier)
-    model = model.to(device)
     return model
     
 def setup_args_with_dataset(dataset_type, args):
