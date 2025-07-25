@@ -8,7 +8,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 from Segmentation_3d.dataset.utils import get_dataset
 from Segmentation_3d.utils import get_model, setup_args_with_dataset
-from Segmentation_3d.metrics import compute_pcloud_semseg_metrics, compute_pcloud_cls_metrics, compute_pcloud_partseg_metrics
+from Segmentation_3d.metrics import compute_pcloud_partseg_metrics
 from Segmentation_3d.metrics import ConfusionMatrix
 
 def eval_model(args):

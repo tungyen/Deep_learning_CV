@@ -20,21 +20,27 @@ class FocalLoss(nn.Module):
         self.ignore_index = ignore_index
         
     def forward(self, logits, labels, trans_feats=None):
+        loss_dict = {}
         if self.ignore_index is not None:
-            loss = nn.CrossEntropyLoss(ignore_index=self.ignore_index)
+            ce = nn.CrossEntropyLoss(ignore_index=self.ignore_index)
         else:
-            loss = nn.CrossEntropyLoss()
-        ce_loss = loss(logits, labels)
+            ce = nn.CrossEntropyLoss()
+        ce_loss = ce(logits, labels)
         pt = torch.exp(-ce_loss)
         focal_loss = self.alpha * (1-pt) ** self.gamma * ce_loss
+        total_loss = focal_loss
+        loss_dict['focal_loss'] = focal_loss
         if self.lovasz_weight is not None:
-            lovasz_loss = LovaszSoftmaxLoss(ignore_index=self.ignore_index)
-            focal_loss += self.lovasz_weight * lovasz_loss(logits, labels)
-
+            lovasz_softmax = LovaszSoftmaxLoss(ignore_index=self.ignore_index)
+            lovasz_softmax_loss = self.lovasz_weight * lovasz_softmax(logits, labels)
+            loss_dict['lovasz_softmax_loss'] = lovasz_softmax_loss
+            total_loss += lovasz_softmax_loss
         if trans_feats is not None:
             mat_diff_loss = transform_reguliarzer(trans_feats)
-            focal_loss += mat_diff_loss * self.mat_diff_loss_scale
-        return focal_loss
+            loss_dict['transform_loss'] = mat_diff_loss * self.mat_diff_loss_scale
+            total_loss += loss_dict['transform_loss']
+        loss_dict['loss'] = total_loss
+        return loss_dict
     
 class CrossEntropyLoss(nn.Module):
     def __init__(self, mat_diff_loss_scale=0.001, lovasz_weight=None, ignore_index=None):
@@ -44,19 +50,25 @@ class CrossEntropyLoss(nn.Module):
         self.ignore_index = ignore_index
 
     def forward(self, logits, labels, trans_feats=None):
+        loss_dict = {}
         if self.ignore_index is not None:
-            loss = nn.CrossEntropyLoss(ignore_index=self.ignore_index)
+            ce = nn.CrossEntropyLoss(ignore_index=self.ignore_index)
         else:
-            loss = nn.CrossEntropyLoss()
-        ce_loss = loss(logits, labels)
+            ce = nn.CrossEntropyLoss()
+        ce_loss = ce(logits, labels)
+        total_loss = ce_loss
+        loss_dict['ce_loss'] = ce_loss
         if self.lovasz_weight is not None:
-            lovasz_loss = LovaszSoftmaxLoss(ignore_index=self.ignore_index)
-            ce_loss += self.lovasz_weight * lovasz_loss(logits, labels)
-
+            lovasz_softmax = LovaszSoftmaxLoss(ignore_index=self.ignore_index)
+            lovasz_softmax_loss = self.lovasz_weight * lovasz_softmax(logits, labels)
+            loss_dict['lovasz_softmax_loss'] = lovasz_softmax_loss
+            total_loss += lovasz_softmax_loss
         if trans_feats is not None:
             mat_diff_loss = transform_reguliarzer(trans_feats)
-            ce_loss += mat_diff_loss
-        return ce_loss
+            loss_dict['transform_loss'] = mat_diff_loss * self.mat_diff_loss_scale
+            total_loss += loss_dict['transform_loss']
+        loss_dict['loss'] = total_loss
+        return loss_dict
     
 class LovaszSoftmaxLoss(nn.Module):
     def __init__(self, ignore_index=None, classes='present'):

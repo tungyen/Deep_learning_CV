@@ -80,10 +80,8 @@ def train_model(args):
                         boundary_loss=f"{loss['boundary_loss'].item():.4f}" if 'boundary_loss' in loss else "0.0000"
                     )
                 scheduler.step()
-
         # Validation
         model.eval()
-        
         for imgs, labels in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=dist.get_rank() != 0):
             with torch.no_grad():
                 outputs = model(imgs.to(local_rank))
@@ -99,6 +97,7 @@ def train_model(args):
             if metrics['mious'] > best_metric:
                 best_metric = metrics['mious']
                 torch.save(model.module.state_dict(), weight_path)
+            confusion_matrix.reset()
     dist.destroy_process_group()
     
 def parse_args():
