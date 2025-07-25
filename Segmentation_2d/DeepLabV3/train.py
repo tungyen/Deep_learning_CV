@@ -119,13 +119,13 @@ def parse_args():
     
     # Training
     parse.add_argument('--experiment', type=str, required=True)
-    parse.add_argument('--epochs', type=int, default=100)
+    parse.add_argument('--epochs', type=int, default=300)
     parse.add_argument('--scheduler', type=str, default="poly")
     parse.add_argument('--lr', type=float, default=0.01)
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--momentum', type=float, default=0.9)
     parse.add_argument('--step_size', type=int, default=70)
-    parse.add_argument('--max_iters', type=int, default=2e4)
+    parse.add_argument('--max_iters', type=int, default=6e4)
     parse.add_argument('--loss_func', type=str, default="ce")
     parse.add_argument('--lovasz_weight', type=float, default=1.5)
     parse.add_argument('--boundary_weight', type=float, default=0.5)

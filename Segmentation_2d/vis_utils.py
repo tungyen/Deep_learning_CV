@@ -2,11 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from Segmentation_2d.dataset.voc import VocDataset
+from Segmentation_2d.dataset.voc import VocSegmentationDataset
 from Segmentation_2d.dataset.cityscapes import CityScapesDataset
 
 def visualize_image_seg(args, masks, imgs, save_path, alpha=0.6):
-    batch_size = args.batch_size
+    batch_size = args.test_batch_size
     model_name = args.model
     dataset_type = args.dataset
     year = args.voc_year
@@ -32,8 +32,8 @@ def visualize_image_seg(args, masks, imgs, save_path, alpha=0.6):
         axs[2, i].axis('off')
 
     plt.tight_layout()
-    plt.show()
     save_name = '{}_{}'.format(model_name, dataset_type)
     if dataset_type == "voc":
         save_name = save_name + "_{}".format(year)
     plt.savefig(os.path.join(save_path, save_name + ".png"), bbox_inches='tight')
+    plt.show()
