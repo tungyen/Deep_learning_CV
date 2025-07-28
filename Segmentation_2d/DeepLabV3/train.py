@@ -104,7 +104,7 @@ def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
     parse.add_argument('--dataset', type=str, default="cityscapes")
-    parse.add_argument('--crop_size', type=list, default=[512, 1024])
+    parse.add_argument('--crop_size', type=list, default=[512, 512])
     parse.add_argument('--voc_data_root', type=str, default="Dataset/VOC")
     parse.add_argument('--voc_year', type=str, default="2012_aug")
     parse.add_argument('--voc_download', type=bool, default=False)

@@ -53,7 +53,7 @@ def get_dataset(args):
         
         train_transform = Compose([
             RandomScale((0.5, 2.0)),
-            RandomCrop(size=(crop_size, crop_size), pad_if_needed=True),
+            RandomCrop(size=crop_size, pad_if_needed=True),
             RandomHorizontalFlip(),
             ToTensor(),
             Normalize(mean=mean, std=std),

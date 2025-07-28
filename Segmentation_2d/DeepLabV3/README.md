@@ -7,10 +7,21 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 | Model  | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
 |-------|-----|----------|-------------------|----------|
 | DeepLabV3 | 1.0  | None | None   | 63.65%   |
-| DeepLabV3   | 1.0  | 1.5   | None      | % |
+| DeepLabV3   | 1.0  | 1.5   | None      | 65.41% |
 | DeepLabV3 | 1.0  | 1.5   | 0.5    | 67.69%   |
 | DeepLabV3++ | 1.0  | None | None   | 69.91%   |
-| DeepLabV3++ | 1.0  | 1.5    | None    | %   |
+| DeepLabV3++ | 1.0  | 1.5    | None    | 70.63%   |
+| DeepLabV3++ | 1.0  | 1.5   | 0.5    | 71.41%   |
+
+
+### Paskal VOC dataset ###
+| Model  | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
+|-------|-----|----------|-------------------|----------|
+| DeepLabV3 | 1.0  | None | None   | 63.65%   |
+| DeepLabV3   | 1.0  | 1.5   | None      | 65.41% |
+| DeepLabV3 | 1.0  | 1.5   | 0.5    | 67.69%   |
+| DeepLabV3++ | 1.0  | None | None   | 69.91%   |
+| DeepLabV3++ | 1.0  | 1.5    | None    | 70.63%   |
 | DeepLabV3++ | 1.0  | 1.5   | 0.5    | 71.41%   |
 
 Note that the following command is based on 2 gpu training. You can change weight of lovasz/boundary loss in command by specifying lovasz_weight and boundary_weight.
@@ -58,17 +69,21 @@ torchrun --nproc_per_node=1 Segmentation_2d/DeepLabV3/test.py --experiment ckpts
 ### Result of Cityscapes Dataset ###
 
 #### DeepLabV3 ####
-CE = 1.0
+CE = 1.0:
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce/deeplabv3_cityscapes.png)
 
-CE = 1.0, Lovasz = 1.5, Boundary = 0.5
+CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce_lovasz_bound_default/deeplabv3_cityscapes.png)
 
 #### DeepLabV3+ ####
-CE = 1.0
+CE = 1.0:
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce/deeplabv3plus_cityscapes.png)
 
-CE = 1.0, Lovasz = 1.5, Boundary = 0.5
+CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
+
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce_lovasz_bound_default/deeplabv3plus_cityscapes.png)
 
 ### Result of Paskal VOC 2012 Dataset ###
