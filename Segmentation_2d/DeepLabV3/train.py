@@ -10,7 +10,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from Segmentation_2d.optimizer import get_scheduler
 from Segmentation_2d.loss import get_loss
 from Segmentation_2d.dataset.utils import get_dataset
-from Segmentation_2d.utils import get_model, setup_args_with_dataset
+from Segmentation_2d.utils import get_model, setup_args_with_dataset, all_reduce_confusion_matrix
 from Segmentation_2d.metrics import ConfusionMatrix
 
 def train_model(args):
@@ -88,6 +88,7 @@ def train_model(args):
                 pred_class = torch.argmax(outputs, dim=1)
                 confusion_matrix.update(pred_class.cpu(), labels)
 
+        all_reduce_confusion_matrix(confusion_matrix, local_rank)
         if dist.get_rank() == 0:
             metrics = confusion_matrix.compute_metrics()
             print("Validation mIoU of {} on {} ===>{:.4f}".format(model_name, dataset_type, metrics['mious'].item()))
@@ -97,7 +98,7 @@ def train_model(args):
             if metrics['mious'] > best_metric:
                 best_metric = metrics['mious']
                 torch.save(model.module.state_dict(), weight_path)
-            confusion_matrix.reset()
+        confusion_matrix.reset()
     dist.destroy_process_group()
     
 def parse_args():
@@ -118,13 +119,13 @@ def parse_args():
     
     # Training
     parse.add_argument('--experiment', type=str, required=True)
-    parse.add_argument('--epochs', type=int, default=300)
+    parse.add_argument('--epochs', type=int, default=100)
     parse.add_argument('--scheduler', type=str, default="poly")
     parse.add_argument('--lr', type=float, default=0.01)
     parse.add_argument('--weight_decay', type=float, default=1e-4)
     parse.add_argument('--momentum', type=float, default=0.9)
     parse.add_argument('--step_size', type=int, default=70)
-    parse.add_argument('--max_iters', type=int, default=6e4)
+    parse.add_argument('--max_iters', type=int, default=9e4)
     parse.add_argument('--loss_func', type=str, default="ce")
     parse.add_argument('--lovasz_weight', type=float, default=1.5)
     parse.add_argument('--boundary_weight', type=float, default=0.5)

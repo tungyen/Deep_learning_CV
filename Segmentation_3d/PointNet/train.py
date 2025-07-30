@@ -9,7 +9,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from Segmentation_3d.dataset.utils import get_dataset
-from Segmentation_3d.utils import get_model, setup_args_with_dataset
+from Segmentation_3d.utils import get_model, setup_args_with_dataset, all_reduce_confusion_matrix
 from Segmentation_3d.optimizer import get_scheduler
 from Segmentation_3d.loss import get_loss
 from Segmentation_3d.metrics import compute_pcloud_semseg_metrics, compute_pcloud_cls_metrics, compute_pcloud_partseg_metrics
@@ -111,6 +111,8 @@ def train_model(args):
                 else:
                     raise ValueError(f'Too much input data.')
                 confusion_matrix.update(pred_classes.cpu(), labels)
+
+        all_reduce_confusion_matrix(confusion_matrix, local_rank)
         if dist.get_rank() == 0:
             metrics = confusion_matrix.compute_metrics()
             if task == "cls":
@@ -135,7 +137,7 @@ def train_model(args):
                 pass
             else:
                 raise ValueError(f'Unknown segmentation task {task}.')
-            confusion_matrix.reset() 
+        confusion_matrix.reset() 
 
 def parse_args():
     parse = argparse.ArgumentParser()

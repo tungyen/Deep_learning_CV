@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import os
 import yaml
-
+import torch.distributed as dist
 
 from Segmentation_3d.PointNet.model.pointnet import PointNetCls, PointNetSemseg, PointNetPartseg
 from Segmentation_3d.PointNet.model.pointnet_plus import PointNetPlusCls, PointNetPlusSemseg, PointNetPlusPartseg
@@ -113,3 +113,8 @@ def setup_args_with_dataset(dataset_type, args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     return args
+
+def all_reduce_confusion_matrix(confusion_matrix, local_rank):
+    tensor = confusion_matrix.confusion_matrix.to(torch.device(f"cuda:{local_rank}"))
+    dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
+    confusion_matrix.confusion_matrix = tensor

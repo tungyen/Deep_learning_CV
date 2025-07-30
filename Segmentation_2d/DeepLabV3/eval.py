@@ -7,9 +7,8 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from Segmentation_2d.dataset.utils import get_dataset
-from Segmentation_2d.utils import get_model, setup_args_with_dataset
+from Segmentation_2d.utils import get_model, setup_args_with_dataset, all_reduce_confusion_matrix
 from Segmentation_2d.metrics import ConfusionMatrix
-
 
 def eval_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -46,6 +45,7 @@ def eval_model(args):
             pred_class = torch.argmax(output, dim=1)
             confusion_matrix.update(pred_class.cpu(), labels)
     
+    all_reduce_confusion_matrix(confusion_matrix, local_rank)
     if dist.get_rank() == 0:
         metrics = confusion_matrix.compute_metrics()
         print("Validation mIoU of {} on {} ===>{:.4f}".format(model_name, dataset_type, metrics['mious'].item()))
@@ -56,7 +56,7 @@ def eval_model(args):
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="cityscapes")
+    parse.add_argument('--dataset', type=str, default="voc")
     parse.add_argument('--crop_size', type=list, default=[512, 1024])
     parse.add_argument('--voc_data_root', type=str, default="Dataset/VOC")
     parse.add_argument('--voc_year', type=str, default="2012_aug")

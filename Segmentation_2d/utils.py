@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+import torch.distributed as dist
 
 from Segmentation_2d.DeepLabV3.model import DeepLabV3, DeepLabV3Plus
 
@@ -53,3 +54,8 @@ def setup_args_with_dataset(dataset_type, args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     return args
+
+def all_reduce_confusion_matrix(confusion_matrix, local_rank):
+    tensor = confusion_matrix.confusion_matrix.to(torch.device(f"cuda:{local_rank}"))
+    dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
+    confusion_matrix.confusion_matrix = tensor
