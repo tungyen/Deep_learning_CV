@@ -20,9 +20,9 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 | DeepLabV3 | 1.0  | None | None   | 77.55%   |
 | DeepLabV3   | 1.0  | 1.5   | None      | 78.85% |
 | DeepLabV3 | 1.0  | 1.5   | 0.5    | 79.05%   |
-| DeepLabV3++ | 1.0  | None | None   | %   |
-| DeepLabV3++ | 1.0  | 1.5    | None    | %   |
-| DeepLabV3++ | 1.0  | 1.5   | 0.5    | %   |
+| DeepLabV3++ | 1.0  | None | None   | 78.07%   |
+| DeepLabV3++ | 1.0  | 1.5    | None    | 79.53%   |
+| DeepLabV3++ | 1.0  | 1.5   | 0.5    | 78.98%   |
 
 Note that the following command is based on 2 gpu training. You can change weight of lovasz/boundary loss in command by specifying lovasz_weight and boundary_weight.
 ## Training ##
@@ -89,15 +89,19 @@ CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 ### Result of Paskal VOC 2012 Dataset ###
 
 #### DeepLabV3 ####
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/imgs/deeplabv3_voc_2012.png)
+CE = 1.0:
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce/deeplabv3_voc_2012_aug.png)
+
+CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce_lovasz_bound_default/deeplabv3_voc_2012_aug.png)
 
 #### DeepLabV3+ ####
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/imgs/deeplabv3plus_voc_2012.png)
+CE = 1.0:
 
-### Result of Paskal VOC 2012_aug Dataset ###
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce/deeplabv3plus_voc_2012_aug.png)
 
-#### DeepLabV3 ####
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/imgs/deeplabv3_voc_2012_aug.png)
+CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 
-#### DeepLabV3+ ####
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/imgs/deeplabv3plus_voc_2012_aug.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce_lovasz_bound_default/deeplabv3plus_voc_2012_aug.png)

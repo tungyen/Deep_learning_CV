@@ -12,7 +12,7 @@ def visualize_image_seg(args, masks, imgs, save_path, alpha=0.6):
     year = args.voc_year
     
     if dataset_type == "voc":
-        colorized_masks = VocDataset.decode_target(masks).astype('uint8')
+        colorized_masks = VocSegmentationDataset.decode_target(masks).astype('uint8')
     elif dataset_type == "cityscapes":
         colorized_masks = CityScapesDataset.decode_target(masks).astype('uint8')
     else:

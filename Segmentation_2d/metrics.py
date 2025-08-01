@@ -41,3 +41,4 @@ class ConfusionMatrix:
     
     def reset(self):
         self.confusion_matrix.zero_()
+        self.confusion_matrix = self.confusion_matrix.cpu()

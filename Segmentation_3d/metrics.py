@@ -68,6 +68,7 @@ class ConfusionMatrix:
             'recall': recall,
             'mean_recall': recall.mean(),
         }
-    
+
     def reset(self):
         self.confusion_matrix.zero_()
+        self.confusion_matrix = self.confusion_matrix.cpu()
