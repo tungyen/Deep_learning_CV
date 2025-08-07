@@ -118,6 +118,7 @@ class MultiBoxesLoss(nn.Module):
         self.ce = nn.CrossEntropyLoss()
         
     def forward(self, pred_boxes, pred_logits, boxes, labels):
+        loss_dict = {}
         batch_size = pred_boxes.shape[0]
         class_num = pred_logits.shape[1]
         device = pred_boxes.device
@@ -143,6 +144,8 @@ class MultiBoxesLoss(nn.Module):
             
         positive_priors = true_classes != 0
         boxes_loss = self.smooth_l1(pred_boxes[positive_priors], true_boxes[positive_priors])
+        total_loss = self.alpha * boxes_loss
+        loss_dict['boxes_loss'] = self.alpha * boxes_loss
         
         positive_num = positive_num.sum(dim=1)
         hard_negative_num = positive_num * self.neg_pos_ratio
@@ -159,11 +162,14 @@ class MultiBoxesLoss(nn.Module):
         cls_loss_neg_hard = cls_loss_neg[hard_negatives]
         
         cls_loss = (cls_loss_neg_hard.sum() + cls_loss_pos.sum()) / positive_num.sum().float()
-        return cls_loss + self.alpha * boxes_loss
+        total_loss += cls_loss
+        loss_dict['cls_loss'] = cls_loss
+        loss_dict['loss'] = total_loss
+        return loss_dict
     
     
 def get_loss(args):
-    if args.loss_func == 'CeSmoothL1':
+    if args.loss_func == 'ce_smooth_l1':
         return 
     else:
         raise ValueError(f'Unknown loss function {args.loss_func}.')

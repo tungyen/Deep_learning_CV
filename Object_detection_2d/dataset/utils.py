@@ -39,13 +39,20 @@ def get_dataset(args):
         class_dict = voc_id2class
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
+
+    local_rank = int(os.environ["LOCAL_RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    rank = int(os.environ["RANK"])
+    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+    val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, shuffle=False)
+    test_sampler = DistributedSampler(test_dataset, num_replicas=world_size, rank=rank, shuffle=True)
         
-    train_dataloader = DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True,
-                                      collate_fn=train_dataset.collate_fn, num_workers=4)
-    val_dataloader = DataLoader(val_dataset, batch_size=eval_batch_size, shuffle=False,
-                                    collate_fn=val_dataset.collate_fn, num_workers=4)
-    test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=True,
-                                     collate_fn=val_dataset.collate_fn, num_workers=4)
+    train_dataloader = DataLoader(train_dataset, batch_size=train_batch_size // world_size,
+                                  sampler=train_sampler, collate_fn=train_dataset.collate_fn)
+    val_dataloader = DataLoader(val_dataset, batch_size=eval_batch_size // world_size,
+                                sampler=val_sampler, collate_fn=val_dataset.collate_fn)
+    test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size // world_size,
+                                 sampler=test_sampler, collate_fn=val_dataset.collate_fn)
     
     mean = torch.tensor(mean).view(1, 3, 1, 1)
     std = torch.tensor(std).view(1, 3, 1, 1)

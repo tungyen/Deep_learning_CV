@@ -5,10 +5,9 @@ from Object_detection_2d.SSD.model import SSD
 def get_model(args):
     model_name = args.model
     class_num = args.class_num
-    device = args.device
     
     if model_name == "ssd":
-        model = SSD(class_num=class_num).to(device)
+        model = SSD(class_num=class_num)
         return model
     else:
         raise ValueError(f'Unknown model {model_name}')
