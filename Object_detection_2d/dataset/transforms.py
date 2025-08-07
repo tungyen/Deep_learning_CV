@@ -74,8 +74,8 @@ class RandomExpand(object):
         if random.random() >= 0.5:
             return img, target
         
-        h_ori = img.shape[1]
-        w_ori = img.shape[2]
+        h_ori = img.size[1]
+        w_ori = img.size[2]
         scale = random.uniform(1, self.max_scale)
         h_new = int(scale * h_ori)
         w_new = int(scale * w_ori)
@@ -89,7 +89,7 @@ class RandomExpand(object):
         
         new_boxes = target['bboxes'] + torch.FloatTensor([left, top, left, top]).unsqueeze(0)
         target['bboxes'] = new_boxes
-        return img, target
+        return new_image, target
 
 class Normalize(object):
     def __init__(self, mean, std):
@@ -118,8 +118,8 @@ class RandomCrop(object):
                 return img, target
             
             for _ in range(self.max_trials):
-                h_scale = random.randint(self.min_scale, 1)
-                w_scale = random.randint(self.min_scale, 1)
+                h_scale = random.uniform(self.min_scale, 1)
+                w_scale = random.uniform(self.min_scale, 1)
                 
                 h_new = int(h_scale * h_ori)
                 w_new = int(w_scale * w_ori)
@@ -158,7 +158,7 @@ class RandomCrop(object):
 
 class Resize(object):
     def __init__(self, size, return_percent_coords=True):
-        self.size = size
+        self.size = tuple(size)
         self.return_percent_coords = return_percent_coords
 
     def __call__(self, img, target):

@@ -1,4 +1,6 @@
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
+import os
 
 from Object_detection_2d.dataset.voc import VocDetectionDataset, voc_id2class
 from Object_detection_2d.dataset.transforms import *
@@ -21,7 +23,7 @@ def get_dataset(args):
         
         train_transform = Compose([
             ColorJitter(),
-            RandomExpand(),
+            RandomExpand(mean),
             RandomCrop(),
             RandomHorizontalFlip(),
             Resize(size=(crop_size, crop_size)),
@@ -29,7 +31,7 @@ def get_dataset(args):
         ])
         
         val_transform = Compose([
-            Resize(size=(crop_size, crop_size)),
+            Resize(size=crop_size),
             Normalize(mean=mean, std=std),
         ])
         

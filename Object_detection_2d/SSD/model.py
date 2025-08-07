@@ -4,7 +4,14 @@ import torch.nn.functional as F
 import torchvision
 from math import sqrt
 
-from Object_detection_2d.SSD.utils import decimate
+def decimate(tensor, m):
+    assert tensor.dim() == len(m)
+    for d in range(tensor.dim()):
+        if m[d] is not None:
+            tensor = tensor.index_select(
+                dim=d,
+                index=torch.arange(start=0, end=tensor.size(d), step=m[d]).long())
+    return tensor
 
 class VggBackbone(nn.Module):
     def __init__(self):
@@ -75,9 +82,8 @@ class VggBackbone(nn.Module):
 
         pretrained_state_dict = torchvision.models.vgg16(pretrained=True).state_dict()
         pretrained_param_names = list(pretrained_state_dict.keys())
-
         for i, param in enumerate(param_names[:-4]):
-            state_dict[param] = pretrained_param_names[pretrained_param_names[i]]
+            state_dict[param] = pretrained_state_dict[pretrained_param_names[i]]
 
         conv_fc6_weight = pretrained_state_dict['classifier.0.weight'].view(4096, 512, 7, 7)
         conv_fc6_bias = pretrained_state_dict['classifier.0.bias']
@@ -185,7 +191,7 @@ class SSD(nn.Module):
         self.det_head = DetectionHead(class_num)
 
         self.rescale_factor = nn.Parameter(torch.FloatTensor(1, 512, 1, 1))
-        nn.init.constant_(self.rescale_factors, 20)
+        nn.init.constant_(self.rescale_factor, 20)
 
         self.prior_boxes_center = self.create_prior_boxes()
 

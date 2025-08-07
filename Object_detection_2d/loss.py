@@ -168,8 +168,8 @@ class MultiBoxesLoss(nn.Module):
         return loss_dict
     
     
-def get_loss(args):
+def get_loss(args, model):
     if args.loss_func == 'ce_smooth_l1':
-        return 
+        return MultiBoxesLoss(model.prior_boxes_center)
     else:
         raise ValueError(f'Unknown loss function {args.loss_func}.')

@@ -28,20 +28,28 @@ def train_model(args):
 
     weight_path = os.path.join(root, ckpts_path, "{}_{}.pth".format(model_name, dataset_type))
     lr = args.lr
-    beta1= args.beta1
-    beta2 = args.beta2
-    eps = args.eps
+    momentum = args.momentum
     epochs = args.epochs
     weight_decay = args.weight_decay
 
     if dist.get_rank() == 0:
         print("Start training model {} on {} dataset!".format(model_name, dataset_type))
-    train_dataloader, val_dataloader, _, class_dict = get_dataset(args)
+    train_dataloader, val_dataloader, _, class_dict, _, _ = get_dataset(args)
     model = get_model(args).to(local_rank)
-    model = DDP(model, device_ids=[local_rank], output_device=local_rank)
-    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay, betas=(beta1, beta2), eps=eps)
+
+    biases = list()
+    others = list()
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            if name.endswith(".bias"):
+                biases.append(param)
+            else:
+                others.append(param)
+    optimizer = optim.SGD(params=[{'params': biases, 'lr': 2 * lr}, {'params': others, 'lr': lr}],
+                          weight_decay=weight_decay, momentum=momentum)
     scheduler = get_scheduler(args, optimizer)
-    criterion = get_loss(args)
+    criterion = get_loss(args, model)
+    model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     best_metric = 0.0
             
     for epoch in range(epochs):

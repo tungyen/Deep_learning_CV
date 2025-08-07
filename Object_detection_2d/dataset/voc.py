@@ -149,6 +149,7 @@ class VocDetectionDataset(Dataset):
         
         if self.transform is not None:
             img, target = self.transform(img, target)
+            print(img.shape)
         return img, target
 
     def __len__(self):
