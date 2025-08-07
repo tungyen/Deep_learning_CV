@@ -21,7 +21,7 @@ python setup.py build_ext --inplace
 
 ### ModelNet40 ###
 | Model  | CE Weight| Lovasz Weight   | Precision | Recall
-|-------|-----|--------|----------|--------|---------|
+|-------|-----|--------|------|---------|
 | PointNet |1.0|1.5|93.68%|91.74%|
 | PointNet++ SSG|1.0|1.5| 94.53% |92.84%|
 | PointNet++ MSG |1.0|1.5| 95.52% | 94.01% |
