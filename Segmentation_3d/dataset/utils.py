@@ -1,5 +1,6 @@
 from torch.utils.data import Dataset, DataLoader, random_split
 import os
+from torch.utils.data.distributed import DistributedSampler
 
 from Segmentation_3d.dataset.chair import ChairDataset
 from Segmentation_3d.dataset.modelnet40 import ModelNet40Dataset
@@ -61,8 +62,15 @@ def get_dataset(args):
         class_dict = (train_dataset.instance2parts, train_dataset.parts2instance, train_dataset.label2class)
     else:
         raise ValueError(f'unknown dataset {dataset_type}')
-        
-    train_dataloader = DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=eval_batch_size, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=True)
+
+    ocal_rank = int(os.environ["LOCAL_RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    rank = int(os.environ["RANK"])
+    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+    val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, shuffle=False)
+    test_sampler = DistributedSampler(test_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+    
+    train_dataloader = DataLoader(train_dataset, batch_size=train_batch_size // world_size, sampler=train_sampler)
+    val_dataloader = DataLoader(val_dataset, batch_size=eval_batch_size // world_size, sampler=val_sampler) 
+    test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size // world_size, sampler=test_sampler)
     return train_dataloader, val_dataloader, test_dataloader, class_dict

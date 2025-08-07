@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import os
+import open3d as o3d
 
 def rotate_points_around_y(points, angle_deg):
     angle_rad = np.radians(angle_deg)
@@ -63,6 +64,21 @@ def visualize_pcloud(args, pcloud, color_maps, predict_class, save_path,
         if task == "cls" and class_dict is not None:
             ax.set_title(f'{class_dict[predict_class[i]]}')
         plt.axis('off')
+
+        ###############
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points_np)
+
+        # Ensure color values are normalized to [0, 1]
+        if np.max(colors) > 1.0:
+            colors = colors / 255.0
+        pcd.colors = o3d.utility.Vector3dVector(colors)
+        o3d.visualization.draw_geometries([pcd],
+                                        zoom=0.6,
+                                        front=[0.0, 0.0, -1.0],
+                                        lookat=[0.0, 0.0, 0.0],
+                                        up=[0.0, -1.0, 0.0])
+        ############
 
     if task == "semseg":
         legend_elements = []

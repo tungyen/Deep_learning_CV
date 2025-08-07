@@ -9,10 +9,10 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from Segmentation_3d.dataset.utils import get_dataset
-from Segmentation_3d.utils import get_model, setup_args_with_dataset, all_reduce_confusion_matrix
+from Segmentation_3d.utils import get_model, setup_args_with_dataset, all_reduce_confusion_matrix, gather_all_data
 from Segmentation_3d.optimizer import get_scheduler
 from Segmentation_3d.loss import get_loss
-from Segmentation_3d.metrics import compute_pcloud_semseg_metrics, compute_pcloud_cls_metrics, compute_pcloud_partseg_metrics
+from Segmentation_3d.metrics import compute_pcloud_partseg_metrics, ConfusionMatrix
 
 def train_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -89,6 +89,8 @@ def train_model(args):
                         )
             scheduler.step()    
         
+        all_preds = []
+        all_labels = []
         # Validation
         with torch.no_grad():
             for pclouds, *labels in tqdm(val_dataloader, desc="Evaluation"):
@@ -102,16 +104,18 @@ def train_model(args):
                     cls_labels, labels = labels
                     instance2parts, _, label2class = class_dict
                     outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
-                    outputs = outputs.cpu()
-                    pred_classes = torch.zeros((outputs.shape[0], outputs.shape[2])).astype(torch.int64)
+                    pred_classes = torch.zeros((outputs.shape[0], outputs.shape[2])).to(local_rank)
                     for i in range(outputs.shape[0]):
                         instance = label2class[cls_labels[i].item()]
                         logits = outputs[i, :, :]
                         pred_classes[i, :] = torch.argmax(logits[instance2parts[instance], :], 0) + instance2parts[instance][0]
+                    all_preds.append(pred_classes.cpu())
+                    all_labels.append(labels)
                 else:
                     raise ValueError(f'Too much input data.')
                 confusion_matrix.update(pred_classes.cpu(), labels)
-
+        all_preds = gather_all_data(all_preds)
+        all_labels = gather_all_data(all_labels)
         all_reduce_confusion_matrix(confusion_matrix, local_rank)
         if dist.get_rank() == 0:
             metrics = confusion_matrix.compute_metrics()
@@ -134,7 +138,14 @@ def train_model(args):
                     best_metric = mious
                     torch.save(model.state_dict(), weight_path)
             elif task == 'partseg':
-                pass
+                instance_ious, instance_mious, class_mious = compute_pcloud_partseg_metrics(all_preds, all_labels, class_dict)
+                print("Validation Instance mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, instance_mious))
+                print("Validation Class mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, class_mious))
+                for cls in instance_ious:
+                    print("{} IoU: {:.4f}".format(cls, instance_ious[cls]))
+                if instance_mious > best_metric:
+                    best_metric = instance_mious
+                    torch.save(model.state_dict(), weight_path)
             else:
                 raise ValueError(f'Unknown segmentation task {task}.')
         confusion_matrix.reset() 
@@ -142,7 +153,7 @@ def train_model(args):
 def parse_args():
     parse = argparse.ArgumentParser()
     # Dataset
-    parse.add_argument('--dataset', type=str, default="s3dis")
+    parse.add_argument('--dataset', type=str, default="shapenet")
     
     # S3DIS
     parse.add_argument('--test_area', type=int, default=5)

@@ -20,11 +20,11 @@ python setup.py build_ext --inplace
 | PointNet++ MSG | 1.0  | 1.5    | 88.58%   |
 
 ### ModelNet40 ###
-| Model  | CE Weight| Lovasz Weight   | mIoUs   | Precision | Recall
+| Model  | CE Weight| Lovasz Weight   | Precision | Recall
 |-------|-----|--------|----------|--------|---------|
-| PointNet | 1.0  | 1.5   | 95.52%   |||
-| PointNet++ SSG   | 1.0  | 1.5      | 92.53% |||
-| PointNet++ MSG | 1.0  | 1.5    | 95.52%   |||
+| PointNet |1.0|1.5|93.68%|91.74%|
+| PointNet++ SSG|1.0|1.5| 94.53% |92.84%|
+| PointNet++ MSG |1.0|1.5| 95.52% | 94.01% |
 
 ### ShapeNetPart ###
 | Model  | CE Weight| Lovasz Weight   | Instance mIoUs   | Class mIoUs
@@ -135,12 +135,3 @@ python Segmentation_3d/PointNet/test.py --experiment ckpts --dataset chair --mod
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_ssg_chair_semseg.png)
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_msg_chair_semseg.png)
-
-
-### Result of S3DIS ###
-
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_s3dis_semseg.png)
-
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_ssg_s3dis_semseg.png)
-
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_3d/PointNet/imgs/pointnet_plus_msg_s3dis_semseg.png)

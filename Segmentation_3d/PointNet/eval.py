@@ -7,7 +7,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from Segmentation_3d.dataset.utils import get_dataset
-from Segmentation_3d.utils import get_model, setup_args_with_dataset, all_reduce_confusion_matrix
+from Segmentation_3d.utils import get_model, setup_args_with_dataset, all_reduce_confusion_matrix, gather_all_data
 from Segmentation_3d.metrics import compute_pcloud_partseg_metrics
 from Segmentation_3d.metrics import ConfusionMatrix
 
@@ -37,7 +37,8 @@ def eval_model(args):
         confusion_matrix = ConfusionMatrix(class_num=args.seg_class_num)
     else:
         confusion_matrix = ConfusionMatrix(class_num=args.cls_class_num)
-    
+    all_preds = []
+    all_labels = []
     with torch.no_grad():
         for pclouds, *labels in tqdm(val_dataloader, desc="Evaluation", disable=dist.get_rank() != 0):
             # Semantic Segmentation or Classification
@@ -50,16 +51,18 @@ def eval_model(args):
                 cls_labels, labels = labels
                 instance2parts, _, label2class = class_dict
                 outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
-                outputs = outputs.cpu()
-                pred_classes = torch.zeros((outputs.shape[0], outputs.shape[2])).astype(torch.int64)
+                pred_classes = torch.zeros((outputs.shape[0], outputs.shape[2])).to(local_rank)
                 for i in range(outputs.shape[0]):
                     instance = label2class[cls_labels[i].item()]
                     logits = outputs[i, :, :]
                     pred_classes[i, :] = torch.argmax(logits[instance2parts[instance], :], 0) + instance2parts[instance][0]
+                all_preds.append(pred_classes.cpu())
+                all_labels.append(labels)
             else:
                 raise ValueError(f'Too much input data.')
             confusion_matrix.update(pred_classes.cpu(), labels)
-
+    all_preds = gather_all_data(all_preds)
+    all_labels = gather_all_data(all_labels)
     all_reduce_confusion_matrix(confusion_matrix, local_rank)
     if dist.get_rank() == 0:
         metrics = confusion_matrix.compute_metrics()
@@ -77,7 +80,11 @@ def eval_model(args):
                 print("{} IoU: {:.4f}".format(class_dict[cls], ious[cls]))
 
         elif task == 'partseg':
-            pass
+            instance_ious, instance_mious, class_mious = compute_pcloud_partseg_metrics(all_preds, all_labels, class_dict)
+            print("Validation Instance mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, instance_mious))
+            print("Validation Class mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, class_mious))
+            for cls in instance_ious:
+                print("{} IoU: {:.4f}".format(cls, instance_ious[cls]))
         else:
             raise ValueError(f'Unknown segmentation task {task}.')  
     dist.destroy_process_group()

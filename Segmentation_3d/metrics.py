@@ -8,6 +8,7 @@ def compute_pcloud_partseg_metrics(all_preds, all_labels, class_dict):
 
     for preds, labels in zip(all_preds, all_labels):
         labels = labels.numpy()
+        preds = preds.numpy()
         batch_size = preds.shape[0]
         for i in range(batch_size):
             pred = preds[i, :]

@@ -92,12 +92,12 @@ def setup_args_with_dataset(dataset_type, args):
     elif dataset_type == 's3dis':
         args.cls_class_num = 14
         args.seg_class_num = 14
-        args.n_points = 4096
+        args.n_points = 8192
         args.n_feats = 6
         args.task = 'semseg'
         args.train_batch_size = 32
         args.eval_batch_size = 16
-        args.test_batch_size = 1
+        args.test_batch_size = 4
     elif dataset_type == "shapenet":
         args.cls_class_num = 16
         args.seg_class_num = 50
@@ -118,3 +118,12 @@ def all_reduce_confusion_matrix(confusion_matrix, local_rank):
     tensor = confusion_matrix.confusion_matrix.to(torch.device(f"cuda:{local_rank}"))
     dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
     confusion_matrix.confusion_matrix = tensor
+
+def gather_all_data(data):
+    world_size = dist.get_world_size()
+    data_list = [None for _ in range(world_size)]
+    dist.all_gather_object(data_list, data)
+    gathered_data = []
+    for part in data_list:
+        gathered_data.extend(part)
+    return gathered_data
