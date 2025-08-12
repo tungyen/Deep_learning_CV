@@ -23,21 +23,23 @@ def get_dataset(args):
         
         train_transform = Compose([
             ColorJitter(),
+            ToTensor(),
             RandomExpand(mean),
             RandomCrop(),
             RandomHorizontalFlip(),
-            Resize(size=(crop_size, crop_size)),
+            Resize(size=crop_size),
             Normalize(mean=mean, std=std),
         ])
         
         val_transform = Compose([
+            ToTensor(),
             Resize(size=crop_size),
             Normalize(mean=mean, std=std),
         ])
         
         train_dataset = VocDetectionDataset(root=voc_data_root, year=voc_year, split='train', download=voc_download, transform=train_transform)
-        val_dataset = VocDetectionDataset(root=voc_data_root, year=voc_year, split='val', download=False, transform=val_transform)
-        test_dataset = VocDetectionDataset(root=voc_data_root, year=voc_year, split='val', download=False, transform=val_transform)
+        val_dataset = VocDetectionDataset(root=voc_data_root, year=voc_year, split='val', download=False, transform=val_transform, keep_difficult=True)
+        test_dataset = VocDetectionDataset(root=voc_data_root, year=voc_year, split='val', download=False, transform=val_transform, keep_difficult=True)
         class_dict = voc_id2class
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')

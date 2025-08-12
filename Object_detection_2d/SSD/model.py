@@ -80,7 +80,7 @@ class VggBackbone(nn.Module):
         state_dict = self.state_dict()
         param_names = list(state_dict.keys())
 
-        pretrained_state_dict = torchvision.models.vgg16(pretrained=True).state_dict()
+        pretrained_state_dict = torchvision.models.vgg16(weights=True).state_dict()
         pretrained_param_names = list(pretrained_state_dict.keys())
         for i, param in enumerate(param_names[:-4]):
             state_dict[param] = pretrained_state_dict[pretrained_param_names[i]]
@@ -149,11 +149,11 @@ class DetectionHead(nn.Module):
         self.box_heads = []
         for n_box, input_channels in zip(n_boxes, input_channels_list):
             self.box_heads.append(nn.Conv2d(input_channels, 4 * n_box, kernel_size=3, padding=1))
-
+        self.box_heads = nn.ModuleList(self.box_heads)
         self.cls_heads = []
         for n_box, input_channels in zip(n_boxes, input_channels_list):
-            self.box_heads.append(nn.Conv2d(input_channels, class_num * n_box, kernel_size=3, padding=1))
-
+            self.cls_heads.append(nn.Conv2d(input_channels, class_num * n_box, kernel_size=3, padding=1))
+        self.cls_heads = nn.ModuleList(self.cls_heads)
         self.init_conv2d()
 
     def init_conv2d(self):
@@ -177,8 +177,8 @@ class DetectionHead(nn.Module):
             cls_res = cls_res.view(batch_size, self.class_num, -1).contiguous()
             classes.append(cls_res)
 
-        boxes = torch.cat(boxes, dim=1)
-        classes = torch.cat(classes, dim=1)
+        boxes = torch.cat(boxes, dim=2)
+        classes = torch.cat(classes, dim=2)
         return boxes, classes
 
 class SSD(nn.Module):

@@ -7,6 +7,7 @@ import torch
 import xml.etree.ElementTree as ET
 
 voc_class2id = {
+    'background': 0,
     'aeroplane': 1,
     'bicycle': 2,
     'bird': 3,
@@ -70,13 +71,44 @@ VOC_DATASET_YEAR_DICT = {
     }
 }
 
+def parse_annotation(annotation_path):
+    boxes = []
+    labels = []
+    difficulties = []
+    
+    tree = ET.parse(annotation_path)
+    root = tree.getroot()
+    
+    for obj in root.findall("object"):
+        difficult = int(obj.find("difficult").text == "1")
+        name = obj.find("name").text.lower().strip()
+        label = voc_class2id.get(name)
+        if label is None:
+            continue
+        
+        box = obj.find("bndbox")
+        xmin = int(box.find("xmin").text) - 1
+        xmax = int(box.find("xmax").text) - 1
+        ymin = int(box.find("ymin").text) - 1
+        ymax = int(box.find("ymax").text) - 1
+        boxes.append([xmin, ymin, xmax, ymax])
+        labels.append(label)
+        difficulties.append(difficult)
+
+    target = {
+        "bboxes": boxes,
+        "labels": labels,
+        "difficulties": difficulties
+    }
+    return target
+
 def download_extract(url, root, filename, md5):
     download_url(url, root, filename, md5)
     with tarfile.open(os.path.join(root, filename), "r") as tar:
         tar.extractall(path=root)
 
 class VocDetectionDataset(Dataset):
-    def __init__(self, root, year='2012', split='train', download=False, transform=None, keep_diffucult=False):
+    def __init__(self, root, year='2012', split='train', download=False, transform=None, keep_difficult=False):
         self.root = os.path.expanduser(root)
         self.year = year
         self.url = VOC_DATASET_YEAR_DICT[year]['url']
@@ -84,7 +116,7 @@ class VocDetectionDataset(Dataset):
         self.md5 = VOC_DATASET_YEAR_DICT[year]['md5']
         self.transform = transform
         self.split = split
-        self.keep_difficult = keep_diffucult
+        self.keep_difficult = keep_difficult
         
         base_dir = VOC_DATASET_YEAR_DICT[year]['base_dir']
         voc_root = os.path.join(self.root, base_dir)
@@ -108,48 +140,30 @@ class VocDetectionDataset(Dataset):
             file_names = [x.strip() for x in f.readlines()]
         
         self.images = [os.path.join(img_dir, f"{x}.jpg") for x in file_names]
-        self.annotations = [os.path.join(annotation_dir, f"{x}.xml") for x in file_names]
+        annotations = [os.path.join(annotation_dir, f"{x}.xml") for x in file_names]
+        self.annotations = [parse_annotation(annotation) for annotation in annotations]
         assert (len(self.images) == len(self.annotations))
 
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
-        ann_path = self.annotations[index]
-        
-        boxes = []
-        labels= []
-        
-        tree = ET.parse(ann_path)
-        root = tree.getroot()
-        
-        for obj in root.findall("object"):
-            difficult = int(obj.find("difficult").text == "1")
-            if (self.keep_difficult is False) and difficult == 1:
-                continue
-            name = obj.find("name").text.lower().strip()
-            label = voc_class2id.get(name)
-            if label is None:
-                continue
-            
-            box = obj.find("bndbox")
-            xmin = int(box.find("xmin").text) - 1
-            xmax = int(box.find("xmax").text) - 1
-            ymin = int(box.find("ymin").text) - 1
-            ymax = int(box.find("ymax").text) - 1
-            boxes.append([xmin, ymin, xmax, ymax])
-            labels.append(label)
+        target = self.annotations[index]
+        boxes = torch.tensor(target['bboxes'], dtype=torch.float32)
+        labels = torch.tensor(target['labels'], dtype=torch.long)
+        difficulties = torch.tensor(target['difficulties'], dtype=torch.bool)
 
-        boxes = torch.tensor(boxes, dtype=torch.float32)
-        labels = torch.tensor(labels, dtype=torch.int64)
-        
+        if not self.keep_difficult:
+            boxes = boxes[~difficulties]
+            labels = labels[~difficulties]
+            difficulties = difficulties[~difficulties]
+
         target = {
-            "bboxes": boxes,
-            "labels": labels,
-            "image_id":torch.tensor([index])
+            'bboxes': boxes,
+            'labels': labels,
+            'difficulties': difficulties
         }
         
         if self.transform is not None:
             img, target = self.transform(img, target)
-            print(img.shape)
         return img, target
 
     def __len__(self):
@@ -162,7 +176,7 @@ class VocDetectionDataset(Dataset):
             imgs.append(img)
             targets.append(target)
 
-        images = torch.stack(images, dim=0)
-        return images, targets
+        imgs = torch.stack(imgs, dim=0)
+        return imgs, targets
     
     

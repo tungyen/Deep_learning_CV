@@ -37,7 +37,7 @@ class RandomHorizontalFlip(object):
             bboxes = target['bboxes']
             bboxes = bboxes.clone()
             
-            bboxes[:, [0, 2]] = w - bboxes[:, [2, 0]]
+            bboxes[:, [0, 2]] = w - bboxes[:, [2, 0]] - 1
             target['bboxes'] = bboxes
 
         return img, target
@@ -56,7 +56,7 @@ class RandomVerticalFlip(object):
             bboxes = target['bboxes']
             bboxes = bboxes.clone()
             
-            bboxes[:, [1, 3]] = h - bboxes[:, [3, 1]]
+            bboxes[:, [1, 3]] = h - bboxes[:, [3, 1]] - 1
             target['bboxes'] = bboxes
 
         return img, target
@@ -74,8 +74,8 @@ class RandomExpand(object):
         if random.random() >= 0.5:
             return img, target
         
-        h_ori = img.size[1]
-        w_ori = img.size[2]
+        h_ori = img.shape[1]
+        w_ori = img.shape[2]
         scale = random.uniform(1, self.max_scale)
         h_new = int(scale * h_ori)
         w_new = int(scale * w_ori)
@@ -96,8 +96,8 @@ class Normalize(object):
         self.mean = mean
         self.std = std
 
-    def __call__(self, tensor, target):
-        return F.normalize(tensor, self.mean, self.std), target
+    def __call__(self, img, target):
+        return F.normalize(img, self.mean, self.std), target
 
     def __repr__(self):
         return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
@@ -141,19 +141,22 @@ class RandomCrop(object):
                 img_new = img[:, top:bottom, left:right]
                 bboxes = target['bboxes']
                 labels = target['labels']
+                difficulties = target['difficulties']
                 centers = (bboxes[:, :2] + bboxes[:, 2:]) / 2
                 
-                in_crop = (centers[:, 0] > left) * (centers[:, 0] > right) * (centers[:, 1] > top) * (centers[:, 0] > bottom)
+                in_crop = (centers[:, 0] > left) * (centers[:, 0] < right) * (centers[:, 1] > top) * (centers[:, 1] < bottom)
                 if not in_crop.any():
                     continue
                 new_bboxes = bboxes[in_crop, :]
                 new_labels = labels[in_crop]
+                new_difficulties = difficulties[in_crop]
                 new_bboxes[:, :2] = torch.max(new_bboxes[:, :2], crop[:2])
                 new_bboxes[:, :2] -= crop[:2]
                 new_bboxes[:, 2:] = torch.min(new_bboxes[:, 2:], crop[2:])
-                new_bboxes[:, 2:] -= crop[2:]
+                new_bboxes[:, 2:] -= crop[:2]
                 target['bboxes'] = new_bboxes
                 target['labels'] = new_labels
+                target['difficulties'] = new_difficulties
                 return img_new, target
 
 class Resize(object):
@@ -164,7 +167,7 @@ class Resize(object):
     def __call__(self, img, target):
         img_new = FT.resize(img, self.size)
         height, width = img.shape[1:]
-        ori_size = torch.FloatTensor([width, height, width, height]).unqueeze(0)
+        ori_size = torch.FloatTensor([width, height, width, height]).unsqueeze(0)
         bboxes = target['bboxes']
         new_bboxes = bboxes / ori_size
         
@@ -253,7 +256,20 @@ class Lambda(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '()'
-    
+
+class ToTensor(object):
+    def __init__(self, normalize=True, target_type='uint8'):
+        self.normalize = normalize
+        self.target_type = target_type
+        
+    def __call__(self, img, target):
+        if self.normalize:
+            return F.to_tensor(img), target
+        else:
+            return torch.from_numpy(np.array(img, dtype=np.float32).transpose(2, 0, 1) ), target
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
     
 class SingleCompose(object):
     def __init__(self, transforms):
