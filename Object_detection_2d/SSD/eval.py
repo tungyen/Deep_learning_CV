@@ -13,7 +13,7 @@ from Object_detection_2d.utils import (
     get_model,
     setup_args_with_dataset,
     decode_boxes,
-    gather_list_ddp
+    gather_tensors
 )
 
 def eval_model(args):
@@ -26,9 +26,8 @@ def eval_model(args):
     model_name = args.model
     dataset_type = args.dataset
     args = setup_args_with_dataset(dataset_type, args)
-    task = args.task
     ckpts_path = args.experiment
-    weight_path = os.path.join(root, ckpts_path, "{}_{}_{}.pth".format(model_name, dataset_type, task))
+    weight_path = os.path.join(root, ckpts_path, "{}_{}.pth".format(model_name, dataset_type))
     
     if dist.get_rank() == 0:
         print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
@@ -39,47 +38,64 @@ def eval_model(args):
     model.eval()
     
     # Validation
-    pred_boxes = list()
-    pred_labels = list()
-    pred_scores = list()
-    true_boxes = list()
-    true_labels = list()
-    true_difficulties = list()
-    
+    pred_boxes_all = list()
+    pred_labels_all = list()
+    pred_scores_all = list()
+    pred_counts_all = list()
+    true_boxes_all = list()
+    true_labels_all = list()
+    true_difficulties_all = list()
+    true_counts_all = list()
     with torch.no_grad():
-        for imgs, targets in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=dist.get_rank() != 0):
+        for imgs, targets in tqdm(val_dataloader, desc="Evaluate", disable=dist.get_rank() != 0):
             imgs = imgs.to(local_rank)
             pred_boxes, pred_scores = model(imgs)
-            pred_boxes_batch, pred_labels_batch, pred_scores_batch = decode_boxes(
+            pred_boxes_all_batch, pred_labels_all_batch, pred_scores_all_batch, pred_counts_all_batch = decode_boxes(
                 args, pred_boxes, pred_scores,
                 model.module.prior_boxes_center
             )
 
-            boxes = [t['bboxes'].to(local_rank) for t in targets]
-            labels = [t['labels'].to(local_rank) for t in targets]
-            difficulties = [t['difficulties'].to(local_rank) for t in targets]
+            gt_boxes_all_batch = torch.cat([t['bboxes'].to(local_rank) for t in targets], dim=0)
+            gt_labels_all_batch = torch.cat([t['labels'].to(local_rank) for t in targets], dim=0)
+            gt_difficulties_all_batch = torch.cat([t['difficulties'].to(local_rank) for t in targets], dim=0)
+            gt_counts_all_batch = torch.tensor([len(t['bboxes']) for t in targets], dtype=torch.int32, device=local_rank)
 
-            pred_boxes.append(pred_boxes_batch)
-            pred_labels.append(pred_labels_batch)
-            pred_scores.append(pred_scores_batch)
-            true_boxes.extend(boxes)
-            true_labels.extend(labels)
-            true_difficulties.extend(difficulties)
+            pred_boxes_all.append(pred_boxes_all_batch)
+            pred_labels_all.append(pred_labels_all_batch)
+            pred_scores_all.append(pred_scores_all_batch)
+            pred_counts_all.append(pred_counts_all_batch)
+            true_boxes_all.append(gt_boxes_all_batch)
+            true_labels_all.append(gt_labels_all_batch)
+            true_difficulties_all.append(gt_difficulties_all_batch)
+            true_counts_all.append(gt_counts_all_batch)
+
+        pred_boxes_all = torch.cat(pred_boxes_all, dim=0)
+        pred_labels_all = torch.cat(pred_labels_all, dim=0)
+        pred_scores_all = torch.cat(pred_scores_all, dim=0)
+        pred_counts_all = torch.cat(pred_counts_all, dim=0)
+        true_boxes_all = torch.cat(true_boxes_all, dim=0)
+        true_labels_all = torch.cat(true_labels_all, dim=0)
+        true_difficulties_all = torch.cat(true_difficulties_all, dim=0)
+        true_counts_all = torch.cat(true_counts_all, dim=0)
+
             
-        pred_boxes = gather_list_ddp(pred_boxes)
-        pred_labels = gather_list_ddp(pred_labels)
-        pred_scores = gather_list_ddp(pred_scores)
-        true_boxes = gather_list_ddp(true_boxes)
-        true_labels = gather_list_ddp(true_labels)
-        true_difficulties = gather_list_ddp(true_difficulties)
+        pred_boxes_all = ggather_tensors(pred_boxes_all).cpu()
+        pred_labels_all = gather_tensors(pred_labels_all).cpu()
+        pred_scores_all = gather_tensors(pred_scores_all).cpu()
+        pred_counts_all = gather_tensors(pred_counts_all).cpu()
+        true_boxes_all = gather_tensors(true_boxes_all).cpu()
+        true_labels_all = gather_tensors(true_labels_all).cpu()
+        true_difficulties_all = gather_tensors(true_difficulties_all).cpu()
+        true_counts_all = gather_tensors(true_counts_all).cpu()
+        print("Merge Completed!")
 
         if dist.get_rank() == 0:
             APs, mAP = compute_object_detection_mAP(
-                args, pred_boxes, pred_labels, pred_scores,
-                true_boxes, true_labels, true_difficulties
+                args, pred_boxes_all, pred_labels_all, pred_scores_all, pred_counts_all,
+                true_boxes_all, true_labels_all, true_difficulties_all, true_counts_all
             )
             print("Validation mAP of {} on {} ===>{:.4f}".format(model_name, dataset_type, mAP.item()))
-            for i in range(args.class_num):
+            for i in range(args.class_num-1):
                 print("{} AP: {:.4f}".format(class_dict[i+1], APs[i].item()))
 
 def parse_args():
@@ -96,6 +112,9 @@ def parse_args():
     
     # Eval
     parse.add_argument('--experiment', type=str, required=True)
+    parse.add_argument('--min_scores', type=float, default=0.01)
+    parse.add_argument('--max_overlap', type=float, default=0.45)
+    parse.add_argument('--top_k', type=int, default=200)
     args = parse.parse_args()
     return args
         

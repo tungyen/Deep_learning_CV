@@ -69,14 +69,15 @@ def decode_boxes(args, pred_boxes, pred_scores, prior_cxcy):
     all_images_boxes = list()
     all_images_labels = list()
     all_images_scores = list()
-
     assert n_priors == pred_boxes.size(1) == pred_scores.size(2)
+
     for i in range(batch_size):
         decoded_boxes = cxcy_to_xy(offset_to_cxcy(pred_boxes[i], prior_cxcy))
 
         image_boxes = list()
         image_labels = list()
         image_scores = list()
+        counts = list()
         max_scores, best_labels = pred_scores[i].max(dim=0)
 
         for c in range(1, class_num):
@@ -98,41 +99,45 @@ def decode_boxes(args, pred_boxes, pred_scores, prior_cxcy):
             # NMS
             suppressed = torch.zeros((n_above_min_score, ), dtype=torch.bool, device=device)
             for box in range(class_decoded_boxes.size(0)):
-                if suppressed[box] == 1:
+                if suppressed[box]:
                     continue
                 suppressed = torch.max(suppressed, overlap[box] > max_overlap)
                 suppressed[box] = 0
+
             image_boxes.append(class_decoded_boxes[~suppressed])
             image_labels.append(torch.tensor((~suppressed).sum().item() * [c], device=device))
             image_scores.append(class_scores[~suppressed])
-        if len(image_boxes) == 0:
-            images_boxes.append(torch.tensor([0., 0., 1., 1.], dtype=torch.float32, device=device))
-            images_labels.append(torch.tensor([0], dtype=torch.long, device=device))
-            imagew_scores.append(torch.tensor([0.], dtype=torch.float32, device=device))
 
-        images_boxes = torch.cat(image_boxes, dim=0)
-        images_labels = torch.cat(image_labels, dim=0)
-        images_scores = torch.cat(image_scores, dim=0)
-        n_objects = images_boxes.size(0)
+        if len(image_boxes) == 0:
+            image_boxes.append(torch.tensor([0., 0., 1., 1.], dtype=torch.float32, device=device))
+            image_labels.append(torch.tensor([0], dtype=torch.long, device=device))
+            image_scores.append(torch.tensor([0.], dtype=torch.float32, device=device))
+
+        image_boxes = torch.cat(image_boxes, dim=0)
+        image_labels = torch.cat(image_labels, dim=0)
+        image_scores = torch.cat(image_scores, dim=0)
+        n_objects = image_boxes.size(0)
 
         if n_objects > top_k:
-            image_scores, ind = images_scores.sort(dim=0, descending=True)
-            images_boxes = images_boxes[ind[:top_k]]
-            images_labels = images_labels[ind[:top_k]]
-            images_scores = images_scores[ind[:top_k]]
+            image_scores, ind = image_scores.sort(dim=0, descending=True)
+            image_boxes = image_boxes[ind[:top_k]]
+            image_labels = image_labels[ind[:top_k]]
+            image_scores = image_scores[ind[:top_k]]
         
-        all_images_boxes.append(images_boxes)
-        all_images_labels.append(images_labels)
-        all_images_scores.append(images_scores)
+        counts.append(image_boxes.size(0))
+        all_images_boxes.append(image_boxes)
+        all_images_labels.append(image_labels)
+        all_images_scores.append(image_scores)
 
-    return all_images_boxes, all_images_labels, all_images_scores
+    all_images_boxes = torch.cat(all_images_boxes, dim=0)
+    all_images_labels = torch.cat(all_images_labels, dim=0)
+    all_images_scores = torch.cat(all_images_scores, dim=0)
+    counts = torch.tensor(counts, dtype=torch.int32, device=device)
+    return all_images_boxes, all_images_labels, all_images_scores, counts
 
-def gather_list_ddp(data):
+def gather_tensors(tensor):
     world_size = dist.get_world_size()
-    all_data = [None for _ in range(world_size)]
-    dist.all_gather_object(all_data, data)
-
-    merged_data = list()
-    for d in all_data:
-        merged_data.extend(d)
-    return merged_data
+    gather_list = [torch.zeros_like(tensor) for _ in range(world_size)]
+    dist.all_gather(gather_list, local_tensor)
+    combined = torch.cat(gather_list, dim=0)
+    return combined

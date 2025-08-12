@@ -7,6 +7,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from Object_detection_2d.dataset.utils import get_dataset
+from Object_detection_2d.vis_utils import visualize_detection
 from Object_detection_2d.utils import (
     get_model,
     setup_args_with_dataset,
@@ -50,8 +51,10 @@ def test_model(args):
             args, pred_boxes, pred_scores,
             model.module.prior_boxes_center
         )
-        
-
+        visualize_detection(
+            args, imgs_denorm, pred_boxes_batch, pred_labels_batch,
+            pred_scores_batch, class_dict, save_path
+        )
 
 def parse_args():
     parse = argparse.ArgumentParser()
