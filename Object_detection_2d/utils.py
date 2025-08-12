@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+import torch.distributed as dist
 
 from Object_detection_2d.SSD.model import SSD
 

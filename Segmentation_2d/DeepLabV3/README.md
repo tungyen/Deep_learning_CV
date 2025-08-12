@@ -4,25 +4,25 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 ## Experiment ##
 
 ### CityScapes dataset ###
-| Model  | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
+| Model | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
 |-------|-----|----------|-------------------|----------|
-| DeepLabV3 | 1.0  | None | None   | 64.65%   |
-| DeepLabV3   | 1.0  | 1.5   | None      | 66.41% |
-| DeepLabV3 | 1.0  | 1.5   | 0.5    | 67.69%   |
-| DeepLabV3++ | 1.0  | None | None   | 69.91%   |
-| DeepLabV3++ | 1.0  | 1.5    | None    | 70.63%   |
-| DeepLabV3++ | 1.0  | 1.5   | 0.5    | 71.41%   |
+| DeepLabV3 | 1.0 | None | None | 64.65% |
+| DeepLabV3 | 1.0 | 1.5 | None | 66.41% |
+| DeepLabV3 | 1.0 | 1.5 | 0.5 | 67.69% |
+| DeepLabV3++ | 1.0 | None | None | 69.91% |
+| DeepLabV3++ | 1.0 | 1.5 | None | 70.63% |
+| DeepLabV3++ | 1.0 | 1.5 | 0.5 | 71.41% |
 
 
 ### Paskal VOC dataset ###
-| Model  | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
+| Model | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
 |-------|-----|----------|-------------------|----------|
-| DeepLabV3 | 1.0  | None | None   | 77.55%   |
-| DeepLabV3   | 1.0  | 1.5   | None      | 78.85% |
-| DeepLabV3 | 1.0  | 1.5   | 0.5    | 79.05%   |
-| DeepLabV3++ | 1.0  | None | None   | 78.07%   |
-| DeepLabV3++ | 1.0  | 1.5    | None    | 79.53%   |
-| DeepLabV3++ | 1.0  | 1.5   | 0.5    | 78.98%   |
+| DeepLabV3 | 1.0 | None | None | 77.55% |
+| DeepLabV3 | 1.0 | 1.5 | None | 78.85% |
+| DeepLabV3 | 1.0 | 1.5 | 0.5 | 79.05% |
+| DeepLabV3++ | 1.0 | None | None | 78.07% |
+| DeepLabV3++ | 1.0 | 1.5 | None | 79.53% |
+| DeepLabV3++ | 1.0 | 1.5 | 0.5 | 78.98% |
 
 Note that the following command is based on 2 gpu training. You can change weight of lovasz/boundary loss in command by specifying lovasz_weight and boundary_weight.
 ## Training ##

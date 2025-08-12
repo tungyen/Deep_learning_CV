@@ -85,54 +85,54 @@ def train_model(args):
                     )
                 scheduler.step()
         # Validation
-        model.eval()
+        # model.eval()
 
-        pred_boxes_all = list()
-        pred_labels_all = list()
-        pred_scores_all = list()
-        true_boxes_all = list()
-        true_labels_all = list()
-        true_difficulties_all = list()
+        # pred_boxes_all = list()
+        # pred_labels_all = list()
+        # pred_scores_all = list()
+        # true_boxes_all = list()
+        # true_labels_all = list()
+        # true_difficulties_all = list()
 
-        with torch.no_grad():
-            for imgs, targets in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=dist.get_rank() != 0):
-                imgs = imgs.to(local_rank)
-                pred_boxes, pred_scores = model(imgs)
-                pred_boxes_batch, pred_labels_batch, pred_scores_batch = decode_boxes(
-                    args, pred_boxes, pred_scores,
-                    model.module.prior_boxes_center
-                )
+        # with torch.no_grad():
+        #     for imgs, targets in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=dist.get_rank() != 0):
+        #         imgs = imgs.to(local_rank)
+        #         pred_boxes, pred_scores = model(imgs)
+        #         pred_boxes_batch, pred_labels_batch, pred_scores_batch = decode_boxes(
+        #             args, pred_boxes, pred_scores,
+        #             model.module.prior_boxes_center
+        #         )
 
-                boxes = [t['bboxes'].to(local_rank) for t in targets]
-                labels = [t['labels'].to(local_rank) for t in targets]
-                difficulties = [t['difficulties'].to(local_rank) for t in targets]
+        #         boxes = [t['bboxes'].to(local_rank) for t in targets]
+        #         labels = [t['labels'].to(local_rank) for t in targets]
+        #         difficulties = [t['difficulties'].to(local_rank) for t in targets]
 
-                pred_boxes_all.append(pred_boxes_batch)
-                pred_labels_all.append(pred_labels_batch)
-                pred_scores_all.append(pred_scores_batch)
-                true_boxes_all.extend(boxes)
-                true_labels_all.extend(labels)
-                true_difficulties_all.extend(difficulties)
+        #         pred_boxes_all.append(pred_boxes_batch)
+        #         pred_labels_all.append(pred_labels_batch)
+        #         pred_scores_all.append(pred_scores_batch)
+        #         true_boxes_all.extend(boxes)
+        #         true_labels_all.extend(labels)
+        #         true_difficulties_all.extend(difficulties)
             
-            pred_boxes_all = gather_list_ddp(pred_boxes_all)
-            pred_labels_all = gather_list_ddp(pred_labels_all)
-            pred_scores_all = gather_list_ddp(pred_scores_all)
-            true_boxes_all = gather_list_ddp(true_boxes_all)
-            true_labels_all = gather_list_ddp(true_labels_all)
-            true_difficulties_all = gather_list_ddp(true_difficulties_all)
+        #     pred_boxes_all = gather_list_ddp(pred_boxes_all)
+        #     pred_labels_all = gather_list_ddp(pred_labels_all)
+        #     pred_scores_all = gather_list_ddp(pred_scores_all)
+        #     true_boxes_all = gather_list_ddp(true_boxes_all)
+        #     true_labels_all = gather_list_ddp(true_labels_all)
+        #     true_difficulties_all = gather_list_ddp(true_difficulties_all)
 
-            if dist.get_rank() == 0:
-                APs, mAP = compute_object_detection_mAP(
-                    args, pred_boxes_all, pred_labels_all, pred_scores_all,
-                    true_boxes_all, true_labels_all, true_difficulties_all
-                )
-                print("Validation mAP of {} on {} ===>{:.4f}".format(model_name, dataset_type, mAP.item()))
-                for i in range(args.class_num):
-                    print("{} AP: {:.4f}".format(class_dict[i+1], APs[i].item()))
+        #     if dist.get_rank() == 0:
+        #         APs, mAP = compute_object_detection_mAP(
+        #             args, pred_boxes_all, pred_labels_all, pred_scores_all,
+        #             true_boxes_all, true_labels_all, true_difficulties_all
+        #         )
+        #         print("Validation mAP of {} on {} ===>{:.4f}".format(model_name, dataset_type, mAP.item()))
+        #         for i in range(args.class_num):
+        #             print("{} AP: {:.4f}".format(class_dict[i+1], APs[i].item()))
 
-                if mAP > best_metric:
-                    best_metric = mAP
-                    torch.save(model.module.state_dict(), weight_path)
+        #         if mAP > best_metric:
+        #             best_metric = mAP
+        torch.save(model.module.state_dict(), weight_path)
 
 def parse_args():
     parse = argparse.ArgumentParser()
