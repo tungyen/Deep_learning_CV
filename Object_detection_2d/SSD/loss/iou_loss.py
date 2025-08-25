@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from Object_detection_2d.utils import xy_to_cxcy, cxcy_to_xy, cxcy_to_offset, find_boxes_overlap
+from Object_detection_2d.SSD.utils.box_utils import *
 
 class BaseIouLoss(nn.Module):
     def __init__(self, eps):
@@ -103,74 +103,3 @@ class CiouLoss(DiouLoss):
         cious = torch.clamp(cious, min=-1.0, max=1.0)
         loss = 1 - cious
         return torch.mean(loss)
-
-class MultiBoxesLoss(nn.Module):
-    def __init__(self, prior_cxcy, threshold=0.5, neg_pos_ratio=3, alpha=1.0):
-        super().__init__()
-        self.prior_cxcy = prior_cxcy
-        self.prior_num = prior_cxcy.shape[0]
-        self.prior_xy = cxcy_to_xy(prior_cxcy)
-        self.threshold = threshold
-        self.neg_pos_ratio = neg_pos_ratio
-        self.alpha = alpha
-        
-        self.smooth_l1 = nn.SmoothL1Loss()
-        self.ce = nn.CrossEntropyLoss(reduction='none')
-        
-    def forward(self, pred_boxes, pred_logits, boxes, labels):
-        loss_dict = {}
-        batch_size = pred_boxes.shape[0]
-        class_num = pred_logits.shape[1]
-        device = pred_boxes.device
-        assert self.prior_num == pred_boxes.shape[2] == pred_logits.shape[2]
-        
-        prior_cxcy = self.prior_cxcy.to(device)
-        prior_xy = self.prior_xy.to(device)
-        true_boxes = torch.zeros((batch_size, self.prior_num, 4), dtype=torch.float).to(device)
-        true_classes = torch.zeros((batch_size, self.prior_num), dtype=torch.long).to(device)
-        for i in range(batch_size):
-            gt_num = boxes[i].shape[0]
-            overlap = find_boxes_overlap(boxes[i], prior_xy) # (gt_num, self.prior_num)
-            overlap_per_prior, overlap_idx_per_prior = overlap.max(dim=0)
-            _, overlap_idx_per_gt = overlap.max(dim=1)
-            
-            overlap_idx_per_prior[overlap_idx_per_gt] = torch.arange(gt_num).to(device)
-            overlap_per_prior[overlap_idx_per_gt] = 1.0
-            
-            labels_per_prior = labels[i][overlap_idx_per_prior]
-            labels_per_prior[overlap_per_prior < self.threshold] = 0.0
-            
-            true_classes[i] = labels_per_prior
-            true_boxes[i] = cxcy_to_offset(xy_to_cxcy(boxes[i][overlap_idx_per_prior]), prior_cxcy)
-            
-        positive_priors = true_classes != 0
-        mask = positive_priors.unsqueeze(1).expand(-1, 4, -1)
-        boxes_loss = self.smooth_l1(pred_boxes[mask], true_boxes.permute(0, 2, 1)[mask])
-        total_loss = self.alpha * boxes_loss
-        loss_dict['boxes_loss'] = self.alpha * boxes_loss
-        
-        positive_num = positive_priors.sum(dim=1)
-        hard_negative_num = positive_num * self.neg_pos_ratio
-        cls_loss = self.ce(pred_logits.permute(0, 2, 1).contiguous().view(-1, class_num), true_classes.view(-1))
-        cls_loss = cls_loss.view(batch_size, self.prior_num)
-        cls_loss_pos = cls_loss[positive_priors]
-        
-        cls_loss_neg = cls_loss.clone()
-        cls_loss_neg[positive_priors] = 0.0
-        cls_loss_neg, _ = cls_loss_neg.sort(dim=1, descending=True)
-        hardness_ranks = torch.LongTensor(range(self.prior_num)).unsqueeze(0).expand_as(cls_loss_neg).to(device)
-        hard_negatives = hardness_ranks < hard_negative_num.unsqueeze(1)
-        cls_loss_neg_hard = cls_loss_neg[hard_negatives]
-        
-        cls_loss = (cls_loss_neg_hard.sum() + cls_loss_pos.sum()) / positive_num.sum().float()
-        total_loss += cls_loss
-        loss_dict['cls_loss'] = cls_loss
-        loss_dict['loss'] = total_loss
-        return loss_dict
-    
-    
-def get_loss(args, model):
-    if args.loss_func == 'ce_smooth_l1':
-        return MultiBoxesLoss(model.prior_boxes_center)
-    else:
-        raise ValueError(f'Unknown loss function {args.loss_func}.')

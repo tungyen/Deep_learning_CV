@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 
-from Object_detection_2d.dataset.voc import voc_cmap
+from Object_detection_2d.data.dataset.voc import voc_cmap
 
 def visualize_detection(args, imgs, batched_bboxes, batched_labels,
                         batched_scores, class_dict, save_path):

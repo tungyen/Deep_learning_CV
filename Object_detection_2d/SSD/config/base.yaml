@@ -1,0 +1,56 @@
+img_size: 300
+class_num: 21
+img_mean: [0.485, 0.456, 0.406]
+root: "Object_detection_2d/SSD"
+
+prior:
+  feature_map_sizes: [38, 19, 10, 5, 3, 1]
+  min_sizes: [30, 60, 111, 162, 213, 264]
+  max_sizes: [60, 111, 162, 213, 264, 315]
+  strides: [8, 16, 32, 64, 100, 300]
+  aspect_ratios: [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
+  boxes_per_feature_map: [4, 6, 6, 6, 4, 4]
+  clip: True
+center_variance: 0.1
+size_variance: 0.2
+iou_thres: 0.5
+model: "SSD"
+backbone:
+  model: 'vgg'
+  out_channels: [512, 1024, 512, 256, 256, 256]
+  pretrained: True
+
+datasets:
+  name: "VOC"
+  data_root: Dataset/VOC
+  year: "2012"
+  download_data: False
+
+# Training
+epochs: 120
+scheduler:
+  name: "WarmupMultiStep"
+  milestones: [80000, 100000]
+  gamma: 0.1
+  warmup_factor: 0.333
+  warmup_iters: 500
+  last_epoch: -1
+
+optimizer:
+  name: "SGD"
+  weight_decay: 0.0005
+  momentum: 0.9
+  lr: 0.001
+
+loss:
+  name: MultiBoxesLoss
+  neg_pos_ratio: 3
+
+train_batch_size: 16
+eval_batch_size: 16
+test_batch_size: 4
+
+# Evaluation
+confidence_thres: 0.01
+nms_thres: 0.45
+topk: 100

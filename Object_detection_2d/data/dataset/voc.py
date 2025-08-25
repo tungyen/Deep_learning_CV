@@ -7,6 +7,8 @@ import torch
 import xml.etree.ElementTree as ET
 import numpy as np
 
+from Object_detection_2d.data.container import Container
+
 voc_class2id = {
     'background': 0,
     'aeroplane': 1,
@@ -72,37 +74,6 @@ VOC_DATASET_YEAR_DICT = {
     }
 }
 
-def parse_annotation(annotation_path):
-    boxes = []
-    labels = []
-    difficulties = []
-    
-    tree = ET.parse(annotation_path)
-    root = tree.getroot()
-    
-    for obj in root.findall("object"):
-        difficult = int(obj.find("difficult").text == "1")
-        name = obj.find("name").text.lower().strip()
-        label = voc_class2id.get(name)
-        if label is None:
-            continue
-        
-        box = obj.find("bndbox")
-        xmin = int(box.find("xmin").text) - 1
-        xmax = int(box.find("xmax").text) - 1
-        ymin = int(box.find("ymin").text) - 1
-        ymax = int(box.find("ymax").text) - 1
-        boxes.append([xmin, ymin, xmax, ymax])
-        labels.append(label)
-        difficulties.append(difficult)
-
-    target = {
-        "bboxes": boxes,
-        "labels": labels,
-        "difficulties": difficulties
-    }
-    return target
-
 def download_extract(url, root, filename, md5):
     download_url(url, root, filename, md5)
     with tarfile.open(os.path.join(root, filename), "r") as tar:
@@ -130,75 +101,99 @@ def voc_cmap(N=256, normalized=False):
 
 class VocDetectionDataset(Dataset):
     cmap = voc_cmap()
-    def __init__(self, root, year='2012', split='train', download=False, transform=None, keep_difficult=False):
-        self.root = os.path.expanduser(root)
-        self.year = year
-        self.url = VOC_DATASET_YEAR_DICT[year]['url']
-        self.filename = VOC_DATASET_YEAR_DICT[year]['filename']
-        self.md5 = VOC_DATASET_YEAR_DICT[year]['md5']
+    def __init__(self, args, transform=None, target_transform=None):
+        self.root = os.path.expanduser(args['data_root'])
+        self.year = args['year']
+        self.url = VOC_DATASET_YEAR_DICT[self.year]['url']
+        self.filename = VOC_DATASET_YEAR_DICT[self.year]['filename']
+        self.md5 = VOC_DATASET_YEAR_DICT[self.year]['md5']
         self.transform = transform
-        self.split = split
-        self.keep_difficult = keep_difficult
+        self.target_transform = target_transform
+        self.split = args['split']
+        self.keep_difficult = args['keep_difficult']
+        self.class_dict = voc_id2class
         
-        base_dir = VOC_DATASET_YEAR_DICT[year]['base_dir']
-        voc_root = os.path.join(self.root, base_dir)
+        base_dir = VOC_DATASET_YEAR_DICT[self.year]['base_dir']
+        self.voc_root = os.path.join(self.root, base_dir)
         
-        if download:
+        if args['download_data']:
             download_extract(self.url, self.root, self.filename, self.md5)
 
-        if not os.path.isdir(voc_root):
+        if not os.path.isdir(self.voc_root):
             raise RuntimeError('Dataset not found or corrupted.' + ' You can use download=True to download it')
         
-        img_dir = os.path.join(voc_root, 'JPEGImages')
-        annotation_dir = os.path.join(voc_root, "Annotations")
-        splits_dir = os.path.join(voc_root, 'ImageSets/Main')
-        split_file = os.path.join(splits_dir, f'{split}.txt')
+        self.img_dir = os.path.join(self.voc_root, 'JPEGImages')
+        self.annotation_dir = os.path.join(self.voc_root, "Annotations")
+        splits_dir = os.path.join(self.voc_root, 'ImageSets/Main')
+        split_file = os.path.join(splits_dir, f'{self.split}.txt')
             
         if not os.path.exists(split_file):
             raise ValueError(
                 'Wrong image_set entered! Please use split=train or split=trainval or split=val')
 
         with open(os.path.join(split_file), "r") as f:
-            file_names = [x.strip() for x in f.readlines()]
-        
-        self.images = [os.path.join(img_dir, f"{x}.jpg") for x in file_names]
-        annotations = [os.path.join(annotation_dir, f"{x}.xml") for x in file_names]
-        self.annotations = [parse_annotation(annotation) for annotation in annotations]
-        assert (len(self.images) == len(self.annotations))
+            self.ids = [x.strip() for x in f.readlines()]
 
     def __getitem__(self, index):
-        img = Image.open(self.images[index]).convert('RGB')
-        target = self.annotations[index]
-        boxes = torch.tensor(target['bboxes'], dtype=torch.float32)
-        labels = torch.tensor(target['labels'], dtype=torch.long)
-        difficulties = torch.tensor(target['difficulties'], dtype=torch.bool)
-
+        img_id = self.ids[index]
+        boxes, labels, difficulties = self.parse_annotation(img_id)
         if not self.keep_difficult:
-            boxes = boxes[~difficulties]
-            labels = labels[~difficulties]
-            difficulties = difficulties[~difficulties]
+            boxes = boxes[difficulties == 0]
+            labels = labels[difficulties == 0]
 
-        target = {
-            'bboxes': boxes,
-            'labels': labels,
-            'difficulties': difficulties
-        }
-        
+        img = self._read_image(img_id)
         if self.transform is not None:
-            img, target = self.transform(img, target)
-        return img, target
+            img, boxes, labels = self.transform(img, boxes, labels)
+        if self.target_transform is not None:
+            boxes, labels = self.target_transform(boxes, labels)
+        targets = Container(boxes=boxes, labels=labels)
+        return img, targets, index
 
     def __len__(self):
-        return len(self.images)
-    
-    def collate_fn(self, batch):
-        imgs = list()
-        targets = list()
-        for img, target in batch:
-            imgs.append(img)
-            targets.append(target)
+        return len(self.ids)
 
-        imgs = torch.stack(imgs, dim=0)
-        return imgs, targets
+    def get_annotation(self, index):
+        img_id = self.ids[index]
+        return img_id, self.parse_annotation(img_id)
+    
+    def parse_annotation(self, img_id):
+        annotation_path = os.path.join(self.annotation_dir, f'{img_id}.xml')
+        boxes = []
+        labels = []
+        difficulties = []
+    
+        objects = ET.parse(annotation_path).findall("object")
+        for obj in objects:
+            difficult = int(obj.find("difficult").text == "1")
+            name = obj.find("name").text.lower().strip()
+            label = voc_class2id.get(name)
+            if label is None:
+                continue
+            
+            box = obj.find("bndbox")
+            xmin = int(box.find("xmin").text) - 1
+            xmax = int(box.find("xmax").text) - 1
+            ymin = int(box.find("ymin").text) - 1
+            ymax = int(box.find("ymax").text) - 1
+            boxes.append([xmin, ymin, xmax, ymax])
+            labels.append(label)
+            difficulties.append(difficult)
+
+        return (np.array(boxes, dtype=np.float32),
+                np.array(labels, dtype=np.int64),
+                np.array(difficulties, dtype=np.uint8))
+
+    def _read_image(self, img_id):
+        img_path = os.path.join(self.img_dir, f'{img_id}.jpg')
+        img = Image.open(img_path).convert('RGB')
+        return np.array(img)
+
+    def get_img_info(self, index):
+        img_id = self.ids[index]
+        annotation_file = os.path.join(self.annotation_dir, f'{img_id}.xml')
+        annotation = ET.parse(annotation_file).getroot()
+        size = annotation.find("size")
+        img_info = tuple(map(int, (size.find("height").text, size.find("width").text)))
+        return {"height": img_info[0], "width": img_info[1]}
     
     
