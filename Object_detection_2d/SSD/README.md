@@ -6,25 +6,25 @@ First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_le
 ### Paskal VOC dataset ###
 | Box Weight | Box Loss | mAP |
 |-----|----- |----------|
-| 1.0 | SmoothL1 | 77.55% |
-| 1.0 | IoU | 78.85% |
-| 1.0 | GIoU  | 79.05% |
-| 1.0 | DIoU | 78.07% |
-| 1.0 | CIoU | 79.53% |
+| 1.0 | SmoothL1 | 54.92% |
+| 1.0 | IoU | % |
+| 1.0 | GIoU  | % |
+| 1.0 | DIoU | % |
+| 1.0 | CIoU | % |
 
 ### Training ###
 ```bash
-torchrun --nproc_per_node=2 Object_detection_2d/SSD/train.py --experiment ckpts --dataset voc --model SSD
+torchrun --nproc_per_node=2 Object_detection_2d/SSD/train.py --experiment ckpts --config Object_detection_2d/SSD/config/base.yaml
 ```
 
 ### Evaluation ###
 ```bash
-torchrun --nproc_per_node=2 Object_detection_2d/SSD/eval.py --experiment ckpts --dataset voc --model SSD
+torchrun --nproc_per_node=2 Object_detection_2d/SSD/eval.py --experiment ckpts --config Object_detection_2d/SSD/config/base.yaml
 ```
 
 ### Testing ###
 ```bash
-torchrun --nproc_per_node=1 Object_detection_2d/SSD/test.py --experiment ckpts --dataset voc --model SSD
+torchrun --nproc_per_node=1 Object_detection_2d/SSD/test.py --experiment ckpts --config Object_detection_2d/SSD/config/base.yaml
 ```
 
 ### Result of voc Dataset ###

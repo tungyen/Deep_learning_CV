@@ -30,8 +30,6 @@ class PostProcessor:
 
             boxes = boxes.reshape(-1, 4)
             scores = scores.reshape(-1)
-            print("Max of scores: ", torch.max(scores))
-            print("Min of scores: ", torch.min(scores))
             labels = labels.reshape(-1)
 
             indexes = torch.nonzero(scores > self.args['confidence_thres']).squeeze(1)
@@ -40,7 +38,6 @@ class PostProcessor:
             boxes[:, 0::2] *= self.width
             boxes[:, 1::2] *= self.height
             nms_start_time = time.time()
-            print("Shape of boxes: ", boxes.shape)
             keep = batched_nms(boxes, scores, labels, self.args['nms_thres'])
             keep = keep[:self.args['topk']]
             boxes, scores, labels = boxes[keep], scores[keep], labels[keep]

@@ -36,6 +36,7 @@ def eval_model(args):
     _, val_dataloader, _ = build_dataloader(args)
     class_dict = val_dataloader.dataset.class_dict
     model = build_model(args).to(local_rank)
+    model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
 
     # Validation
@@ -47,18 +48,20 @@ def eval_model(args):
             imgs = imgs.to(local_rank)
             with torch.no_grad():
                 detections = model(imgs, False)
-    #             detections = [d.to(torch.device("cpu")) for d in detections]
-    #         pred_results.update(
-    #             {int(img_id): d for img_id, d in zip(img_ids, detections)}
-    #         )
-    # synchronize()
-    # pred_results = gather_preds_ddp(pred_results)
+                detections = [d.to(torch.device("cpu")) for d in detections]
+            pred_results.update(
+                {int(img_id): d for img_id, d in zip(img_ids, detections)}
+            )
+    synchronize()
+    pred_results = gather_preds_ddp(pred_results)
 
-    # if is_main_process():
-    #     metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
-    #     print("Validation mAP of {} on {} ===> {:.4f}".format(args['model'], args['datasets']['name'], metrics['map']))
-    #     for i, ap in enumerate(metrics['ap']):
-    #         print("{} ap: {:.4f}".format([i], ap))
+    if is_main_process():
+        metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
+        print("Validation mAP of {} on {} ===> {:.4f}".format(args['model'], args['datasets']['name'], metrics['map']))
+        for i, ap in enumerate(metrics['ap']):
+            if i == 0:
+                continue
+            print("{} ap: {:.4f}".format(class_dict[i], ap))
 
 def parse_args():
     parse = argparse.ArgumentParser()

@@ -4,7 +4,7 @@ import itertools
 import six
 from collections import defaultdict
 
-from Object_detection_2d.SSD.utils.box_utils import get_iou_numpy
+from Object_detection_2d.SSD.utils.box_utils import get_iou_numpy_multiboxes
 
 def compute_object_detection_metrics(dataset, preds, iou_thres=0.5):
     pred_boxes_all = []
@@ -78,8 +78,7 @@ def compute_prec_rec(pred_boxes_all, pred_labels_all, pred_scores_all,
             pred_boxes_class[:, 2:] += 1
             gt_boxes_class = gt_boxes_class.copy()
             gt_boxes_class[:, 2:] += 1
-
-            iou = get_iou_numpy(pred_boxes_class, gt_boxes_class)
+            iou = get_iou_numpy_multiboxes(pred_boxes_class, gt_boxes_class)
             gt_index = iou.argmax(axis=1)
             gt_index[iou.max(axis=1) < iou_thres] = -1
             del iou

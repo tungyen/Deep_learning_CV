@@ -68,6 +68,7 @@ def train_model(args):
                         boxes_loss=f"{loss['boxes_loss'].item():.4f}"
                     )
                 scheduler.step()
+        torch.cuda.empty_cache()
         # Validation
         model.eval()
         pred_results = {}
@@ -77,7 +78,7 @@ def train_model(args):
                 imgs = imgs.to(local_rank)
                 with torch.no_grad():
                     detections = model(imgs, False)
-                    detections = [d.cpu() for d in detections]
+                    detections = [d.to(torch.device("cpu")) for d in detections]
                 pred_results.update(
                     {int(img_id): d for img_id, d in zip(img_ids, detections)}
                 )
@@ -86,9 +87,11 @@ def train_model(args):
 
         if is_main_process():
             metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
-            print("Validation mAP of {} on {} ===> {:.4f}".format(model_name, dataset_type, metrics['map']))
+            print("Validation mAP of {} on {} ===> {:.4f}".format(args['model'], args['datasets']['name'], metrics['map']))
             for i, ap in enumerate(metrics['ap']):
-                print("{} ap: {:.4f}".format([i], ap))
+                if i == 0:
+                    continue
+                print("{} ap: {:.4f}".format(class_dict[i], ap))
             if metrics['map'] > best_metric:
                 best_metric = metrics['map']
                 torch.save(model.module.state_dict(), weight_path)
@@ -99,7 +102,7 @@ def parse_args():
     parse.add_argument('--config', type=str, required=True)
     args = parse.parse_args()
     return args
-     
+
 if __name__ =='__main__':
     args = parse_args()
     train_model(args)

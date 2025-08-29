@@ -1,6 +1,6 @@
 img_size: 300
 class_num: 21
-img_mean: [0.485, 0.456, 0.406]
+img_mean: [123, 117, 104]
 root: "Object_detection_2d/SSD"
 
 prior:
@@ -27,7 +27,7 @@ datasets:
   download_data: False
 
 # Training
-epochs: 120
+epochs: 200
 scheduler:
   name: "WarmupMultiStep"
   milestones: [80000, 100000]
@@ -46,8 +46,8 @@ loss:
   name: MultiBoxesLoss
   neg_pos_ratio: 3
 
-train_batch_size: 16
-eval_batch_size: 16
+train_batch_size: 32
+eval_batch_size: 32
 test_batch_size: 4
 
 # Evaluation

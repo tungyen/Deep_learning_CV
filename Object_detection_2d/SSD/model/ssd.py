@@ -7,8 +7,6 @@ from Object_detection_2d.SSD.model.post_processor import PostProcessor
 from Object_detection_2d.SSD.model.anchors import PriorBox
 from Object_detection_2d.SSD.utils.box_utils import *
 
-import time
-
 class DetectionHead(nn.Module):
     def __init__(self, args):
         super().__init__()
@@ -16,37 +14,30 @@ class DetectionHead(nn.Module):
         n_boxes = args['prior']['boxes_per_feature_map']
         input_channels_list = args['backbone']['out_channels']
 
-        self.box_heads = []
-        for n_box, input_channels in zip(n_boxes, input_channels_list):
-            self.box_heads.append(nn.Conv2d(input_channels, 4 * n_box, kernel_size=3, padding=1))
-        self.box_heads = nn.ModuleList(self.box_heads)
-        self.cls_heads = []
-        for n_box, input_channels in zip(n_boxes, input_channels_list):
-            self.cls_heads.append(nn.Conv2d(input_channels, self.class_num * n_box, kernel_size=3, padding=1))
-        self.cls_heads = nn.ModuleList(self.cls_heads)
-        self.init_conv2d()
+        self.box_heads = nn.ModuleList()
+        self.cls_heads = nn.ModuleList()
+        for i, (n_box, input_channels) in enumerate(zip(n_boxes, input_channels_list)):
+            self.box_heads.append(self.box_block(i, input_channels, n_box))
+            self.cls_heads.append(self.cls_block(i, input_channels, n_box))
 
-    def init_conv2d(self):
-        for modules in self.children():
-            for c in modules:
-                if isinstance(c, nn.Conv2d):
-                    nn.init.xavier_uniform_(c.weight)
-                    nn.init.constant_(c.bias, 0.0)
+    def cls_block(self, level, input_channels, n_box):
+        return nn.Conv2d(input_channels, n_box * self.class_num, kernel_size=3, stride=1, padding=1)
+    
+    def box_block(self, level, input_channels, n_box):
+        return nn.Conv2d(input_channels, n_box * 4, kernel_size=3, stride=1, padding=1)
    
     def forward(self, feats):
         assert(len(feats) == 6)
         batch_size = feats[0].shape[0]
         boxes = []
-        classes = []
-        for i, feat in enumerate(feats):
-            box_res = self.box_heads[i](feat)
-            boxes.append(box_res.permute(0, 2, 3, 1).contiguous())
-            cls_res = self.cls_heads[i](feat)
-            classes.append(cls_res.permute(0, 2, 3, 1).contiguous())
+        cls_logits = []
+        for feat, box_head, cls_head in zip(feats, self.box_heads, self.cls_heads):
+            boxes.append(box_head(feat).permute(0, 2, 3, 1).contiguous())
+            cls_logits.append(cls_head(feat).permute(0, 2, 3, 1).contiguous())
 
-        boxes = torch.cat([b.view(batch_size, -1) for b in boxes], dim=1).view(batch_size, -1, 4)
-        classes = torch.cat([c.view(batch_size, -1) for c in classes], dim=1).view(batch_size, -1, self.class_num)
-        return boxes, classes
+        boxes = torch.cat([b.view(b.shape[0], -1) for b in boxes], dim=1).view(batch_size, -1, 4)
+        cls_logits = torch.cat([c.view(c.shape[0], -1) for c in cls_logits], dim=1).view(batch_size, -1, self.class_num)
+        return boxes, cls_logits
 
 class SSD(nn.Module):
     def __init__(self, args):
@@ -64,6 +55,8 @@ class SSD(nn.Module):
         if is_train:
             return boxes, cls_scores
         self.prior_xy = self.prior_xy.to(x.device)
+        # print("Max of scores: ", torch.max(cls_scores))
+        # print("Min of scores: ", torch.min(cls_scores))
         cls_scores = F.softmax(cls_scores, dim=2)
         boxes = offset_to_cxcy(boxes, self.prior_xy, self.center_variance, self.size_variance)
         boxes = cxcy_to_xy(boxes)

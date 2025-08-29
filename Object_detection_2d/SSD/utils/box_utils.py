@@ -20,6 +20,20 @@ def get_iou_numpy(box1, box2):
     union = area_1 + area_2 - inter
     return inter / union
 
+def get_iou_numpy_multiboxes(box1, box2):
+    """
+    Args:
+        box1: Multiple bounding boxes with shape (num_boxes_1, 4)
+        box2: Multiple bounding boxes with shape (num_boxes_2, 4)
+    """
+    right_coord = np.minimum(box1[:, None, 2:], box2[:, 2:])
+    left_coord = np.maximum(box1[:, None, :2], box2[:, :2])
+    inter = np.prod(right_coord - left_coord, axis=2) * (left_coord < right_coord).all(axis=2)
+    area_1 = np.prod(box1[:, 2:] - box1[:, :2], axis=1)
+    area_2 = np.prod(box2[:, 2:] - box2[:, :2], axis=1)
+    union = area_1[:, None] + area_2 - inter
+    return inter / union
+
 def remove_empty_boxes(boxes, labels):
     del_boxes = []
     for idx, box in enumerate(boxes):

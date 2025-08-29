@@ -8,7 +8,7 @@ class L2Norm(nn.Module):
         self.in_channels = in_channels
         self.gamma = scale
         self.eps = 1e-10
-        self.weight = nn.Parameter(torch.zeros((self.in_channels, )))
+        self.weight = nn.Parameter(torch.Tensor(in_channels))
         self.reset_parameters()
 
     def reset_parameters(self):
