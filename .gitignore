@@ -25,7 +25,6 @@ build
 __pycache__
 .DS_Store
 ckpts
-results
 *.eps
 *.aux
 *.log
@@ -39,7 +38,6 @@ results
 *.npz
 *.mat
 *.gz
-runs
 *.tiff
 *.csv
 *.asc
