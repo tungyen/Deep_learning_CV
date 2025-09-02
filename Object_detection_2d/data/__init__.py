@@ -31,9 +31,9 @@ def build_dataloader(args):
     val_transform = build_transforms(args, is_train=False)
     target_transform = build_target_transform(args)
         
-    train_dataset = build_dataset(args, transform=train_transform, target_transform=target_transform)
-    val_dataset = build_dataset(args, transform=val_transform, is_train=False)
-    test_dataset = val_dataset
+    train_dataset = build_dataset(args, "train", transform=train_transform, target_transform=target_transform)
+    val_dataset = build_dataset(args, "eval", transform=val_transform, is_train=False)
+    test_dataset = build_dataset(args, "test", transform=val_transform, is_train=False)
 
     local_rank = int(os.environ["LOCAL_RANK"])
     world_size = int(os.environ["WORLD_SIZE"])

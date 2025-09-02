@@ -6,6 +6,7 @@ import tarfile
 import torch
 import xml.etree.ElementTree as ET
 import numpy as np
+import bisect
 
 from Object_detection_2d.data.container import Container
 
@@ -101,47 +102,55 @@ def voc_cmap(N=256, normalized=False):
 
 class VocDetectionDataset(Dataset):
     cmap = voc_cmap()
-    def __init__(self, args, transform=None, target_transform=None):
+    def __init__(self, args, stage="train", transform=None, target_transform=None):
         self.root = os.path.expanduser(args['data_root'])
-        self.year = args['year']
-        self.url = VOC_DATASET_YEAR_DICT[self.year]['url']
-        self.filename = VOC_DATASET_YEAR_DICT[self.year]['filename']
-        self.md5 = VOC_DATASET_YEAR_DICT[self.year]['md5']
+        self.years = args[stage]['years']
+        self.urls = [VOC_DATASET_YEAR_DICT[year]['url'] for year in self.years]
+        self.filenames = [VOC_DATASET_YEAR_DICT[year]['filename'] for year in self.years]
+        self.md5 = [VOC_DATASET_YEAR_DICT[year]['md5'] for year in self.years]
         self.transform = transform
         self.target_transform = target_transform
-        self.split = args['split']
+        self.splits = args[stage]['splits']
         self.keep_difficult = args['keep_difficult']
         self.class_dict = voc_id2class
         
-        base_dir = VOC_DATASET_YEAR_DICT[self.year]['base_dir']
-        self.voc_root = os.path.join(self.root, base_dir)
+        base_dirs = [VOC_DATASET_YEAR_DICT[year]['base_dir'] for year in self.years]
+        self.voc_roots = [os.path.join(self.root, base_dir) for base_dir in base_dirs]
         
-        if args['download_data']:
-            download_extract(self.url, self.root, self.filename, self.md5)
-
-        if not os.path.isdir(self.voc_root):
-            raise RuntimeError('Dataset not found or corrupted.' + ' You can use download=True to download it')
+        for i, download in enumerate(args[stage]['download_data']):
+            if download:
+                download_extract(self.urls[i], self.root, self.filenames[i], self.md5[i])
+        for voc_root in self.voc_roots:
+            if not os.path.isdir(voc_root):
+                raise RuntimeError('Dataset not found or corrupted.' + ' You can use download=True to download it')
         
-        self.img_dir = os.path.join(self.voc_root, 'JPEGImages')
-        self.annotation_dir = os.path.join(self.voc_root, "Annotations")
-        splits_dir = os.path.join(self.voc_root, 'ImageSets/Main')
-        split_file = os.path.join(splits_dir, f'{self.split}.txt')
-            
-        if not os.path.exists(split_file):
-            raise ValueError(
-                'Wrong image_set entered! Please use split=train or split=trainval or split=val')
+        self.img_dirs = [os.path.join(voc_root, 'JPEGImages') for voc_root in self.voc_roots]
+        self.annotation_dirs = [os.path.join(voc_root, "Annotations") for voc_root in self.voc_roots]
+        splits_dirs = [os.path.join(voc_root, 'ImageSets/Main') for voc_root in self.voc_roots]
+        split_files = [os.path.join(splits_dir, f'{split}.txt') for split, splits_dir in zip(self.splits, splits_dirs)]
 
-        with open(os.path.join(split_file), "r") as f:
-            self.ids = [x.strip() for x in f.readlines()]
+        for split_file in split_files: 
+            if not os.path.exists(split_file):
+                raise ValueError(
+                    'Wrong image_set entered! Please use split=train or split=trainval or split=val')
+        self.ids = []
+        size = 0
+        self.sizes = []
+        for split_file in split_files: 
+            with open(os.path.join(split_file), "r") as f:
+                id_cur = [x.strip() for x in f.readlines()]
+                size += len(id_cur)
+                self.sizes.append(size)
+                self.ids.extend(id_cur)
 
     def __getitem__(self, index):
         img_id = self.ids[index]
-        boxes, labels, difficulties = self.parse_annotation(img_id)
+        boxes, labels, difficulties = self.parse_annotation(img_id, index)
         if not self.keep_difficult:
             boxes = boxes[difficulties == 0]
             labels = labels[difficulties == 0]
 
-        img = self._read_image(img_id)
+        img = self._read_image(img_id, index)
         if self.transform is not None:
             img, boxes, labels = self.transform(img, boxes, labels)
         if self.target_transform is not None:
@@ -154,10 +163,14 @@ class VocDetectionDataset(Dataset):
 
     def get_annotation(self, index):
         img_id = self.ids[index]
-        return img_id, self.parse_annotation(img_id)
+        return img_id, self.parse_annotation(img_id, index)
     
-    def parse_annotation(self, img_id):
-        annotation_path = os.path.join(self.annotation_dir, f'{img_id}.xml')
+    def parse_annotation(self, img_id, index):
+        annotation_dir = self.annotation_dirs[bisect.bisect_right(self.sizes, index)]
+        annotation_path = os.path.join(annotation_dir, f'{img_id}.xml')
+        # print("Img: ", img_id)
+        # print("Index: ", index)
+        # print("Anno Path: ", annotation_path)
         boxes = []
         labels = []
         difficulties = []
@@ -183,14 +196,16 @@ class VocDetectionDataset(Dataset):
                 np.array(labels, dtype=np.int64),
                 np.array(difficulties, dtype=np.uint8))
 
-    def _read_image(self, img_id):
-        img_path = os.path.join(self.img_dir, f'{img_id}.jpg')
+    def _read_image(self, img_id, index):
+        img_dir = self.img_dirs[bisect.bisect_right(self.sizes, index)]
+        img_path = os.path.join(img_dir, f'{img_id}.jpg')
         img = Image.open(img_path).convert('RGB')
         return np.array(img)
 
     def get_img_info(self, index):
         img_id = self.ids[index]
-        annotation_file = os.path.join(self.annotation_dir, f'{img_id}.xml')
+        annotation_dir = self.annotation_dirs[bisect.bisect_right(self.sizes, index)]
+        annotation_file = os.path.join(annotation_dir, f'{img_id}.xml')
         annotation = ET.parse(annotation_file).getroot()
         size = annotation.find("size")
         img_info = tuple(map(int, (size.find("height").text, size.find("width").text)))

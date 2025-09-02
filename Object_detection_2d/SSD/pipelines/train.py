@@ -39,6 +39,9 @@ def train_model(args):
     train_dataloader, val_dataloader, _ = build_dataloader(args)
     class_dict = val_dataloader.dataset.class_dict
     model = build_model(args).to(local_rank)
+
+    args['optimizer']['lr'] *= world_size
+    args['scheduler']['milestones'] = [m // world_size for m in args['scheduler']['milestones']]
     optimizer = build_optimizer(args, model.parameters())
     scheduler = build_scheduler(args, optimizer)
     criterion = build_loss(args)
@@ -73,19 +76,20 @@ def train_model(args):
         model.eval()
         pred_results = {}
 
-        with torch.no_grad():
-            for imgs, targets, img_ids in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
-                imgs = imgs.to(local_rank)
-                with torch.no_grad():
-                    detections = model(imgs, False)
-                    detections = [d.to(torch.device("cpu")) for d in detections]
-                pred_results.update(
-                    {int(img_id): d for img_id, d in zip(img_ids, detections)}
-                )
+        for imgs, targets, img_ids in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
+            imgs = imgs.to(local_rank)
+            with torch.no_grad():
+                detections = model(imgs, False)
+                detections = [d.to(torch.device("cpu")) for d in detections]
+            pred_results.update(
+                {int(img_id): d for img_id, d in zip(img_ids, detections)}
+            )
+
         synchronize()
         pred_results = gather_preds_ddp(pred_results)
 
         if is_main_process():
+            print("Start computing metrics.")
             metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
             print("Validation mAP of {} on {} ===> {:.4f}".format(args['model'], args['datasets']['name'], metrics['map']))
             for i, ap in enumerate(metrics['ap']):

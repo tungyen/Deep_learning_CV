@@ -41,7 +41,6 @@ class PostProcessor:
             keep = batched_nms(boxes, scores, labels, self.args['nms_thres'])
             keep = keep[:self.args['topk']]
             boxes, scores, labels = boxes[keep], scores[keep], labels[keep]
-
             container = Container(boxes=boxes, labels=labels, scores=scores)
             container.img_width = self.width
             container.img_height = self.height

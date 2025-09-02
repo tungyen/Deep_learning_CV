@@ -55,8 +55,6 @@ class SSD(nn.Module):
         if is_train:
             return boxes, cls_scores
         self.prior_xy = self.prior_xy.to(x.device)
-        # print("Max of scores: ", torch.max(cls_scores))
-        # print("Min of scores: ", torch.min(cls_scores))
         cls_scores = F.softmax(cls_scores, dim=2)
         boxes = offset_to_cxcy(boxes, self.prior_xy, self.center_variance, self.size_variance)
         boxes = cxcy_to_xy(boxes)

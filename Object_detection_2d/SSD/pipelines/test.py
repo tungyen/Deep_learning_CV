@@ -1,19 +1,18 @@
-import torch
+from tqdm import tqdm
 import argparse
-import os
 import numpy as np
+import os
+import torch
+import torch.optim as optim
 
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from Object_detection_2d.dataset.utils import get_dataset
-from Object_detection_2d.vis_utils import visualize_detection
-from Object_detection_2d.utils import (
-    get_model,
-    setup_args_with_dataset,
-    decode_boxes,
-    gather_list_ddp
-)
+from Object_detection_2d.data import build_dataloader
+from Object_detection_2d.SSD.model import build_model
+from Object_detection_2d.SSD.utils.config_utils import parse_config
+from Object_detection_2d.SSD.utils.ddp_utils import is_main_process
+from Object_detection_2d.SSD.utils.vis_utils import visualize_detection
 
 def test_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -21,58 +20,38 @@ def test_model(args):
     rank = int(os.environ["RANK"])
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
-    root = os.path.dirname(os.path.abspath(__file__))
-    save_path = os.path.join(root, args.experiment)
-    os.makedirs(save_path, exist_ok=True)
-    model_name = args.model
-    dataset_type = args.dataset
-    args = setup_args_with_dataset(dataset_type, args)
-    
-    if dist.get_rank() == 0:
-        print("Start testing model {} on {} dataset!".format(model_name, dataset_type))
-    
+    config_path = args.config
     ckpts_path = args.experiment
-    weight_path = os.path.join(root, ckpts_path, "{}_{}.pth".format(model_name, dataset_type))
+    args = parse_config(config_path)
+    root = args['root']
+    model_name = args['model']
+    dataset_type = args['datasets']['name']
+    save_path = os.path.join(root, "runs", ckpts_path)
+    weight_path = os.path.join(save_path, "{}_{}.pt".format(args['model'], args['datasets']['name']))
     
-    model = get_model(args).to(local_rank)
+    if is_main_process():
+        print("Start testing model {} on {} dataset!".format(model_name, dataset_type))
+    _, _, test_dataloader = build_dataloader(args)
+    class_dict = test_dataloader.dataset.class_dict
+    model = build_model(args).to(local_rank)
     model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     model.eval()
 
-    _, _, test_dataloader, class_dict, mean, std = get_dataset(args)
-
-    imgs, targets = next(iter(test_dataloader))
-    imgs_denorm = imgs * std + mean
+    imgs, _, idxes = next(iter(test_dataloader))
+    mean = args['img_mean']
+    imgs_denorm = imgs + torch.tensor(mean).view(1, 3, 1, 1)
     imgs_denorm = imgs_denorm.permute(0, 2, 3, 1).numpy()
-    imgs_denorm = (imgs_denorm * 255).astype(np.uint8)
+    imgs_denorm = imgs_denorm.astype(np.uint8)
     with torch.no_grad():
-        pred_boxes, pred_scores = model(imgs.to(local_rank))
-        pred_boxes_batch, pred_labels_batch, pred_scores_batch = decode_boxes(
-            args, pred_boxes, pred_scores,
-            model.module.prior_boxes_center
-        )
-        visualize_detection(
-            args, imgs_denorm, pred_boxes_batch, pred_labels_batch,
-            pred_scores_batch, class_dict, save_path
-        )
+        detections = model(imgs.to(local_rank), False)
+        detections = [d.to(torch.device("cpu")) for d in detections]
+    visualize_detection(args, test_dataloader.dataset, imgs_denorm, detections, idxes, class_dict, save_path, model_name, dataset_type)
 
 def parse_args():
     parse = argparse.ArgumentParser()
-    # Dataset
-    parse.add_argument('--dataset', type=str, default="voc")
-    parse.add_argument('--crop_size', type=int, default=[300, 300])
-    parse.add_argument('--voc_data_root', type=str, default="Dataset/VOC")
-    parse.add_argument('--voc_year', type=str, default="2012")
-    parse.add_argument('--voc_download', type=bool, default=False)
-    
-    # Model
-    parse.add_argument('--model', type=str, default="ssd")
-    
-    # testing
     parse.add_argument('--experiment', type=str, required=True)
-    parse.add_argument('--min_scores', type=float, default=0.01)
-    parse.add_argument('--max_overlap', type=float, default=0.45)
-    parse.add_argument('--top_k', type=int, default=200)
+    parse.add_argument('--config', type=str, required=True)
     args = parse.parse_args()
     return args
     
