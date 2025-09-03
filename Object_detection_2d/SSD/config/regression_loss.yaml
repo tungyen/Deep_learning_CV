@@ -11,9 +11,12 @@ prior:
   aspect_ratios: [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
   boxes_per_feature_map: [4, 6, 6, 6, 4, 4]
   clip: True
+
+target_transform: Offset
 center_variance: 0.1
 size_variance: 0.2
 iou_thres: 0.5
+
 model: "SSD"
 backbone:
   model: 'vgg'

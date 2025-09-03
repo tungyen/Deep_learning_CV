@@ -64,7 +64,7 @@ class IouLoss(BaseIouLoss):
         ious, _, _ = self.get_ious(pred_boxes, gt_boxes)
         ious = ious.clamp(min=self.eps)
         loss = -ious.log()
-        return torch.mean(loss)
+        return torch.sum(loss)
 
 class GiouLoss(BaseIouLoss):
     def get_loss(self, pred_boxes, gt_boxes):
@@ -72,13 +72,13 @@ class GiouLoss(BaseIouLoss):
         enclose, _ = self.get_enclose(pred_boxes, gt_boxes)
         gious = ious - (enclose - unions) / enclose
         loss = 1 - gious
-        return torch.mean(loss)
+        return torch.sum(loss)
     
 class DiouLoss(BaseIouLoss): 
     def get_loss(self, pred_boxes, gt_boxes):
         dious, _ = self.get_dious(pred_boxes, gt_boxes)
         loss = 1 - dious
-        return torch.mean(loss)
+        return torch.sum(loss)
     
     def get_dious(self, pred_boxes, gt_boxes):
         ious, _, _ = self.get_ious(pred_boxes, gt_boxes)
@@ -97,9 +97,9 @@ class CiouLoss(DiouLoss):
         gt_w = gt_boxes[:, 2] - gt_boxes[:, 0]
         gt_h = gt_boxes[:, 3] - gt_boxes[:, 1]
         
-        v = torch.pow((torch.atan(gt_w / gt_h) - torch.atan(pred_w, pred_h)), 2) * (4 / (math.pi ** 2))
+        v = torch.pow((torch.atan(gt_w / gt_h) - torch.atan(pred_w / pred_h)), 2) * (4 / (math.pi ** 2))
         alpha = v / (1-ious + v)
         cious = dious - alpha * v
         cious = torch.clamp(cious, min=-1.0, max=1.0)
         loss = 1 - cious
-        return torch.mean(loss)
+        return torch.sum(loss)

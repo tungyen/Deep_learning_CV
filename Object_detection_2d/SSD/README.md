@@ -14,19 +14,21 @@ Test and evaluation are based on Paskal VOC 2012 val dataset. While training is 
 | 1.0 | DIoU | % |
 | 1.0 | CIoU | % |
 
+The command below is based on Smooth L1 loss for bounding boxes. If you want to train on IoU Loss, please change to iou_loss.yaml
+
 ### Training ###
 ```bash
-torchrun --nproc_per_node=1 Object_detection_2d/SSD/pipelines/train.py --experiment smooth_l1 --config Object_detection_2d/SSD/config/base.yaml
+torchrun --nproc_per_node=1 Object_detection_2d/SSD/pipelines/train.py --experiment smooth_l1 --config Object_detection_2d/SSD/config/regression_loss.yaml
 ```
 
 ### Evaluation ###
 ```bash
-torchrun --nproc_per_node=1 Object_detection_2d/SSD/pipelines/eval.py --experiment smooth_l1 --config Object_detection_2d/SSD/config/base.yaml
+torchrun --nproc_per_node=1 Object_detection_2d/SSD/pipelines/eval.py --experiment smooth_l1 --config Object_detection_2d/SSD/config/regression_loss.yaml
 ```
 
 ### Testing ###
 ```bash
-torchrun --nproc_per_node=1 Object_detection_2d/SSD/pipelines/test.py --experiment smooth_l1 --config Object_detection_2d/SSD/config/base.yaml
+torchrun --nproc_per_node=1 Object_detection_2d/SSD/pipelines/test.py --experiment smooth_l1 --config Object_detection_2d/SSD/config/regression_loss.yaml
 ```
 
 ### Result of voc Dataset ###
