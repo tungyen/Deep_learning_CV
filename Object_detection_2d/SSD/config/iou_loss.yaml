@@ -57,7 +57,9 @@ optimizer:
 loss:
   name: MultiBoxesIouLoss
   neg_pos_ratio: 3
-  box_loss_weight: 0.5
+  box_loss_weight: 1.0
+  center_variance: 0.1
+  size_variance: 0.2
 
 train_batch_size: 32
 eval_batch_size: 32

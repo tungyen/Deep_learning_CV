@@ -7,18 +7,25 @@ from Object_detection_2d.SSD.utils.box_utils import *
 from Object_detection_2d.SSD.loss.iou_loss import *
 
 class MultiBoxesIouLoss(nn.Module):
-    def __init__(self, neg_pos_ratio, box_loss_weight):
+    def __init__(self, priors_xy, neg_pos_ratio, box_loss_weight, center_variance, size_variance):
         super().__init__()
         self.neg_pos_ratio = neg_pos_ratio
         self.box_loss_weight = box_loss_weight
         self.iou_loss = CiouLoss(eps=1e-7)
+        self.priors_xy = priors_xy
+        self.center_variance = center_variance
+        self.size_variance = size_variance
         
     def forward(self, pred_boxes, pred_logits, gt_boxes, gt_labels):
         loss_dict = {}
         batch_size = pred_boxes.shape[0]
         class_num = pred_logits.shape[2]
         device = pred_boxes.device
-        
+        self.priors_xy = self.priors_xy.to(device)
+
+        boxes_cxcy = offset_to_cxcy(pred_boxes, self.priors_xy, self.center_variance, self.size_variance)
+        pred_boxes = cxcy_to_xy(boxes_cxcy)
+
         with torch.no_grad():
             loss = -F.log_softmax(pred_logits, dim=2)[:, :, 0]
             mask = hard_negative_mining(loss, gt_labels, self.neg_pos_ratio)

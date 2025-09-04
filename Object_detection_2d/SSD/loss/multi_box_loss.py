@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from Object_detection_2d.SSD.utils.box_utils import *
 
 class MultiBoxesLoss(nn.Module):
-    def __init__(self, neg_pos_ratio):
+    def __init__(self, priors_xy, neg_pos_ratio):
         super().__init__()
         self.neg_pos_ratio = neg_pos_ratio
         
