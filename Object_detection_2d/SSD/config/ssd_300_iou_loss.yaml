@@ -16,6 +16,7 @@ target_transform: Coord
 center_variance: 0.1
 size_variance: 0.2
 iou_thres: 0.5
+
 model: "SSD"
 backbone:
   model: 'vgg'

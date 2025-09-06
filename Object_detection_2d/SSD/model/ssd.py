@@ -27,7 +27,6 @@ class DetectionHead(nn.Module):
         return nn.Conv2d(input_channels, n_box * 4, kernel_size=3, stride=1, padding=1)
    
     def forward(self, feats):
-        assert(len(feats) == 6)
         batch_size = feats[0].shape[0]
         boxes = []
         cls_logits = []
