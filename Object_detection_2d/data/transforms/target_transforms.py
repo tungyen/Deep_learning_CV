@@ -38,3 +38,9 @@ class SSDTargetTransformCoord:
             gt_labels = torch.from_numpy(gt_labels)
         boxes_xy, labels = assign_priors(gt_boxes, gt_labels, self.priors_xy, self.iou_thres)
         return boxes_xy, labels
+
+class CenterNetTargetTransform:
+    def __init__(self):
+        pass
+
+    def __call__(self, gt_boxes, gt_labels):
