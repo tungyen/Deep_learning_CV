@@ -1,12 +1,13 @@
 img_size: 300
 class_num: 21
-img_mean: [123, 117, 104]
+img_mean: [0.40789655, 0.44719303, 0.47026116]
+img_std: [0.2886383, 0.27408165, 0.27809834]
 root: "Object_detection_2d/CenterNet"
 
 
 model:
   name: "CenterNet"
-  num_layers: 
+  num_layers: 152
   class_num: 21
   
 
@@ -27,27 +28,23 @@ datasets:
     download_data: [False]
 
 # Training
-epochs: 200
+epochs: 150
+warmup_epochs: 5
+target_transform: "CenterNet"
+max_objs: 50
 scheduler:
-  name: "WarmupMultiStep"
-  milestones: [80000, 100000]
-  gamma: 0.1
-  warmup_factor: 0.333
-  warmup_iters: 500
-  last_epoch: -1
+  name: "CosineAnnealingWarmup"
+  max_lr: 0.0002
+  min_lr: 0.000001
 
 optimizer:
-  name: "SGD"
-  weight_decay: 0.0005
-  momentum: 0.9
+  name: "AdamW"
   lr: 0.001
 
 loss:
-  name: MultiBoxesIouLoss
-  neg_pos_ratio: 3
-  box_loss_weight: 1.0
-  center_variance: 0.1
-  size_variance: 0.2
+  name: "CenterDetectionLoss"
+  wh_loss_weight: 0.1
+  offset_loss_weight: 1.0
 
 train_batch_size: 32
 eval_batch_size: 32

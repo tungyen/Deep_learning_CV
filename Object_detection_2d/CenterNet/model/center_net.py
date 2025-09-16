@@ -12,7 +12,7 @@ resnet_spec = {50: [3, 4, 6, 3],101: [3, 4, 23, 3],152: [3, 8, 36, 3]}
 class Bottleneck(nn.Module):
     expansion=4
 
-    def __init__(self, input_channels, output_channels, momentum, stride=1, downsample=None):
+    def __init__(self, input_channels, output_channels, momentum=0.1, stride=1, downsample=None):
         super().__init__()
         self.conv1 = nn.Conv2d(input_channels, output_channels, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(output_channels, momentum=momentum)
@@ -47,14 +47,14 @@ class Bottleneck(nn.Module):
         return out
 
 class CenterNet(nn.Module):
-    def __init__(self, num_layers, class_num, head_channels=64, momentum=0.1):
+    def __init__(self, args, head_channels=64, momentum=0.1):
 
         self.inter_channels = 64
         self.deconv_with_bias = False
-        self.heads = {'hm': class_num, 'wh': 2, 'reg': 2}
-        self.num_layers = num_layers
+        self.heads = {'hm': args['class_num'], 'wh': 2, 'reg': 2}
+        self.num_layers = args['num_layers']
         self.momentum = momentum
-        layers = resnet_spec[num_layers]
+        layers = resnet_spec[args['num_layers']]
 
         super().__init__()
 
@@ -74,7 +74,7 @@ class CenterNet(nn.Module):
             nn.Conv2d(64, head_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(head_channels, momentum=momentum),
             nn.ReLU(inplace=True),
-            nn.Conv2d(head_channels, class_num, kernel_size=1),
+            nn.Conv2d(head_channels, args['class_num'], kernel_size=1),
             nn.Sigmoid()
         )
         self.wh = nn.Sequential(
@@ -89,18 +89,18 @@ class CenterNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(head_channels, 2, kernel_size=1)
         )
-        self.init_weights(num_layers, pretrianed=True)
+        self.init_weights(self.num_layers, pretrianed=True)
 
     def _make_layer(self, output_channels, num_blocks, stride=1):
         downsample = nn.Sequential(
-            nn.Conv2d(self.inter_channels, output_channels * Bottleneck.expansion, kernel_size=1, stride=stride, bias=False)
+            nn.Conv2d(self.inter_channels, output_channels * Bottleneck.expansion, kernel_size=1, stride=stride, bias=False),
             nn.BatchNorm2d(output_channels * Bottleneck.expansion, momentum=self.momentum)
         )
 
         layers = []
         layers.append(Bottleneck(self.inter_channels, output_channels, stride, downsample))
         self.inter_channels = output_channels * Bottleneck.expansion
-        for i in range(1, blocks):
+        for i in range(1, num_blocks):
             layers.append(Bottleneck(self.inter_channels, output_channels))
         return nn.Sequential(*layers)
 
@@ -115,7 +115,7 @@ class CenterNet(nn.Module):
             output_channels = output_channels // 2
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, is_train=True):
         x = self.relu(self.bn1(self.conv1(x)))
         x = self.maxpool(x)
 
@@ -128,9 +128,10 @@ class CenterNet(nn.Module):
         result = {}
         result['hm'] = self.hm(x)
         result['wh'] = self.wh(x)
-        result['reg'] = self.reg(x)
-
-        return [result]
+        result['offsets'] = self.reg(x)
+        if is_train:
+            return result
+        
 
     def init_weights(self, num_layers, pretrianed=True):
         if pretrianed:
@@ -149,7 +150,7 @@ class CenterNet(nn.Module):
                     if isinstance(m, nn.Conv2d):
                         if m.weight.shape[0] == self.heads[head]:
                             if 'hm' in head:
-                                nn.init.constan_(m.bias, -2.19)
+                                nn.init.constant_(m.bias, -2.19)
                             else:
                                 nn.init.constant_(m.bias, 0)
 

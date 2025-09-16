@@ -153,9 +153,13 @@ class VocDetectionDataset(Dataset):
         img = self._read_image(img_id, index)
         if self.transform is not None:
             img, boxes, labels = self.transform(img, boxes, labels)
+        result = {
+            "boxes": boxes,
+            "labels": labels
+        }
         if self.target_transform is not None:
-            boxes, labels = self.target_transform(boxes, labels)
-        targets = Container(boxes=boxes, labels=labels)
+            result = self.target_transform(boxes, labels)
+        targets = Container(result)
         return img, targets, index
 
     def __len__(self):

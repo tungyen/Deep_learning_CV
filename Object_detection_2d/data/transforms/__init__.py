@@ -1,10 +1,11 @@
 from Object_detection_2d.SSD.model.anchors import PriorBox
 from Object_detection_2d.data.transforms.transforms import *
-from Object_detection_2d.data.transforms.target_transforms import SSDTargetTransformOffset, SSDTargetTransformCoord
+from Object_detection_2d.data.transforms.target_transforms import SSDTargetTransformOffset, SSDTargetTransformCoord, CenterNetTargetTransform
 
 TARGET_TRANSFORM_DICT = {
     "Offset": SSDTargetTransformOffset,
     "Coord": SSDTargetTransformCoord,
+    "CenterNet": CenterNetTargetTransform
 }
 
 def build_transforms(args, is_train=True):
@@ -32,6 +33,8 @@ def build_transforms(args, is_train=True):
 def build_target_transform(args):
     target_transform_name = args['target_transform']
     target_transform_factory = TARGET_TRANSFORM_DICT[target_transform_name]
-    transform = target_transform_factory(PriorBox(args)(), args['center_variance'],
-                                   args['size_variance'], args['iou_thres'])
+    if target_transform_name != "CenterNet":
+        transform = target_transform_factory(PriorBox(args)(), args)
+    else:
+        transform = target_transform_factory(args)
     return transform

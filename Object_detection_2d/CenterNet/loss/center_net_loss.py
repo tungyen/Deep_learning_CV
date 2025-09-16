@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from Object_detection_2d.CenterNet.utils import _transpose_and_gather_feat
+from Object_detection_2d.CenterNet.utils.feats_utils import _transpose_and_gather_feat
 
 class RegressionL1Loss(nn.Module):
     def __init__(self):
