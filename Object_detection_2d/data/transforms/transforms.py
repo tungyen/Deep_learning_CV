@@ -38,6 +38,20 @@ class SubtractMeans(object):
         img -= self.mean
         return img.astype(np.float32), boxes, labels
 
+class Normalize(object):
+    def __init__(self, mean, std):
+        self.mean = np.array(mean, dtype=np.float32)
+        self.std = np.array(std, dtype=np.float32)
+
+    def __call__(self, img, boxes=None, labels=None):
+        img = img.astype(np.float32)
+        if np.max(img) > 1.0:
+            img /= 255.0
+        img -= self.mean
+        img /= self.std
+        return img.astype(np.float32), boxes, labels
+
+
 class ToAbsoluteCoords(object):
     def __call__(self, img, boxes=None, labels=None):
         height, width, channels = img.shape
@@ -56,7 +70,7 @@ class ToPercentCoords(object):
         boxes[:, 3] /= height
         return img, boxes, labels
 
-class Resize(object):
+class ResizeImg(object):
     def __init__(self, size):
         self.size = size
 
@@ -66,6 +80,32 @@ class Resize(object):
         else:
             img = cv2.resize(img, (self.size, self.size))
         return img, boxes, labels
+
+class ResizeImgBoxes(object):
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, img, boxes=None, labels=None):
+        # Input boxes should be absolute pixel coordinates
+        if isinstance(self.size, tuple):
+            ih, iw = self.size[1], self.size[0]
+        else:
+            ih, iw = self.size, self.size
+        
+        h, w = img.shape[:2]
+        scale = min(iw/w, ih/h)
+        nw, nh = int(scale*w), int(scale*h)
+        img_resized = cv.resize(img, (nw, nh))
+        dw, dh = (iw-nw) // 2, (ih-nh) // 2
+        img_padded = np.full(shape=[ih, iw, 3], fill_value=0)
+        img_padded[dh:nh+dh, dw:dw+nw, :] = img_resized
+
+        if boxes is None:
+            return img_padded, boxes, labels
+
+        boxes[:, [0, 2]] = boxes[:, [0, 2]] * scale + dw
+        boxes[:, [1, 3]] = boxes[:, [1, 3]] * scale + dh
+        return img_padded, boxes, labels
 
 class RandomSaturation(object):
     def __init__(self, lower=0.5, upper=1.5):
