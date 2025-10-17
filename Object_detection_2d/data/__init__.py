@@ -43,9 +43,9 @@ def build_dataloader(args):
     test_sampler = DistributedSampler(test_dataset, num_replicas=world_size, rank=rank, shuffle=True)
         
     train_dataloader = DataLoader(train_dataset, batch_size=args['train_batch_size'] // world_size,
-                                  sampler=train_sampler, collate_fn=BatchCollator(is_train=True))
+                                  sampler=train_sampler, collate_fn=BatchCollator(is_train=True), num_workers=2)
     val_dataloader = DataLoader(val_dataset, batch_size=args['eval_batch_size'] // world_size,
-                                sampler=val_sampler, collate_fn=BatchCollator(is_train=False))
+                                sampler=val_sampler, collate_fn=BatchCollator(is_train=False), num_workers=2)
     test_dataloader = DataLoader(test_dataset, batch_size=args['test_batch_size'] // world_size,
                                  sampler=test_sampler, collate_fn=BatchCollator(is_train=False))
     

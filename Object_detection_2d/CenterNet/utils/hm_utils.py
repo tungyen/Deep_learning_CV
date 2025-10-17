@@ -32,7 +32,7 @@ def gaussian2D(shape, sigma=1):
 
 def draw_umich_gaussian(heatmap, center, radius, k=1):
     diameter = 2 * radius + 1
-    gaussian = gaussian2D((diameter. diameter), sigma=diameter / 6)
+    gaussian = gaussian2D((diameter, diameter), sigma=diameter / 6)
     x, y = int(center[0]), int(center[1])
 
     height, width = heatmap.shape[0:2]

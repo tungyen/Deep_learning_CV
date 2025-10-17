@@ -50,9 +50,9 @@ class CenterDetectionLoss(nn.Module):
 
     def forward(self, pred, gt):
         pred['hm'] = torch.clamp(pred['hm'], min=1e-4, max=1-1e-4)
-        hm_loss = self.heatmap_loss(pred['hm', gt['hm']])
-        wh_loss = self.regression_loss(pred['wh'], gt['reg_mask'], gt['ind'], gt['wh'])
-        offset_loss = self.regression_loss(pred['offset'], gt['reg_mask'], gt['ind'], gt['offet'])
+        hm_loss = self.heatmap_loss(pred['hm'], gt['hm'])
+        wh_loss = self.regression_loss(pred['wh'], gt['offsets_mask'], gt['ind'], gt['wh'])
+        offset_loss = self.regression_loss(pred['offsets'], gt['offsets_mask'], gt['ind'], gt['offsets'])
 
         total_loss = hm_loss + self.wh_loss_weight * wh_loss + self.offset_loss_weight * offset_loss
         loss_dict = {

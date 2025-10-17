@@ -95,7 +95,7 @@ class ResizeImgBoxes(object):
         h, w = img.shape[:2]
         scale = min(iw/w, ih/h)
         nw, nh = int(scale*w), int(scale*h)
-        img_resized = cv.resize(img, (nw, nh))
+        img_resized = cv2.resize(img, (nw, nh))
         dw, dh = (iw-nw) // 2, (ih-nh) // 2
         img_padded = np.full(shape=[ih, iw, 3], fill_value=0)
         img_padded[dh:nh+dh, dw:dw+nw, :] = img_resized

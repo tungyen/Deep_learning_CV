@@ -58,10 +58,8 @@ def train_model(args):
             for imgs, targets, _ in pbar:
                 imgs = imgs.to(local_rank)
                 targets = targets.to(local_rank)
-                boxes = targets['boxes']
-                labels = targets['labels']
-                pred_boxes, pred_logits = model(imgs)
-                loss = criterion(pred_boxes, pred_logits, boxes, labels)
+                pred_dict = model(imgs)
+                loss = criterion(pred_dict, targets)
                 optimizer.zero_grad()
                 loss['loss'].backward()
 
@@ -69,38 +67,39 @@ def train_model(args):
                 if dist.get_rank() == 0:
                     pbar.set_postfix(
                         total_loss=f"{loss['loss'].item():.4f}",
-                        cls_loss=f"{loss['cls_loss'].item():.4f}",
-                        boxes_loss=f"{loss['boxes_loss'].item():.4f}"
+                        hs_loss=f"{loss['hm_loss'].item():.4f}",
+                        wh_loss=f"{loss['wh_loss'].item():.4f}",
+                        offset_loss=f"{loss['offset_loss'].item():.4f}"
                     )
                 scheduler.step()
         torch.cuda.empty_cache()
-        # Validation
-        model.eval()
-        pred_results = {}
+        # # Validation
+        # model.eval()
+        # pred_results = {}
 
-        for imgs, targets, img_ids in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
-            imgs = imgs.to(local_rank)
-            with torch.no_grad():
-                detections = model(imgs, False)
-                detections = [d.to(torch.device("cpu")) for d in detections]
-            pred_results.update(
-                {int(img_id): d for img_id, d in zip(img_ids, detections)}
-            )
+        # for imgs, targets, img_ids in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
+        #     imgs = imgs.to(local_rank)
+        #     with torch.no_grad():
+        #         detections = model(imgs, False)
+        #         detections = [d.to(torch.device("cpu")) for d in detections]
+        #     pred_results.update(
+        #         {int(img_id): d for img_id, d in zip(img_ids, detections)}
+        #     )
 
-        synchronize()
-        pred_results = gather_preds_ddp(pred_results)
+        # synchronize()
+        # pred_results = gather_preds_ddp(pred_results)
 
-        if is_main_process():
-            print("Start computing metrics.")
-            metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
-            print("Validation mAP of {} on {} ===> {:.4f}".format(args['model'], args['datasets']['name'], metrics['map']))
-            for i, ap in enumerate(metrics['ap']):
-                if i == 0:
-                    continue
-                print("{} ap: {:.4f}".format(class_dict[i], ap))
-            if metrics['map'] > best_metric:
-                best_metric = metrics['map']
-                torch.save(model.module.state_dict(), weight_path)
+        # if is_main_process():
+        #     print("Start computing metrics.")
+        #     metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
+        #     print("Validation mAP of {} on {} ===> {:.4f}".format(args['model'], args['datasets']['name'], metrics['map']))
+        #     for i, ap in enumerate(metrics['ap']):
+        #         if i == 0:
+        #             continue
+        #         print("{} ap: {:.4f}".format(class_dict[i], ap))
+        #     if metrics['map'] > best_metric:
+        #         best_metric = metrics['map']
+        #         torch.save(model.module.state_dict(), weight_path)
 
 def parse_args():
     parse = argparse.ArgumentParser()

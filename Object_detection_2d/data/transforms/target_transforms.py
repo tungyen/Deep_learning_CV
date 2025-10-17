@@ -48,14 +48,14 @@ class CenterNetTargetTransform:
 
     def __call__(self, gt_boxes, gt_labels):
         output_size = self.img_size // 4
-        hm = np.zeros((self.class_num, output_size, soutput_size), dtype=np.float32)
+        hm = np.zeros((self.class_num, output_size, output_size), dtype=np.float32)
         wh = np.zeros((self.max_objs, 2), dtype=np.float32)
         offsets = np.zeros((self.max_objs, 2), dtype=np.float32)
 
         ind = np.zeros((self.max_objs), dtype=np.int64)
         offsets_mask = np.zeros((self.max_objs), dtype=np.uint8)
-        wh_concat = np.zeros((self.max_objs, class_num * 2), dtype=np.float32)
-        mask_concat = np.zeros((self.max_objs, class_num * 2), dtype=np.uint8)
+        wh_concat = np.zeros((self.max_objs, self.class_num * 2), dtype=np.float32)
+        mask_concat = np.zeros((self.max_objs, self.class_num * 2), dtype=np.uint8)
 
         for k in range(min(gt_boxes.shape[0], self.max_objs)):
             box = gt_boxes[k]

@@ -40,6 +40,7 @@ def center_net_transforms(args, is_train):
             Normalize(args['img_mean'], args['img_std']),
             ToTensor()
         ]
+    return transform
 
 TRANSFORM_DICT = {
     "SSD": ssd_transforms,
@@ -53,24 +54,6 @@ TARGET_TRANSFORM_DICT = {
 }
 
 def build_transforms(args, is_train=True):
-    # if is_train:
-    #     transform = [
-    #         ConvertFromInts(),
-    #         PhotometricDistort(),
-    #         Expand(args['img_mean']),
-    #         RandomSampleCrop(),
-    #         RandomMirror(),
-    #         ToPercentCoords(),
-    #         Resize(args['img_size']),
-    #         SubtractMeans(args['img_mean']),
-    #         ToTensor(),
-    #     ]
-    # else:
-    #     transform = [
-    #         Resize(args['img_size']),
-    #         SubtractMeans(args['img_mean']),
-    #         ToTensor()
-    #     ]
     model_name = args['model']['name']
     transform = TRANSFORM_DICT[model_name](args, is_train)
     transform = Compose(transform)

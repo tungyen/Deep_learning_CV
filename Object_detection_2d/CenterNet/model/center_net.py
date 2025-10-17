@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.hub import load_state_dict_from_url
 import torch.utils.model_zoo as model_zoo
 
 model_urls = {
@@ -61,7 +62,7 @@ class CenterNet(nn.Module):
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64, momentum=momentum)
         self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=2, padding=1)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         self.layer1 = self._make_layer(64, layers[0])
         self.layer2 = self._make_layer(128, layers[1], stride=2)
@@ -98,7 +99,7 @@ class CenterNet(nn.Module):
         )
 
         layers = []
-        layers.append(Bottleneck(self.inter_channels, output_channels, stride, downsample))
+        layers.append(Bottleneck(self.inter_channels, output_channels, self.momentum, stride, downsample))
         self.inter_channels = output_channels * Bottleneck.expansion
         for i in range(1, num_blocks):
             layers.append(Bottleneck(self.inter_channels, output_channels))
@@ -106,8 +107,8 @@ class CenterNet(nn.Module):
 
     def _make_deconv_layer(self):
         layers = []
+        output_channels = 256
         for i in range(3):
-            output_channels = 256
             layers.append(nn.ConvTranspose2d(self.inter_channels, output_channels, 4, stride=2, padding=1, bias=self.deconv_with_bias))
             layers.append(nn.BatchNorm2d(output_channels, momentum=self.momentum))
             layers.append(nn.ReLU(inplace=True))
@@ -155,6 +156,6 @@ class CenterNet(nn.Module):
                                 nn.init.constant_(m.bias, 0)
 
             url = model_urls[f'resnet{num_layers}']
-            pretrained_state_dict = model_zoo.load_url(url)
+            pretrained_state_dict = load_state_dict_from_url(url)
 
             self.load_state_dict(pretrained_state_dict, strict=False)
