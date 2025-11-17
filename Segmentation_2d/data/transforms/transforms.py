@@ -24,42 +24,42 @@ class Compose(object):
         return format_string
 
 class RandomHorizontalFlip(object):
-    def __init__(self, p=0.5):
-        self.p = p
+    def __init__(self, prob=0.5):
+        self.prob = prob
         
     def __call__(self, img, label):
-        if random.random() < self.p:
+        if random.random() < self.prob:
             return F.hflip(img), F.hflip(label)
         return img, label
     
     def __repr__(self):
-        return self.__class__.__name__ + 'p={}'.format(self.p)
+        return self.__class__.__name__ + 'p={}'.format(self.prob)
     
 class RandomVerticalFlip(object):
-    def __init__(self, p=0.5):
-        self.p = p
+    def __init__(self, prob=0.5):
+        self.prob = prob
 
     def __call__(self, img, label):
-        if random.random() < self.p:
+        if random.random() < self.prob:
             return F.vflip(img), F.vflip(label)
         return img, label
 
     def __repr__(self):
-        return self.__class__.__name__ + '(p={})'.format(self.p)
+        return self.__class__.__name__ + '(p={})'.format(self.prob)
     
     
 class CenterCrop(object):
-    def __init__(self, size):
-        if isinstance(size, numbers.Number):
-            self.size = (int(size), int(size))
+    def __init__(self, crop_size):
+        if isinstance(crop_size, numbers.Number):
+            self.crop_size = (int(crop_size), int(crop_size))
         else:
-            self.size = tuple(size)
+            self.crop_size = tuple(crop_size)
 
     def __call__(self, img, label):
-        return F.center_crop(img, self.size), F.center_crop(label, self.size)
+        return F.center_crop(img, self.crop_size), F.center_crop(label, self.crop_size)
 
     def __repr__(self):
-        return self.__class__.__name__ + '(size={0})'.format(self.size)
+        return self.__class__.__name__ + '(size={0})'.format(self.crop_size)
     
     
 class RandomScale(object):
@@ -164,11 +164,11 @@ class Normalize(object):
     
     
 class RandomCrop(object):
-    def __init__(self, size, padding=0, pad_if_needed=False):
-        if isinstance(size, numbers.Number):
-            self.size = (int(size), int(size))
+    def __init__(self, crop_size, padding=0, pad_if_needed=False):
+        if isinstance(crop_size, numbers.Number):
+            self.crop_size = (int(crop_size), int(crop_size))
         else:
-            self.size = size
+            self.crop_size = crop_size
         self.padding = padding
         self.pad_if_needed = pad_if_needed
 
@@ -189,21 +189,21 @@ class RandomCrop(object):
             label = F.pad(label, self.padding)
 
         # pad the width if needed
-        if self.pad_if_needed and img.size[0] < self.size[1]:
-            img = F.pad(img, padding=int((1 + self.size[1] - img.size[0]) / 2))
-            label = F.pad(label, padding=int((1 + self.size[1] - label.size[0]) / 2))
+        if self.pad_if_needed and img.size[0] < self.crop_size[1]:
+            img = F.pad(img, padding=int((1 + self.crop_size[1] - img.size[0]) / 2))
+            label = F.pad(label, padding=int((1 + self.crop_size[1] - label.size[0]) / 2))
 
         # pad the height if needed
-        if self.pad_if_needed and img.size[1] < self.size[0]:
-            img = F.pad(img, padding=int((1 + self.size[0] - img.size[1]) / 2))
-            label = F.pad(label, padding=int((1 + self.size[0] - label.size[1]) / 2))
+        if self.pad_if_needed and img.size[1] < self.crop_size[0]:
+            img = F.pad(img, padding=int((1 + self.crop_size[0] - img.size[1]) / 2))
+            label = F.pad(label, padding=int((1 + self.crop_size[0] - label.size[1]) / 2))
 
-        i, j, h, w = self.get_params(img, self.size)
+        i, j, h, w = self.get_params(img, self.crop_size)
 
         return F.crop(img, i, j, h, w), F.crop(label, i, j, h, w)
 
     def __repr__(self):
-        return self.__class__.__name__ + '(size={0}, padding={1})'.format(self.size, self.padding)
+        return self.__class__.__name__ + '(size={0}, padding={1})'.format(self.crop_size, self.padding)
     
     
 class Resize(object):

@@ -36,7 +36,7 @@ def train_model(args):
 
     if is_main_process():
         print("Start training model {} on {} dataset!".format(args['model']['name'], args['datasets']['name']))
-    train_dataloader, val_dataloader, _ = build_dataloader(args)
+    train_dataloader, val_dataloader, _ = build_dataloader(args, device=local_rank)
     class_dict = val_dataloader.dataset.class_dict
     model = build_model(args).to(local_rank)
 

@@ -2,11 +2,13 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from Segmentation_2d.utils import set_bn_momentum, initialize_weights
 from Segmentation_2d.DeepLabV3.model import resnet
 from Segmentation_2d.DeepLabV3.model.utils import IntermediateLayerGetter
 
 class DeepLabV3(nn.Module):
-    def __init__(self, in_channel, class_num, backbone, mid_channel=256, out_stride=16, pretrained_backbone=True):
+    def __init__(self, in_channel=2048, class_num=21, backbone="resnet101", mid_channel=256, out_stride=16, pretrained_backbone=True,
+                 bn_momentum=None, weight_init=None):
         super(DeepLabV3, self).__init__()
         if out_stride==8:
             replace_stride_with_dilation=[False, True, True]
@@ -20,6 +22,12 @@ class DeepLabV3(nn.Module):
         
         self.backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
         self.classifier = DeepLabHead(in_channel, mid_channel, class_num, aspp_dilate)
+
+        if bn_momentum is not None:
+            set_bn_momentum(self.backbone, momentum=bn_momentum)
+
+        if weight_init is not None:
+            self.classifier.apply(initialize_weights(weight_init))
         
     def forward(self, x):
         input_shape = x.shape[-2:]

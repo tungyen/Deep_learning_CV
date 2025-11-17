@@ -3,7 +3,7 @@ import os
 from PIL import Image
 import numpy as np
 
-cityscapes_class_dict = {
+class_dict = {
     0: "road",
     1: "sidewalk",
     2: "building",
@@ -61,7 +61,6 @@ cityscapes_dataset_dirs = {
 
 
 class CityScapesDataset(Dataset):
-    
     train_id_to_color = [label_color_dict[c] for c in label_color_dict]
     train_id_to_color = np.array(train_id_to_color)
     def __init__(self, data_path, meta_path, split, transform=None):
@@ -69,7 +68,7 @@ class CityScapesDataset(Dataset):
         self.img_dir = data_path + "leftImg8bit_trainvaltest/leftImg8bit/" + split
         self.label_dir = meta_path + "/label_imgs/"
         self.transform = transform
-        
+        self.class_dict = class_dict
         self.img_h = 1024
         self.img_w = 2048
         self.new_img_h = 512

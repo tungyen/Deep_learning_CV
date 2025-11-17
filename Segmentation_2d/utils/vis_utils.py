@@ -2,8 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from Segmentation_2d.dataset.voc import VocSegmentationDataset
-from Segmentation_2d.dataset.cityscapes import CityScapesDataset
+from Segmentation_2d.data.dataset import VocSegmentationDataset, CityScapesDataset
 
 def visualize_image_seg(args, masks, imgs, save_path, alpha=0.6):
     batch_size = args.test_batch_size

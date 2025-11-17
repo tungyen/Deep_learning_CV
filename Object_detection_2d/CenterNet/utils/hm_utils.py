@@ -1,4 +1,4 @@
-import numpy as np
+import torch
 
 def gaussian_radius(det_size, min_overlap=0.7):
     height, width = det_size
@@ -22,20 +22,21 @@ def gaussian_radius(det_size, min_overlap=0.7):
     r3 = (b3 + sq3) / (2 * a3)
     return min(r1, r2, r3)
 
-def gaussian2D(shape, sigma=1):
+def gaussian2D(shape, sigma=1, device="cuda"):
     m, n = [(ss - 1.0) / 2.0 for ss in shape]
-    y, x = np.ogrid[-m:m+1, -n:n+1]
+    y = torch.arange(-m, m+1, device=device).view(-1, 1)
+    x = torch.arange(-n, n+1, device=device).view(-1, 1)
 
-    h = np.exp(-(x * x + y * y) / (2 * sigma * sigma))
-    h[h < np.finfo(h.dtype).eps * h.max()] = 0
+    h = torch.exp(-(x * x + y * y) / (2 * sigma * sigma))
+    h[h < torch.finfo(h.dtype).eps * h.max()] = 0
     return h
 
 def draw_umich_gaussian(heatmap, center, radius, k=1):
     diameter = 2 * radius + 1
-    gaussian = gaussian2D((diameter, diameter), sigma=diameter / 6)
+    gaussian = gaussian2D((diameter, diameter), sigma=diameter / 6, device=heatmap.device)
     x, y = int(center[0]), int(center[1])
 
-    height, width = heatmap.shape[0:2]
+    height, width = heatmap.shape[-2:]
 
     left, right = min(x, radius), min(width - x, radius + 1)
     top, bottom = min(y, radius), min(height - y, radius + 1)
@@ -44,5 +45,5 @@ def draw_umich_gaussian(heatmap, center, radius, k=1):
     masked_gaussian = gaussian[radius - top:radius + bottom, radius - left:radius + right]
 
     if min(masked_gaussian.shape) > 0 and min(masked_heatmap.shape) > 0:
-        np.maximum(masked_heatmap, masked_gaussian * k, out=masked_heatmap)
+        torch.maximum(masked_heatmap, masked_gaussian * k, out=masked_heatmap)
     return heatmap

@@ -2,6 +2,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data.dataloader import default_collate
 import os
+import torch
 
 from Object_detection_2d.data.dataset import build_dataset
 from Object_detection_2d.data.transforms import build_transforms, build_target_transform
@@ -25,6 +26,7 @@ class BatchCollator:
             targets = None
         return imgs, targets, img_ids
 
+
 def build_dataloader(args):
         
     train_transform = build_transforms(args, is_train=True)
@@ -43,9 +45,9 @@ def build_dataloader(args):
     test_sampler = DistributedSampler(test_dataset, num_replicas=world_size, rank=rank, shuffle=True)
         
     train_dataloader = DataLoader(train_dataset, batch_size=args['train_batch_size'] // world_size,
-                                  sampler=train_sampler, collate_fn=BatchCollator(is_train=True), num_workers=2)
+                                  sampler=train_sampler, collate_fn=BatchCollator(is_train=True), num_workers=4, pin_memory=True)
     val_dataloader = DataLoader(val_dataset, batch_size=args['eval_batch_size'] // world_size,
-                                sampler=val_sampler, collate_fn=BatchCollator(is_train=False), num_workers=2)
+                                sampler=val_sampler, collate_fn=BatchCollator(is_train=False), num_workers=4, pin_memory=True)
     test_dataloader = DataLoader(test_dataset, batch_size=args['test_batch_size'] // world_size,
                                  sampler=test_sampler, collate_fn=BatchCollator(is_train=False))
     

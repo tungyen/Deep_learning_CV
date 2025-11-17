@@ -2,9 +2,39 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 import os
 
+from Segmentation_2d.data.dataset import build_dataset
+from Segmentation_2d.data.transforms import build_transforms, build_target_transform
+
 from Segmentation_2d.transforms import *
 from Segmentation_2d.dataset.cityscapes import CityScapesDataset, cityscapes_class_dict
 from Segmentation_2d.dataset.voc import VocSegmentationDataset, voc_class_dict
+
+def build_dataloader(args):
+    train_transform = build_transforms(args, is_train=True)
+    val_transform = build_transforms(args, is_train=False)
+    target_transform = build_target_transform(args)
+        
+    train_dataset = build_dataset(args, "train", transform=train_transform, target_transform=target_transform)
+    val_dataset = build_dataset(args, "eval", transform=val_transform, is_train=False)
+    test_dataset = build_dataset(args, "test", transform=val_transform, is_train=False)
+
+    local_rank = int(os.environ["LOCAL_RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    rank = int(os.environ["RANK"])
+    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+    val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, shuffle=False)
+    test_sampler = DistributedSampler(test_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+        
+    train_dataloader = DataLoader(train_dataset, batch_size=args['train_batch_size'] // world_size,
+                                  sampler=train_sampler, collate_fn=BatchCollator(is_train=True), num_workers=2)
+    val_dataloader = DataLoader(val_dataset, batch_size=args['eval_batch_size'] // world_size,
+                                sampler=val_sampler, collate_fn=BatchCollator(is_train=False), num_workers=2)
+    test_dataloader = DataLoader(test_dataset, batch_size=args['test_batch_size'] // world_size,
+                                 sampler=test_sampler, collate_fn=BatchCollator(is_train=False))
+    
+    return train_dataloader, val_dataloader, test_dataloader
+
+
 
 def get_dataset(args):
     dataset_type = args.dataset

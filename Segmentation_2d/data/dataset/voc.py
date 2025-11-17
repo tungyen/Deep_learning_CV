@@ -5,7 +5,7 @@ import tarfile
 import numpy as np
 from torchvision.datasets.utils import download_url
 
-voc_class_dict = {
+class_dict = {
     0: 'background',
     1: 'aeroplane',
     2: 'bicycle',
@@ -91,6 +91,7 @@ def voc_cmap(N=256, normalized=False):
 class VocSegmentationDataset(Dataset):
     cmap = voc_cmap()
     def __init__(self, root, year='2012', split='train', download=False, transform=None):
+        self.class_dict = class_dict
         is_aug = False
         if year == '2012_aug':
             is_aug = True

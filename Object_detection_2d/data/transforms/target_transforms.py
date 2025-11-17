@@ -12,7 +12,7 @@ class SSDTargetTransformOffset:
         self.size_variance = args['size_variance']
         self.iou_thres = args['iou_thres']
 
-    def __call__(self, gt_boxes, gt_labels):
+    def __call__(self, gt_boxes, gt_labels, device=None):
         if type(gt_boxes) is np.ndarray:
             gt_boxes = torch.from_numpy(gt_boxes)
 
@@ -31,7 +31,7 @@ class SSDTargetTransformCoord:
         self.size_variance = args['size_variance']
         self.iou_thres = args['iou_thres']
 
-    def __call__(self, gt_boxes, gt_labels):
+    def __call__(self, gt_boxes, gt_labels, device=None):
         if type(gt_boxes) is np.ndarray:
             gt_boxes = torch.from_numpy(gt_boxes)
 
@@ -46,32 +46,38 @@ class CenterNetTargetTransform:
         self.class_num = args['class_num']
         self.max_objs = args['max_objs']
 
-    def __call__(self, gt_boxes, gt_labels):
+    def __call__(self, gt_boxes, gt_labels, device):
         output_size = self.img_size // 4
-        hm = np.zeros((self.class_num, output_size, output_size), dtype=np.float32)
-        wh = np.zeros((self.max_objs, 2), dtype=np.float32)
-        offsets = np.zeros((self.max_objs, 2), dtype=np.float32)
+        hm = torch.zeros((self.class_num, output_size, output_size), dtype=torch.float32, device=device)
+        wh = torch.zeros((self.max_objs, 2), dtype=torch.float32, device=device)
+        offsets = torch.zeros((self.max_objs, 2), dtype=torch.float32, device=device)
 
-        ind = np.zeros((self.max_objs), dtype=np.int64)
-        offsets_mask = np.zeros((self.max_objs), dtype=np.uint8)
-        wh_concat = np.zeros((self.max_objs, self.class_num * 2), dtype=np.float32)
-        mask_concat = np.zeros((self.max_objs, self.class_num * 2), dtype=np.uint8)
+        ind = torch.zeros((self.max_objs), dtype=torch.long, device=device)
+        offsets_mask = torch.zeros((self.max_objs), dtype=torch.uint8, device=device)
+        wh_concat = torch.zeros((self.max_objs, self.class_num * 2), dtype=torch.float32, device=device)
+        mask_concat = torch.zeros((self.max_objs, self.class_num * 2), dtype=torch.uint8, device=device)
+
+        if type(gt_boxes) is np.ndarray:
+            gt_boxes = torch.from_numpy(gt_boxes).to(device)
+        gt_boxes = gt_boxes / 4.0
+
+        if type(gt_labels) is np.ndarray:
+            gt_labels = torch.from_numpy(gt_labels).to(device)
 
         for k in range(min(gt_boxes.shape[0], self.max_objs)):
             box = gt_boxes[k]
             cls_id = int(gt_labels[k])
-            box = box / 4.0
             h, w = box[3] - box[1], box[2] - box[0]
             if h > 0 and w > 0:
                 radius = gaussian_radius((math.ceil(h), math.ceil(w)))
                 radius = max(0, int(radius))
 
-                ct = np.array([(box[0]+box[2]) / 2, (box[1]+box[3]) / 2], dtype=np.float32)
-                ct_int = ct.astype(np.int32)
+                ct = torch.tensor([(box[0]+box[2]) / 2, (box[1]+box[3]) / 2], device=device)
+                ct_int = ct.to(torch.int32)
 
                 draw_umich_gaussian(hm[cls_id], ct_int, radius)
 
-                wh[k] = 1.0 * w, 1.0 * h
+                wh[k] = torch.tensor([w, h], device=device)
                 ind[k] = ct_int[1] * output_size + ct_int[0]
                 offsets[k] = ct - ct_int
                 offsets_mask[k] = 1

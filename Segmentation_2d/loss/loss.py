@@ -118,11 +118,3 @@ class BoundaryLoss(nn.Module):
             boundary_f1_score = torch.mean(boundary_f1_score, dim=1)
             
         return torch.mean(1 - boundary_f1_score)
-            
-    
-def get_loss(args):
-    ignore_idx = args.ignore_idx
-    if args.loss_func == 'ce':
-        return CrossEntropyLoss(ignore_index=ignore_idx, lovasz_weight=args.lovasz_weight, boundary_weight=args.boundary_weight)
-    else:
-        raise ValueError(f'Unknown loss function {args.loss_func}.')

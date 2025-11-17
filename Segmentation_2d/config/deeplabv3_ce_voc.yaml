@@ -1,0 +1,22 @@
+if is_train:
+        transform = [
+            RandomScale((0.5, 2.0)),
+            RandomCrop(size=opts.crop_size, pad_if_needed=True),
+            RandomHorizontalFlip(),
+            ToTensor(),
+            Normalize(mean=opts.img_mean, std=opts.img_std),
+        ]
+    else:
+        if opts.crop_val:
+            val_transform = [
+                Resize(opts.crop_size),
+                CenterCrop(opts.crop_size),
+                ToTensor(),
+                Normalize(mean=opts.img_mean, std=opts.img_std),
+            ]
+        else:
+            val_transform = [
+                ToTensor(),
+                Normalize(mean=opts.img_mean, std=opts.img_std),
+            ]
+    return transform

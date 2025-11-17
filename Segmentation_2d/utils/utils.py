@@ -37,25 +37,3 @@ def set_bn_momentum(model, momentum=0.1):
     for m in model.modules():
         if isinstance(m, nn.BatchNorm2d):
             m.momentum = momentum
-            
-def setup_args_with_dataset(dataset_type, args):
-    if dataset_type == 'cityscapes':
-        args.class_num = 19
-        args.ignore_idx = 19
-        args.train_batch_size = 16
-        args.eval_batch_size = 4
-        args.test_batch_size = 4
-    elif dataset_type == 'voc':
-        args.class_num = 21
-        args.ignore_idx = 255
-        args.train_batch_size = 12
-        args.eval_batch_size = 16
-        args.test_batch_size = 4
-    else:
-        raise ValueError(f'Unknown dataset {dataset_type}.')
-    return args
-
-def all_reduce_confusion_matrix(confusion_matrix, local_rank):
-    tensor = confusion_matrix.confusion_matrix.to(torch.device(f"cuda:{local_rank}"))
-    dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
-    confusion_matrix.confusion_matrix = tensor

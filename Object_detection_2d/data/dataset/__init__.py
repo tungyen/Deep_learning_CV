@@ -4,7 +4,7 @@ DATASET_DICT = {
     'VOC': VocDetectionDataset
 }
 
-def build_dataset(args, stage, transform=None, target_transform=None, is_train=True):
+def build_dataset(args, stage, device=None, transform=None, target_transform=None, is_train=True):
     dataset_config = args['datasets']
     dataset_name = dataset_config['name']
     factory = DATASET_DICT[dataset_name]
@@ -14,5 +14,5 @@ def build_dataset(args, stage, transform=None, target_transform=None, is_train=T
             dataset_config['split'] = 'train'
         else:
             dataset_config['split'] = 'val'
-    dataset = factory(dataset_config, stage, transform, target_transform)
+    dataset = factory(dataset_config, stage, device, transform, target_transform)
     return dataset

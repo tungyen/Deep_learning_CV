@@ -25,43 +25,13 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 | DeepLabV3++ | 1.0 | 1.5 | 0.5 | 78.98% |
 
 Note that the following command is based on 2 gpu training. You can change weight of lovasz/boundary loss in command by specifying lovasz_weight and boundary_weight.
-## Training ##
+## Running the code ##
 ```bash
 # DeepLabV3
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset cityspaces --model deeplabv3 --backbone resnet101 
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
+bash Segmentation_2d/DeepLabV3/run_deeplabv3.sh 1 deeplabv3_cityscapes_ce Segmentation_2d/config/deeplabv3_ce_cityscapes.yaml
 
 # DeepLabV3+
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset cityspaces --model deeplabv3plus --backbone resnet101 
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/train.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
-```
-
-## Evaluation ##
-```bash
-# DeepLabV3
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset cityspaces --model deeplabv3 --backbone resnet101 
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
-
-# DeepLabV3+
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset cityspaces --model deeplabv3plus --backbone resnet101 
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
-torchrun --nproc_per_node=2 Segmentation_2d/DeepLabV3/eval.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
-```
-
-## Test ##
-```bash
-# DeepLabV3
-torchrun --nproc_per_node=1 Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset cityspaces --model deeplabv3 --backbone resnet101 
-torchrun --nproc_per_node=1 Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3 --backbone resnet101
-torchrun --nproc_per_node=1 Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3 --backbone resnet101
-
-# DeepLabV3+
-torchrun --nproc_per_node=1 Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset cityspaces --model deeplabv3plus --backbone resnet101 
-torchrun --nproc_per_node=1 Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset voc --voc_year 2012 --model deeplabv3plus --backbone resnet101
-torchrun --nproc_per_node=1 Segmentation_2d/DeepLabV3/test.py --experiment ckpts --dataset voc --voc_year 2012_aug --model deeplabv3plus --backbone resnet101
+bash Segmentation_2d/DeepLabV3/run_deeplabv3.sh 1 deeplabv3_cityscapes_ce Segmentation_2d/config/deeplabv3plus_ce_cityscapes.yaml
 ```
 
 ## Result ##
@@ -71,20 +41,20 @@ torchrun --nproc_per_node=1 Segmentation_2d/DeepLabV3/test.py --experiment ckpts
 #### DeepLabV3 ####
 CE = 1.0:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce/deeplabv3_cityscapes.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/img/ce/deeplabv3_cityscapes.png)
 
 CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce_lovasz_bound_default/deeplabv3_cityscapes.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/img/ce_lovasz_bound_default/deeplabv3_cityscapes.png)
 
 #### DeepLabV3+ ####
 CE = 1.0:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce/deeplabv3plus_cityscapes.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/img/ce/deeplabv3plus_cityscapes.png)
 
 CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce_lovasz_bound_default/deeplabv3plus_cityscapes.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/img/ce_lovasz_bound_default/deeplabv3plus_cityscapes.png)
 
 ### Result of Paskal VOC 2012 Dataset ###
 
@@ -100,8 +70,8 @@ CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 #### DeepLabV3+ ####
 CE = 1.0:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce/deeplabv3plus_voc_2012_aug.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/img/ce/deeplabv3plus_voc_2012_aug.png)
 
 CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce_lovasz_bound_default/deeplabv3plus_voc_2012_aug.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/img/ce_lovasz_bound_default/deeplabv3plus_voc_2012_aug.png)

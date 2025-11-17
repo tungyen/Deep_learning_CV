@@ -102,7 +102,7 @@ def voc_cmap(N=256, normalized=False):
 
 class VocDetectionDataset(Dataset):
     cmap = voc_cmap()
-    def __init__(self, args, stage="train", transform=None, target_transform=None):
+    def __init__(self, args, stage="train", device=None, transform=None, target_transform=None):
         self.root = os.path.expanduser(args['data_root'])
         self.years = args[stage]['years']
         self.urls = [VOC_DATASET_YEAR_DICT[year]['url'] for year in self.years]
@@ -113,6 +113,7 @@ class VocDetectionDataset(Dataset):
         self.splits = args[stage]['splits']
         self.keep_difficult = args['keep_difficult']
         self.class_dict = voc_id2class
+        self.device = device
         
         base_dirs = [VOC_DATASET_YEAR_DICT[year]['base_dir'] for year in self.years]
         self.voc_roots = [os.path.join(self.root, base_dir) for base_dir in base_dirs]
@@ -158,7 +159,7 @@ class VocDetectionDataset(Dataset):
             "labels": labels
         }
         if self.target_transform is not None:
-            result = self.target_transform(boxes, labels)
+            result = self.target_transform(boxes, labels, self.device)
         targets = Container(result)
         return img, targets, index
 
