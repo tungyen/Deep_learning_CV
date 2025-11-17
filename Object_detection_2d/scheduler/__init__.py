@@ -9,10 +9,9 @@ SCHEDULER_DICT = {
     "CosineAnnealingWarmup": CosineAnnealingWarmup,
 }
  
-def build_scheduler(args, optimizer):
-    scheduler_config = args['scheduler']
-    scheduler_name = scheduler_config.pop('name', None)
+def build_scheduler(opts, optimizer):
+    scheduler_name = opts.pop('name', None)
     if scheduler_name is None or scheduler_name not in SCHEDULER_DICT:
         raise ValueError(f"Missing scheduler name or unknown scheduler {scheduler_name}.")
     scheduler_factory = SCHEDULER_DICT[scheduler_name]
-    return scheduler_factory(optimizer, **scheduler_config)
+    return scheduler_factory(optimizer, **opts)

@@ -3,15 +3,15 @@ import torch
 from math import sqrt
 
 class PriorBox:
-    def __init__(self, args):
-        self.img_size = args['img_size']
-        prior_config = args['prior']
-        self.feature_map_sizes = prior_config['feature_map_sizes']
-        self.min_sizes = prior_config['min_sizes']
-        self.max_sizes = prior_config['max_sizes']
-        self.strides = prior_config['strides']
-        self.aspect_ratios = prior_config['aspect_ratios']
-        self.clip = prior_config['clip']
+    def __init__(self, img_size, feature_map_sizes=[], min_sizes=[],
+                 max_sizes=[], strides=[], aspect_ratios=[], clip=True):
+        self.img_size = img_size
+        self.feature_map_sizes = feature_map_sizes
+        self.min_sizes = min_sizes
+        self.max_sizes = max_sizes
+        self.strides = strides
+        self.aspect_ratios = aspect_ratios
+        self.clip = clip
 
     def __call__(self):
         priors = []

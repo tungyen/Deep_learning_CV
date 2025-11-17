@@ -8,7 +8,10 @@ MODEL_DICT = {
     "SSD": SSD
 }
 
-def build_model(args):
-    model_factory = MODEL_DICT[args['model']]
-    model = model_factory(args)
+def build_model(opts):
+    model_name = opts.pop('name', None)
+    if model_name is None or model_name not in MODEL_DICT:
+        raise ValueError(f"Missing model name or unknown model.")
+    model_factory = MODEL_DICT[model_name]
+    model = model_factory(**opts)
     return model

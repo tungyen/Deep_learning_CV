@@ -8,9 +8,11 @@ LOSS_DICT = {
     "MultiBoxesIouLoss": MultiBoxesIouLoss,
 }
 
-def build_loss(args):
-    loss_config = args['loss']
-    loss_name = loss_config.pop("name", None)
+def build_loss(opts):
+    loss_name = opts.pop("name", None)
     loss_factory = LOSS_DICT[loss_name]
-    criterion = loss_factory(PriorBox(args)(), **loss_config)
+    prior_cfg = opts.pop('prior', None)
+    if prior_cfg is None:
+        raise ValueError("prior cfg in SSD loss should not be None.")
+    criterion = loss_factory(PriorBox(**prior_cfg)(), **opts)
     return criterion

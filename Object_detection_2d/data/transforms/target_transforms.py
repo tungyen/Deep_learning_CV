@@ -4,13 +4,23 @@ import torch
 from Object_detection_2d.SSD.utils.box_utils import *
 from Object_detection_2d.CenterNet.utils.hm_utils import *
 
+class Compose_target(object):
+    def __init__(self, target_transforms):
+        self.target_transforms = target_transforms
+        
+    def __call__(self, gt_boxes, gt_labels, device=None):
+        for t in self.target_transforms:
+            result_dict = t(gt_boxes=gt_boxes, gt_labels=gt_labels, device=device)
+        return result_dict
+
 class SSDTargetTransformOffset:
-    def __init__(self, priors_cxcy, args):
+    def __init__(self, priors_cxcy, center_variance=0.1, size_variance=0.2,
+                 iou_thres=0.5):
         self.priors_cxcy = priors_cxcy
         self.priors_xy = cxcy_to_xy(priors_cxcy)
-        self.center_variance = args['center_variance']
-        self.size_variance = args['size_variance']
-        self.iou_thres = args['iou_thres']
+        self.center_variance = center_variance
+        self.size_variance = size_variance
+        self.iou_thres = iou_thres
 
     def __call__(self, gt_boxes, gt_labels, device=None):
         if type(gt_boxes) is np.ndarray:
@@ -24,12 +34,13 @@ class SSDTargetTransformOffset:
         return {"bboxes": offsets, "labels": labels}
 
 class SSDTargetTransformCoord:
-    def __init__(self, priors_cxcy, args):
+    def __init__(self, priors_cxcy, center_variance=0.1, size_variance=0.2,
+                 iou_thres=0.5):
         self.priors_cxcy = priors_cxcy
         self.priors_xy = cxcy_to_xy(priors_cxcy)
-        self.center_variance = args['center_variance']
-        self.size_variance = args['size_variance']
-        self.iou_thres = args['iou_thres']
+        self.center_variance = center_variance
+        self.size_variance = size_variance
+        self.iou_thres = iou_thres
 
     def __call__(self, gt_boxes, gt_labels, device=None):
         if type(gt_boxes) is np.ndarray:
@@ -46,7 +57,7 @@ class CenterNetTargetTransform:
         self.class_num = args['class_num']
         self.max_objs = args['max_objs']
 
-    def __call__(self, gt_boxes, gt_labels, device):
+    def __call__(self, gt_boxes, gt_labels, device=None):
         output_size = self.img_size // 4
         hm = torch.zeros((self.class_num, output_size, output_size), dtype=torch.float32, device=device)
         wh = torch.zeros((self.max_objs, 2), dtype=torch.float32, device=device)

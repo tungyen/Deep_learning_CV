@@ -62,16 +62,16 @@ extras_base = {
 }
 
 class VGG(nn.Module):
-    def __init__(self, args):
+    def __init__(self, img_size, pretrained=True):
         super().__init__()
-        size = args['img_size']
+        size = img_size
         vgg_config = vgg_base[str(size)]
         extras_config = extras_base[str(size)]
 
         self.vgg = nn.ModuleList(add_vgg(vgg_config))
         self.extras = nn.ModuleList(add_extras(extras_config, i=1024, img_size=size))
         self.l2_norm = L2Norm(512, scale=20)
-        self.pretrained = args['backbone']['pretrained']
+        self.pretrained = pretrained
         self.reset_parameters()
 
         if self.pretrained:

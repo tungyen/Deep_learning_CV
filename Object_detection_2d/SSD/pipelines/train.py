@@ -23,32 +23,35 @@ def train_model(args):
     rank = int(os.environ["RANK"])
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
-    config_path = args.config
-    ckpts_path = args.experiment
-    args = parse_config(config_path)
-    root = args['root']
-    model_name = args['model']
-    dataset_type = args['datasets']['name']
+    config_path = args.config_path
+    exp = args.exp
+    opts = parse_config(config_path)
+
+    root = opts.root
+    os.makedirs(os.path.join(root, 'runs'), exist_ok=True)
+    os.makedirs(os.path.join(root, 'runs', exp), exist_ok=True)
+    model_name = opts.model.name
+    dataset_type = opts.datasets.dataset_name
     exec_path = os.path.join(root, "runs")
-    os.makedirs(exec_path, exist_ok=True)
-    os.makedirs(os.path.join(exec_path, ckpts_path), exist_ok=True)
-    weight_path = os.path.join(exec_path, ckpts_path, "{}_{}.pt".format(args['model'], args['datasets']['name']))
+    weight_path = os.path.join(root, 'runs', exp, "max-ap-val.pt")
 
     if is_main_process():
-        print("Start training model {} on {} dataset!".format(args['model'], args['datasets']['name']))
-    train_dataloader, val_dataloader, _ = build_dataloader(args)
+        print("Start training model {} on {} dataset!".format(model_name, dataset_type))
+    train_dataloader, val_dataloader, _ = build_dataloader(opts)
     class_dict = val_dataloader.dataset.class_dict
-    model = build_model(args).to(local_rank)
+    model = build_model(opts.model).to(local_rank)
+    epochs = opts.epochs
 
-    args['optimizer']['lr'] *= world_size
-    args['scheduler']['milestones'] = [m // world_size for m in args['scheduler']['milestones']]
-    optimizer = build_optimizer(args, model.parameters())
-    scheduler = build_scheduler(args, optimizer)
-    criterion = build_loss(args)
+    opts.optimizer.lr *= world_size
+    if 'milestones' in opts.scheduler:
+        opts.scheduler.milestones = [m // world_size for m in opts.scheduler.milestones]
+    optimizer = build_optimizer(opts.optimizer, model.parameters())
+    scheduler = build_scheduler(opts.scheduler, optimizer)
+    criterion = build_loss(opts.loss)
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     best_metric = 0.0
             
-    for epoch in range(args['epochs']):
+    for epoch in range(epochs):
         # Train
         train_dataloader.sampler.set_epoch(epoch)
         model.train()
@@ -56,7 +59,7 @@ def train_model(args):
             for imgs, targets, _ in pbar:
                 imgs = imgs.to(local_rank)
                 targets = targets.to(local_rank)
-                boxes = targets['boxes']
+                boxes = targets['bboxes']
                 labels = targets['labels']
                 pred_boxes, pred_logits = model(imgs)
                 loss = criterion(pred_boxes, pred_logits, boxes, labels)
@@ -102,8 +105,8 @@ def train_model(args):
 
 def parse_args():
     parse = argparse.ArgumentParser()
-    parse.add_argument('--experiment', type=str, required=True)
-    parse.add_argument('--config', type=str, required=True)
+    parse.add_argument('--exp', type=str, required=True)
+    parse.add_argument('--config_path', type=str, required=True)
     args = parse.parse_args()
     return args
 

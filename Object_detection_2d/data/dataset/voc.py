@@ -10,7 +10,7 @@ import bisect
 
 from Object_detection_2d.data.container import Container
 
-voc_class2id = {
+class2id = {
     'background': 0,
     'aeroplane': 1,
     'bicycle': 2,
@@ -34,7 +34,7 @@ voc_class2id = {
     'tvmonitor': 20,
 }
 
-voc_id2class = {v:k for k, v in voc_class2id.items()}
+id2class = {v:k for k, v in class2id.items()}
 
 VOC_DATASET_YEAR_DICT = {
     '2012': {
@@ -102,23 +102,26 @@ def voc_cmap(N=256, normalized=False):
 
 class VocDetectionDataset(Dataset):
     cmap = voc_cmap()
-    def __init__(self, args, stage="train", device=None, transform=None, target_transform=None):
-        self.root = os.path.expanduser(args['data_root'])
-        self.years = args[stage]['years']
+    def __init__(self, data_path="", years=None, splits=None, keep_difficult=False,
+                 download_data=None, device=None, transform=None,
+                 target_transform=None):
+        self.root = os.path.expanduser(data_path)
+        self.years = years
         self.urls = [VOC_DATASET_YEAR_DICT[year]['url'] for year in self.years]
         self.filenames = [VOC_DATASET_YEAR_DICT[year]['filename'] for year in self.years]
         self.md5 = [VOC_DATASET_YEAR_DICT[year]['md5'] for year in self.years]
         self.transform = transform
         self.target_transform = target_transform
-        self.splits = args[stage]['splits']
-        self.keep_difficult = args['keep_difficult']
-        self.class_dict = voc_id2class
+        self.splits = splits
+        self.keep_difficult = keep_difficult
+        self.class_dict = id2class
         self.device = device
+        self.class_dict = id2class
         
         base_dirs = [VOC_DATASET_YEAR_DICT[year]['base_dir'] for year in self.years]
         self.voc_roots = [os.path.join(self.root, base_dir) for base_dir in base_dirs]
         
-        for i, download in enumerate(args[stage]['download_data']):
+        for i, download in enumerate(download_data):
             if download:
                 download_extract(self.urls[i], self.root, self.filenames[i], self.md5[i])
         for voc_root in self.voc_roots:
@@ -173,9 +176,6 @@ class VocDetectionDataset(Dataset):
     def parse_annotation(self, img_id, index):
         annotation_dir = self.annotation_dirs[bisect.bisect_right(self.sizes, index)]
         annotation_path = os.path.join(annotation_dir, f'{img_id}.xml')
-        # print("Img: ", img_id)
-        # print("Index: ", index)
-        # print("Anno Path: ", annotation_path)
         boxes = []
         labels = []
         difficulties = []
@@ -184,7 +184,7 @@ class VocDetectionDataset(Dataset):
         for obj in objects:
             difficult = int(obj.find("difficult").text == "1")
             name = obj.find("name").text.lower().strip()
-            label = voc_class2id.get(name)
+            label = class2id.get(name)
             if label is None:
                 continue
             

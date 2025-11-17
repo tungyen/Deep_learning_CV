@@ -26,6 +26,9 @@ class Lambda(object):
         return self.lambd(img, boxes, labels)
 
 class ConvertFromInts(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
     def __call__(self, img, boxes=None, labels=None):
         return img.astype(np.float32), boxes, labels
 
@@ -53,6 +56,9 @@ class Normalize(object):
 
 
 class ToAbsoluteCoords(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
     def __call__(self, img, boxes=None, labels=None):
         height, width, channels = img.shape
         boxes[:, 0] *= width
@@ -62,6 +68,9 @@ class ToAbsoluteCoords(object):
         return img, boxes, labels
 
 class ToPercentCoords(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
     def __call__(self, img, boxes=None, labels=None):
         height, width, channels = img.shape
         boxes[:, 0] /= width
@@ -190,15 +199,21 @@ class RandomBrightness(object):
         return img, boxes, labels
 
 class ToCV2Image(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
     def __call__(self, tensor, boxes=None, labels=None):
         return tensor.cpu().numpy().astype(np.float32).transpose((1, 2, 0)), boxes, labels
 
 class ToTensor(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
     def __call__(self, cvimage, boxes=None, labels=None):
         return torch.from_numpy(cvimage.astype(np.float32)).permute(2, 0, 1), boxes, labels
 
 class RandomSampleCrop(object):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.sample_options = (
             None,
             (0.1, None),
@@ -279,6 +294,9 @@ class Expand(object):
         return img, boxes, labels
 
 class RandomMirror(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
     def __call__(self, img, boxes, labels):
         _, width, _ = img.shape
         if random.randint(2):
@@ -296,7 +314,7 @@ class SwapChannels(object):
         return img
 
 class PhotometricDistort(object):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.pd = [
             RandomContrast(),
             ConvertColor(current="RGB", transform='HSV'),

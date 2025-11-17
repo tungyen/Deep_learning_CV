@@ -3,10 +3,13 @@ from Object_detection_2d.data.container import Container
 from Object_detection_2d.SSD.utils import batched_nms
 import time
 class PostProcessor:
-    def __init__(self, args):
-        self.args = args
-        self.width = args['img_size']
-        self.height = args['img_size']
+    def __init__(self, img_size=300, confidence_thres=0.01,
+                 nms_thres=0.45, topk=100):
+        self.width = img_size
+        self.height = img_size
+        self.confidence_thres = confidence_thres
+        self.nms_thres = nms_thres
+        self.topk = topk
 
     def __call__(self, detection_results):
         pred_boxes, pred_scores = detection_results
@@ -32,14 +35,14 @@ class PostProcessor:
             scores = scores.reshape(-1)
             labels = labels.reshape(-1)
 
-            indexes = torch.nonzero(scores > self.args['confidence_thres']).squeeze(1)
+            indexes = torch.nonzero(scores > self.confidence_thres).squeeze(1)
             boxes, scores, labels = boxes[indexes], scores[indexes], labels[indexes]
 
             boxes[:, 0::2] *= self.width
             boxes[:, 1::2] *= self.height
             nms_start_time = time.time()
-            keep = batched_nms(boxes, scores, labels, self.args['nms_thres'])
-            keep = keep[:self.args['topk']]
+            keep = batched_nms(boxes, scores, labels, self.nms_thres)
+            keep = keep[:self.topk]
             boxes, scores, labels = boxes[keep], scores[keep], labels[keep]
             container = Container(boxes=boxes, labels=labels, scores=scores)
             container.img_width = self.width

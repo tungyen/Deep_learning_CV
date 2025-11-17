@@ -8,17 +8,16 @@ from Object_detection_2d.SSD.model.anchors import PriorBox
 from Object_detection_2d.SSD.utils.box_utils import *
 
 class DetectionHead(nn.Module):
-    def __init__(self, args):
+    def __init__(self, class_num, boxes_per_feature_map=[], input_channels=[]):
         super().__init__()
-        self.class_num = args['class_num']
-        n_boxes = args['prior']['boxes_per_feature_map']
-        input_channels_list = args['backbone']['out_channels']
+        self.class_num = class_num
+        n_boxes = boxes_per_feature_map
 
         self.box_heads = nn.ModuleList()
         self.cls_heads = nn.ModuleList()
-        for i, (n_box, input_channels) in enumerate(zip(n_boxes, input_channels_list)):
-            self.box_heads.append(self.box_block(i, input_channels, n_box))
-            self.cls_heads.append(self.cls_block(i, input_channels, n_box))
+        for i, (n_box, input_channel) in enumerate(zip(n_boxes, input_channels)):
+            self.box_heads.append(self.box_block(i, input_channel, n_box))
+            self.cls_heads.append(self.cls_block(i, input_channel, n_box))
 
     def cls_block(self, level, input_channels, n_box):
         return nn.Conv2d(input_channels, n_box * self.class_num, kernel_size=3, stride=1, padding=1)
@@ -39,14 +38,15 @@ class DetectionHead(nn.Module):
         return boxes, cls_logits
 
 class SSD(nn.Module):
-    def __init__(self, args):
+    def __init__(self, backbone, head, prior, post_processor,
+                 center_variance=0.1, size_variance=0.2):
         super().__init__()
-        self.backbone = VGG(args)
-        self.det_head = DetectionHead(args)
-        self.prior_xy = PriorBox(args)()
-        self.post_processor = PostProcessor(args)
-        self.center_variance = args['center_variance']
-        self.size_variance = args['size_variance']
+        self.backbone = VGG(**backbone)
+        self.det_head = DetectionHead(**head)
+        self.prior_xy = PriorBox(**prior)()
+        self.post_processor = PostProcessor(**post_processor)
+        self.center_variance = center_variance
+        self.size_variance = size_variance
 
     def forward(self, x, is_train=True):
         backbone_feats = self.backbone(x)
