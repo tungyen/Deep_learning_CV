@@ -1,5 +1,5 @@
 # DeepLabV3 #
-First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the cityscapes dataset. This part includes DeepLabV3 and DeepLabV3+ model for image semantic segmentation. For the first time use of Paskal VOC dataset, please turn download to True in any VOC dataset config to download dataset under Dataset folder.To download different year of Paskal VOC dataset, change year in the config. And remember to add train_aug.txt under Dataset/VOC/VOCdevkit/VOC2012/train_aug.txt. The detail is also in the link above.
+First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the cityscapes dataset. This part includes DeepLabV3 and DeepLabV3+ model for image semantic segmentation. For the first time use of Paskal VOC dataset, please turn `download` to True in any VOC dataset config to download dataset under Dataset folder.To download different year of Paskal VOC dataset, change `year` in the config. And remember to add train_aug.txt under `Dataset/VOC/VOCdevkit/VOC2012/train_aug.txt`. The detail is also in the link above.
 
 ## Experiment ##
 
@@ -24,7 +24,7 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 | DeepLabV3++ | 1.0 | 1.5 | None | 79.53% |
 | DeepLabV3++ | 1.0 | 1.5 | 0.5 | 78.98% |
 
-You can change weight of lovasz/boundary loss in config by changing lovasz_weight and boundary_weight.
+You can change weight of lovasz/boundary loss in config by changing `lovasz_weight` and `boundary_weight`.
 ## Running the code ##
 ```bash
 # DeepLabV3
