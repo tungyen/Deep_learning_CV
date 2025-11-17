@@ -1,0 +1,76 @@
+class_num: &class_num 21
+ignore_index: &ignore_index 255
+root: "Segmentation_2d/DeepLabV3"
+
+img_mean: &img_mean [0.485, 0.456, 0.406]
+img_std: &img_std [0.229, 0.224, 0.225]
+dataset_name: "VOC"
+
+year: "2012"
+download: False
+data_path: Dataset/VOC
+train_batch_size: 8
+val_batch_size: 4
+test_batch_size: 4
+
+transforms:
+  train:
+    - type: RandomScale
+      scale_range: [0.5, 2.0]
+    - type: RandomCrop
+      crop_size: [512, 512]
+      pad_if_needed: True
+    - type: RandomHorizontalFlip
+    - type: ToTensor
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+  val:
+    - type: Resize
+      size: [512, 512]
+    - type: CenterCrop
+      crop_size: [512, 512]
+    - type: ToTensor
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+  test:
+    - type: Resize
+      size: [512, 512]
+    - type: CenterCrop
+      crop_size: [512, 512]
+    - type: ToTensor
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+
+model:
+  name: "DeepLabV3"
+  backbone: "resnet101"
+  class_num: *class_num
+  in_channel: 2048
+  bn_momentum: 0.1
+  weight_init: "xavier"
+
+# Training
+epochs: 100
+scheduler:
+  name: "Poly"
+  max_iters: 90000
+
+optimizer:
+  name: "SGD"
+  weight_decay: 0.0001
+  momentum: 0.9
+  lr: 0.01
+
+loss:
+  name: CrossEntropyLoss
+  ignore_index: *ignore_index
+  lovasz_weight: 1.5
+  boundary_weight: 0.5
+
+metrics:
+  name: "ConfusionMatrix"
+  class_num: *class_num
+  ignore_index: *ignore_index

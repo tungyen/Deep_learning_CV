@@ -38,7 +38,8 @@ class DeepLabV3(nn.Module):
     
     
 class DeepLabV3Plus(nn.Module):
-    def __init__(self, in_channel, class_num, backbone, mid_channel=256, out_stride=16, pretrained_backbone=True):
+    def __init__(self, in_channel, class_num, backbone, mid_channel=256, out_stride=16, pretrained_backbone=True,
+                 bn_momentum=None, weight_init=None):
         super(DeepLabV3Plus, self).__init__()
         if out_stride==8:
             replace_stride_with_dilation=[False, True, True]
@@ -53,6 +54,12 @@ class DeepLabV3Plus(nn.Module):
         self.backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
         self.classifier = DeepLabHeadV3Plus(in_channel, mid_channel, class_num, aspp_dilate=aspp_dilate)
         
+        if bn_momentum is not None:
+            set_bn_momentum(self.backbone, momentum=bn_momentum)
+
+        if weight_init is not None:
+            self.classifier.apply(initialize_weights(weight_init))
+
     def forward(self, x):
         input_shape = x.shape[-2:]
         features = self.backbone(x)

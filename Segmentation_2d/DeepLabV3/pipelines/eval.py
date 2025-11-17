@@ -35,7 +35,7 @@ def eval_model(args):
     metrics = build_metrics(opts.metrics)
     class_dict = val_dataloader.dataset.class_dict
 
-    if is_main_process:
+    if is_main_process():
         print("Start evaluation model {}!".format(model_name))
     
     with torch.no_grad():

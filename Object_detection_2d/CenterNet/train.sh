@@ -1,0 +1,6 @@
+export PYTHONPATH=$(pwd)
+NUM_GPU=$1
+EXP=$2
+CONFIG=$3
+torchrun --nproc_per_node=${NUM_GPU} Object_detection_2d/CenterNet/pipelines/train.py \
+--experiment ${EXP} --config ${CONFIG}

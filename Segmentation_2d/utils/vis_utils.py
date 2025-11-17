@@ -4,25 +4,19 @@ import os
 
 from Segmentation_2d.data.dataset import VocSegmentationDataset, CityScapesDataset
 
-def visualize_image_seg(args, masks, imgs, save_path, alpha=0.6):
-    batch_size = args.test_batch_size
-    model_name = args.model
-    dataset_type = args.dataset
-    year = args.voc_year
-    
-    if dataset_type == "voc":
-        colorized_masks = VocSegmentationDataset.decode_target(masks).astype('uint8')
-    elif dataset_type == "cityscapes":
-        colorized_masks = CityScapesDataset.decode_target(masks).astype('uint8')
-    else:
-        raise ValueError(f'Unknown dataset {dataset_type}.')
-        
+DECODE_DICT = {
+    "CityScapes": CityScapesDataset,
+    "VOC": VocSegmentationDataset,
+}
+
+def visualize_image_seg(dataset_name, bs, masks, imgs, save_path, alpha=0.6):
+    colorized_masks = DECODE_DICT[dataset_name].decode_target(masks).astype('uint8')
     imgs_f = imgs.astype(np.float32)
     colorized_masks_f = colorized_masks.astype(np.float32)
     overlays = ((1 - alpha) * imgs_f + alpha * colorized_masks_f).astype(np.uint8)
     
-    _, axs = plt.subplots(3, batch_size, figsize=(8, 8))
-    for i in range(batch_size):
+    _, axs = plt.subplots(3, bs, figsize=(8, 8))
+    for i in range(bs):
         axs[0, i].imshow(colorized_masks[i])
         axs[1, i].imshow(imgs[i])
         axs[2, i].imshow(overlays[i])
@@ -31,8 +25,5 @@ def visualize_image_seg(args, masks, imgs, save_path, alpha=0.6):
         axs[2, i].axis('off')
 
     plt.tight_layout()
-    save_name = '{}_{}'.format(model_name, dataset_type)
-    if dataset_type == "voc":
-        save_name = save_name + "_{}".format(year)
-    plt.savefig(os.path.join(save_path, save_name + ".png"), bbox_inches='tight')
+    plt.savefig(os.path.join(save_path, "seg_result.png"), bbox_inches='tight')
     plt.show()

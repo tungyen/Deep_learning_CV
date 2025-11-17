@@ -90,14 +90,14 @@ def voc_cmap(N=256, normalized=False):
 
 class VocSegmentationDataset(Dataset):
     cmap = voc_cmap()
-    def __init__(self, root, year='2012', split='train', download=False, transform=None):
+    def __init__(self, data_path, year='2012', split='train', download=False, transform=None):
         self.class_dict = class_dict
         is_aug = False
         if year == '2012_aug':
             is_aug = True
             year = '2012'
             
-        self.root = os.path.expanduser(root)
+        self.data_path = os.path.expanduser(data_path)
         self.year = year
         self.url = VOC_DATASET_YEAR_DICT[year]['url']
         self.filename = VOC_DATASET_YEAR_DICT[year]['filename']
@@ -106,11 +106,11 @@ class VocSegmentationDataset(Dataset):
         self.split = split
         
         base_dir = VOC_DATASET_YEAR_DICT[year]['base_dir']
-        voc_root = os.path.join(self.root, base_dir)
+        voc_root = os.path.join(self.data_path, base_dir)
         img_dir = os.path.join(voc_root, 'JPEGImages')
 
         if download:
-            download_extract(self.url, self.root, self.filename, self.md5)
+            download_extract(self.url, self.data_path, self.filename, self.md5)
 
         if not os.path.isdir(voc_root):
             raise RuntimeError('Dataset not found or corrupted.' + ' You can use download=True to download it')

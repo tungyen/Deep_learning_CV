@@ -5,9 +5,6 @@ def parse_config(config_path):
     with open(config_path) as f:
         opts = yaml.safe_load(f)
     opts = EasyDict(opts)
-    opts.metrics.class_num = opts.class_num
-    opts.metrics.ignore_index = opts.ignore_index
-    opts.model.class_num = opts.class_num
     opts.datasets = EasyDict()
 
     for split in ['train', 'val', 'test']:

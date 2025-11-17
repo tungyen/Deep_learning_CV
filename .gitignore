@@ -1,4 +1,5 @@
 venv
+runs
 training_logs
 flower_data
 MNIST
@@ -49,7 +50,6 @@ ckpts
 *.html
 *.lambdas
 *.doc
-*.sh
 *.pth
 *.xml
 *.meta

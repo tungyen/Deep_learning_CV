@@ -1,5 +1,5 @@
-class_num: 19
-ignore_index: 19
+class_num: &class_num 19
+ignore_index: &ignore_index 19
 root: "Segmentation_2d/DeepLabV3"
 
 img_mean: &img_mean [0.485, 0.456, 0.406]
@@ -15,7 +15,7 @@ test_batch_size: 4
 transforms:
   train:
     - type: RandomCrop
-      crop_size: [1024, 512]
+      crop_size: [512, 1024]
     - type: ColorJitter
       brightness: 0.5
       contrast: 0.5
@@ -28,26 +28,27 @@ transforms:
       std: *img_std
   val:
     - type: Resize
-      size: [1024, 512]
+      size: [512, 1024]
     - type: CenterCrop
-      crop_size: [1024, 512]
+      crop_size: [512, 1024]
     - type: ToTensor
     - type: Normalize
       mean: *img_mean
       std: *img_std
   test:
     - type: Resize
-      size: [1024, 512]
+      size: [512, 1024]
     - type: CenterCrop
-      crop_size: [1024, 512]
+      crop_size: [512, 1024]
     - type: ToTensor
     - type: Normalize
       mean: *img_mean
       std: *img_std
 
 model:
-  name: "DeepLabV3"
+  name: "DeepLabV3Plus"
   backbone: "resnet101"
+  class_num: *class_num
   in_channel: 2048
   bn_momentum: 0.1
   weight_init: "xavier"
@@ -66,9 +67,11 @@ optimizer:
 
 loss:
   name: CrossEntropyLoss
-  ignore_index: 255
+  ignore_index: *ignore_index
   lovasz_weight: 1.5
   boundary_weight: 0.5
 
 metrics:
   name: "ConfusionMatrix"
+  class_num: *class_num
+  ignore_index: *ignore_index
