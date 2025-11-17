@@ -61,11 +61,11 @@ CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 #### DeepLabV3 ####
 CE = 1.0:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce/deeplabv3_voc_2012_aug.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/img/ce/deeplabv3_voc_2012_aug.png)
 
 CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/ce_lovasz_bound_default/deeplabv3_voc_2012_aug.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/DeepLabV3/img/ce_lovasz_bound_default/deeplabv3_voc_2012_aug.png)
 
 #### DeepLabV3+ ####
 CE = 1.0:
