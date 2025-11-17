@@ -28,10 +28,10 @@ You can change weight of lovasz/boundary loss in config by changing `lovasz_weig
 ## Running the code ##
 ```bash
 # DeepLabV3
-bash Segmentation_2d/DeepLabV3/run_deeplabv3.sh 1 deeplabv3_cityscapes_ce Segmentation_2d/config/deeplabv3_ce_cityscapes.yaml
+bash Segmentation_2d/DeepLabV3/run_deeplabv3.sh 1 exp Segmentation_2d/config/deeplabv3_cityscapes.yaml
 
 # DeepLabV3+
-bash Segmentation_2d/DeepLabV3/run_deeplabv3.sh 1 deeplabv3_cityscapes_ce Segmentation_2d/config/deeplabv3plus_ce_cityscapes.yaml
+bash Segmentation_2d/DeepLabV3/run_deeplabv3.sh 1 exp Segmentation_2d/config/deeplabv3plus_cityscapes.yaml
 ```
 
 ## Result ##
