@@ -3,38 +3,81 @@ class_num: &class_num 21
 img_mean: &img_mean [123, 117, 104]
 root: "Object_detection_2d/SSD"
 
-prior:
-  feature_map_sizes: [64, 32, 16, 8, 4, 2, 1]
-  min_sizes: [35.84, 76.8, 153.6, 230.4, 307.2, 384.0, 460.8]
-  max_sizes: [76.8, 153.6, 230.4, 307.2, 384.0, 460.8, 537.65]
-  strides: [8, 16, 32, 64, 128, 256, 512]
-  aspect_ratios: [[2], [2, 3], [2, 3], [2, 3], [2, 3], [2], [2]]
-  boxes_per_feature_map: [4, 6, 6, 6, 6, 4, 4]
-  clip: True
+train_batch_size: 32
+eval_batch_size: 32
+test_batch_size: 4
 
-target_transform: Offset
-center_variance: 0.1
-size_variance: 0.2
-iou_thres: 0.5
+center_variance: &center_variance 0.1
+size_variance: &size_variance 0.2
 
-model: "SSD"
-backbone:
-  model: 'vgg'
-  out_channels: [512, 1024, 512, 256, 256, 256, 256]
-  pretrained: True
+transforms:
+  train:
+    - type: ConvertFromInts
+    - type: PhotometricDistort
+    - type: Expand
+      mean: *img_mean
+    - type: RandomSampleCrop
+    - type: RandomMirror
+    - type: ToPercentCoords
+    - type: ResizeImg
+      size: *img_size
+    - type: SubtractMeans
+      mean: *img_mean
+    - type: ToTensor
+  val:
+    - type: ResizeImgBoxes
+      size: *img_size
+    - type: SubtractMeans
+      mean: *img_mean
+    - type: ToTensor
+
+target_transforms:
+  - type: Offset
+    center_variance: *center_variance
+    size_variance: *size_variance
+    iou_thres: 0.5
+    prior: &prior
+      img_size: *img_size
+      feature_map_sizes: [64, 32, 16, 8, 4, 2, 1]
+      min_sizes: [35.84, 76.8, 153.6, 230.4, 307.2, 384.0, 460.8]
+      max_sizes: [76.8, 153.6, 230.4, 307.2, 384.0, 460.8, 537.65]
+      strides: [8, 16, 32, 64, 128, 256, 512]
+      aspect_ratios: [[2], [2, 3], [2, 3], [2, 3], [2, 3], [2], [2]]
+      clip: True
+
+model:
+  name: "SSD"
+  prior: *prior
+  backbone:
+    img_size: *img_size
+    pretrained: True
+  head:
+    class_num: *class_num
+    input_channels: [512, 1024, 512, 256, 256, 256, 256]
+    boxes_per_feature_map: [4, 6, 6, 6, 6, 4, 4]
+  post_processor:
+    img_size: *img_size
+    confidence_thres: 0.01
+    nms_thres: 0.45
+    topk: 100
+  center_variance: *center_variance
+  size_variance: *size_variance
 
 datasets:
   name: "VOC"
   data_root: Dataset/VOC
   train:
+    keep_difficult: False
     years: ["2007", "2012"]
     splits: ["trainval", "trainval"]
     download_data: [False, False]
   eval:
+    keep_difficult: True
     years: ["2012"]
     splits: ["val"]
     download_data: [False]
   test:
+    keep_difficult: True
     years: ["2012"]
     splits: ["val"]
     download_data: [False]
@@ -47,7 +90,6 @@ scheduler:
   gamma: 0.1
   warmup_factor: 0.333
   warmup_iters: 500
-  last_epoch: -1
 
 optimizer:
   name: "SGD"
@@ -57,16 +99,8 @@ optimizer:
 
 loss:
   name: MultiBoxesLoss
+  prior: *prior
   neg_pos_ratio: 3
-
-train_batch_size: 32
-eval_batch_size: 32
-test_batch_size: 4
-
-# Evaluation
-confidence_thres: 0.01
-nms_thres: 0.45
-topk: 100
 
 # Test
 score_thres: 0.7

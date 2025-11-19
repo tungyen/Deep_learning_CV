@@ -23,34 +23,38 @@ def train_model(args):
     rank = int(os.environ["RANK"])
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
-    config_path = args.config
-    ckpts_path = args.experiment
-    args = parse_config(config_path)
-    root = args['root']
-    model_name = args['model']
-    dataset_type = args['datasets']['name']
+    config_path = args.config_path
+    exp = args.exp
+    opts = parse_config(config_path)
+
+    root = opts.root
+    os.makedirs(os.path.join(root, 'runs'), exist_ok=True)
+    os.makedirs(os.path.join(root, 'runs', exp), exist_ok=True)
+    model_name = opts.model.name
+    dataset_type = opts.datasets.dataset_name
     exec_path = os.path.join(root, "runs")
-    os.makedirs(exec_path, exist_ok=True)
-    os.makedirs(os.path.join(exec_path, ckpts_path), exist_ok=True)
-    weight_path = os.path.join(exec_path, ckpts_path, "{}_{}.pt".format(args['model']['name'], args['datasets']['name']))
+    weight_path = os.path.join(root, 'runs', exp, "max-ap-val.pt")
 
     if is_main_process():
-        print("Start training model {} on {} dataset!".format(args['model']['name'], args['datasets']['name']))
-    train_dataloader, val_dataloader, _ = build_dataloader(args, device=local_rank)
+        print("Start training model {} on {} dataset!".format(model_name, dataset_name))
+    train_dataloader, val_dataloader, _ = build_dataloader(opts)
     class_dict = val_dataloader.dataset.class_dict
-    model = build_model(args).to(local_rank)
+    model = build_model(opts.model).to(local_rank)
 
-    args['optimizer']['lr'] *= world_size
+    epochs = opts.epochs
+    opts.optimizer.lr *= world_size
     train_size = len(train_dataloader)
-    args['scheduler']['first_cycle_steps'] = train_size * (args['epochs'] - args['warmup_epochs'])
-    args['scheduler']['warmup_steps'] = train_size * args['warmup_epochs']
-    optimizer = build_optimizer(args, model.parameters())
-    scheduler = build_scheduler(args, optimizer)
-    criterion = build_loss(args)
+
+    if opts.scheduler.name == "CosineAnnealingWarmup":
+        opts.scheduler.first_cycle_steps = train_size * (epochs - opts.warmup_epochs)
+        opts.scheduler.warmup_steps = train_size * opts.warmup_epochs
+    optimizer = build_optimizer(opts.optimizer, model.parameters())
+    scheduler = build_scheduler(opts.scheduler, optimizer)
+    criterion = build_loss(opts.loss)
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     best_metric = 0.0
             
-    for epoch in range(args['epochs']):
+    for epoch in range(epochs):
         # Train
         train_dataloader.sampler.set_epoch(epoch)
         model.train()
@@ -103,8 +107,8 @@ def train_model(args):
 
 def parse_args():
     parse = argparse.ArgumentParser()
-    parse.add_argument('--experiment', type=str, required=True)
-    parse.add_argument('--config', type=str, required=True)
+    parse.add_argument('--exp', type=str, required=True)
+    parse.add_argument('--config_path', type=str, required=True)
     args = parse.parse_args()
     return args
 
