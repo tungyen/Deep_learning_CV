@@ -48,14 +48,14 @@ class Bottleneck(nn.Module):
         return out
 
 class CenterNet(nn.Module):
-    def __init__(self, args, head_channels=64, momentum=0.1):
+    def __init__(self, class_num=21, num_layers=4, head_channels=64, momentum=0.1):
 
         self.inter_channels = 64
         self.deconv_with_bias = False
-        self.heads = {'hm': args['class_num'], 'wh': 2, 'reg': 2}
-        self.num_layers = args['num_layers']
+        self.heads = {'hm': class_num, 'wh': 2, 'reg': 2}
+        self.num_layers = num_layers
         self.momentum = momentum
-        layers = resnet_spec[args['num_layers']]
+        layers = resnet_spec[num_layers]
 
         super().__init__()
 

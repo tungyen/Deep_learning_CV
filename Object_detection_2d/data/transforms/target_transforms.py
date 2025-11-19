@@ -52,10 +52,10 @@ class SSDTargetTransformCoord:
         return {"bboxes": boxes_xy, "labels": labels}
 
 class CenterNetTargetTransform:
-    def __init__(self, args):
-        self.img_size = args['img_size']
-        self.class_num = args['class_num']
-        self.max_objs = args['max_objs']
+    def __init__(self, img_size=300, class_num=21, max_objs=100):
+        self.img_size = img_size
+        self.class_num = class_num
+        self.max_objs = max_objs
 
     def __call__(self, gt_boxes, gt_labels, device=None):
         output_size = self.img_size // 4

@@ -41,7 +41,7 @@ class HeatmapLoss(nn.Module):
         return loss
 
 class CenterDetectionLoss(nn.Module):
-    def __init__(self, wh_loss_weight, offset_loss_weight):
+    def __init__(self, wh_loss_weight=0.1, offset_loss_weight=1.0):
         super().__init__()
         self.heatmap_loss = HeatmapLoss()
         self.regression_loss = RegressionL1Loss()

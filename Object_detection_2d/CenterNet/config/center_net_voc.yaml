@@ -1,41 +1,74 @@
-img_size: 384
-class_num: 21
-img_mean: [0.40789655, 0.44719303, 0.47026116]
-img_std: [0.2886383, 0.27408165, 0.27809834]
+img_size: &img_size 384
+class_num: &class_num 21
+img_mean: &img_mean [0.40789655, 0.44719303, 0.47026116]
+img_std: &img_std [0.2886383, 0.27408165, 0.27809834]
 root: "Object_detection_2d/CenterNet"
 
+train_batch_size: 32
+eval_batch_size: 32
+test_batch_size: 4
+
+transforms:
+  train:
+    - type: ConvertFromInts
+    - type: PhotometricDistort
+    - type: RandomSampleCrop
+    - type: RandomMirror
+    - type: ResizeImgBoxes
+      img_size: *img_size
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+    - type: ToTensor
+  val:
+    - type: ResizeImg
+      size: *img_size
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+    - type: ToTensor
+
+
+target_transforms:
+  - type: CenterNet
+    img_size: *img_size
+    class_num: *class_num
+    max_objs: 100
 
 model:
   name: "CenterNet"
   num_layers: 152
-  class_num: 21
+  class_num: *class_num
+  head_channels: 64
   
 
 datasets:
-  name: "VOC"
-  data_root: Dataset/VOC
+  dataset_name: "VOC"
+  data_path: Dataset/VOC
   train:
+    keep_difficult: False
     years: ["2007", "2012"]
     splits: ["trainval", "trainval"]
     download_data: [False, False]
   eval:
+    keep_difficult: True
     years: ["2012"]
     splits: ["val"]
     download_data: [False]
   test:
+    keep_difficult: True
     years: ["2012"]
     splits: ["val"]
     download_data: [False]
 
 # Training
 epochs: 150
-warmup_epochs: 5
-target_transform: "CenterNet"
-max_objs: 50
+
 scheduler:
   name: "CosineAnnealingWarmup"
   max_lr: 0.0002
   min_lr: 0.000001
+  warmup_epochs: 5
 
 optimizer:
   name: "AdamW"
@@ -45,10 +78,6 @@ loss:
   name: "CenterDetectionLoss"
   wh_loss_weight: 0.1
   offset_loss_weight: 1.0
-
-train_batch_size: 32
-eval_batch_size: 32
-test_batch_size: 4
 
 # Evaluation
 confidence_thres: 0.01

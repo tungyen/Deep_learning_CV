@@ -1,6 +1,6 @@
-img_size: 512
-class_num: 21
-img_mean: [123, 117, 104]
+img_size: &img_size 512
+class_num: &class_num 21
+img_mean: &img_mean [123, 117, 104]
 root: "Object_detection_2d/SSD"
 
 prior:
