@@ -36,7 +36,7 @@ def train_model(args):
     weight_path = os.path.join(root, 'runs', exp, "max-ap-val.pt")
 
     if is_main_process():
-        print("Start training model {} on {} dataset!".format(model_name, dataset_name))
+        print("Start training model {} on {} dataset!".format(model_name, dataset_type))
     train_dataloader, val_dataloader, _ = build_dataloader(opts)
     class_dict = val_dataloader.dataset.class_dict
     model = build_model(opts.model).to(local_rank)
@@ -46,8 +46,9 @@ def train_model(args):
     train_size = len(train_dataloader)
 
     if opts.scheduler.name == "CosineAnnealingWarmup":
-        opts.scheduler.first_cycle_steps = train_size * (epochs - opts.warmup_epochs)
-        opts.scheduler.warmup_steps = train_size * opts.warmup_epochs
+        warmup_epochs = opts.scheduler.pop('warmup_epochs', None)
+        opts.scheduler.first_cycle_steps = train_size * (epochs - warmup_epochs)
+        opts.scheduler.warmup_steps = train_size * warmup_epochs
     optimizer = build_optimizer(opts.optimizer, model.parameters())
     scheduler = build_scheduler(opts.scheduler, optimizer)
     criterion = build_loss(opts.loss)

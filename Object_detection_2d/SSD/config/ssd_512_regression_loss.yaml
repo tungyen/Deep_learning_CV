@@ -64,14 +64,14 @@ model:
   size_variance: *size_variance
 
 datasets:
-  name: "VOC"
-  data_root: Dataset/VOC
+  dataset_name: "VOC"
+  data_path: Dataset/VOC
   train:
     keep_difficult: False
     years: ["2007", "2012"]
     splits: ["trainval", "trainval"]
     download_data: [False, False]
-  eval:
+  val:
     keep_difficult: True
     years: ["2012"]
     splits: ["val"]

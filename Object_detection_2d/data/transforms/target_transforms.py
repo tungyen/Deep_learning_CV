@@ -74,7 +74,7 @@ class CenterNetTargetTransform:
 
         if type(gt_labels) is np.ndarray:
             gt_labels = torch.from_numpy(gt_labels).to(device)
-
+        print("Start transform target!")
         for k in range(min(gt_boxes.shape[0], self.max_objs)):
             box = gt_boxes[k]
             cls_id = int(gt_labels[k])
@@ -97,10 +97,10 @@ class CenterNetTargetTransform:
                 mask_concat[k, cls_id*2:cls_id*2+2] = 1
 
         result = {
-            'hm': torch.from_numpy(hm),
-            'wh': torch.from_numpy(wh),
-            'offsets': torch.from_numpy(offsets),
-            'ind': torch.from_numpy(ind),
-            'offsets_mask': torch.from_numpy(offsets_mask)
+            'hm': hm,
+            'wh': wh,
+            'offsets': offsets,
+            'ind': ind,
+            'offsets_mask': offsets_mask
         }
         return result

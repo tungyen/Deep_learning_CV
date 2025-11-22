@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 def gaussian_radius(det_size, min_overlap=0.7):
     height, width = det_size

@@ -75,7 +75,7 @@ class CenterNet(nn.Module):
             nn.Conv2d(64, head_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(head_channels, momentum=momentum),
             nn.ReLU(inplace=True),
-            nn.Conv2d(head_channels, args['class_num'], kernel_size=1),
+            nn.Conv2d(head_channels, class_num, kernel_size=1),
             nn.Sigmoid()
         )
         self.wh = nn.Sequential(

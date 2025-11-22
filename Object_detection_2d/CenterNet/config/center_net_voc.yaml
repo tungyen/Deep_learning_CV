@@ -4,7 +4,7 @@ img_mean: &img_mean [0.40789655, 0.44719303, 0.47026116]
 img_std: &img_std [0.2886383, 0.27408165, 0.27809834]
 root: "Object_detection_2d/CenterNet"
 
-train_batch_size: 32
+train_batch_size: 4
 eval_batch_size: 32
 test_batch_size: 4
 
@@ -15,7 +15,7 @@ transforms:
     - type: RandomSampleCrop
     - type: RandomMirror
     - type: ResizeImgBoxes
-      img_size: *img_size
+      size: *img_size
     - type: Normalize
       mean: *img_mean
       std: *img_std
@@ -50,7 +50,7 @@ datasets:
     years: ["2007", "2012"]
     splits: ["trainval", "trainval"]
     download_data: [False, False]
-  eval:
+  val:
     keep_difficult: True
     years: ["2012"]
     splits: ["val"]

@@ -6,9 +6,9 @@ from PIL import Image
 
 from Object_detection_2d.data.dataset.voc import voc_cmap
 
-def visualize_detection(args, dataset, imgs, detections, idxes, class_dict, save_path, model_name, dataset_type):
+def visualize_detection(opts, dataset, imgs, detections, idxes, class_dict, save_path, model_name, dataset_type):
     batch_size = len(detections)
-    score_thres = args['score_thres']
+    score_thres = opts.score_thres
     
     colors = voc_cmap(len(class_dict), normalized=True)
     row = 2

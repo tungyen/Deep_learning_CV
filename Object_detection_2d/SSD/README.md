@@ -42,7 +42,7 @@ torchrun --nproc_per_node=1 Object_detection_2d/SSD/pipelines/test.py --experime
 Since ciou loss leads to worsen performance, only result based on smooth-L1 loss are shown here.
 
 #### SSD 300: ####
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Object_detection_2d/SSD/runs/ssd_300_smooth_l1/SSD_VOC.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Object_detection_2d/SSD/img/SSD_VOC_300_regression.png)
 
 #### SSD 512: ####
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Object_detection_2d/SSD/runs/ssd_512_smooth_l1/SSD_VOC.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Object_detection_2d/SSD/img/SSD_VOC_512_regression.png)
