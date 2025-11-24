@@ -9,9 +9,7 @@ class RegressionL1Loss(nn.Module):
 
     def forward(self, pred, mask, ind, gt):
         pred = _transpose_and_gather_feat(pred, ind)
-
         mask = mask.unsqueeze(2).expand_as(pred).float()
-
         loss = nn.functional.l1_loss(pred * mask, gt * mask, reduction='sum')
         loss = loss / (mask.sum() + 1e-4)
         return loss
@@ -26,6 +24,7 @@ class HeatmapLoss(nn.Module):
 
         negative_weights = torch.pow(1 - gt, 4)
         loss = 0
+        pred = torch.clamp(pred, 1e-6, 1 - 1e-6)
 
         positive_loss = torch.log(pred) * torch.pow(1-pred, 2) * positive_inds
         negative_loss = torch.log(1-pred) * torch.pow(pred, 2) * negative_weights * negative_inds
@@ -58,7 +57,7 @@ class CenterDetectionLoss(nn.Module):
         loss_dict = {
             'loss': total_loss,
             'hm_loss': hm_loss,
-            'wh_loss': wh_loss,
-            'offset_loss': offset_loss
+            'wh_loss': wh_loss * self.wh_loss_weight,
+            'offset_loss': offset_loss * self.offset_loss_weight
         }
         return loss_dict

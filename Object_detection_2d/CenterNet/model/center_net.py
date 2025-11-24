@@ -3,6 +3,8 @@ import torch.nn as nn
 from torch.hub import load_state_dict_from_url
 import torch.utils.model_zoo as model_zoo
 
+from Object_detection_2d.CenterNet.model.post_processor import PostProcessor
+
 model_urls = {
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
     'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
@@ -48,7 +50,7 @@ class Bottleneck(nn.Module):
         return out
 
 class CenterNet(nn.Module):
-    def __init__(self, class_num=21, num_layers=4, head_channels=64, momentum=0.1):
+    def __init__(self, post_processor, class_num=21, num_layers=4, head_channels=64, momentum=0.1):
 
         self.inter_channels = 64
         self.deconv_with_bias = False
@@ -90,6 +92,7 @@ class CenterNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(head_channels, 2, kernel_size=1)
         )
+        self.post_processor = PostProcessor(**post_processor)
         self.init_weights(self.num_layers, pretrianed=True)
 
     def _make_layer(self, output_channels, num_blocks, stride=1):
@@ -132,6 +135,9 @@ class CenterNet(nn.Module):
         result['offsets'] = self.reg(x)
         if is_train:
             return result
+
+        return self.post_processor(result)
+        
         
 
     def init_weights(self, num_layers, pretrianed=True):

@@ -40,7 +40,6 @@ class PostProcessor:
 
             boxes[:, 0::2] *= self.width
             boxes[:, 1::2] *= self.height
-            nms_start_time = time.time()
             keep = batched_nms(boxes, scores, labels, self.nms_thres)
             keep = keep[:self.topk]
             boxes, scores, labels = boxes[keep], scores[keep], labels[keep]

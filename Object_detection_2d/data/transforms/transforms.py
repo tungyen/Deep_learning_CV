@@ -264,7 +264,7 @@ class RandomSampleCrop(object):
                 current_labels = labels[mask]
                 current_boxes[:, :2] = np.maximum(current_boxes[:, :2], rect[:2])
                 current_boxes[:, :2] -= rect[:2]
-                current_boxes[:, 2:] = np.maximum(current_boxes[:, 2:], rect[2:])
+                current_boxes[:, 2:] = np.minimum(current_boxes[:, 2:], rect[2:])
                 current_boxes[:, 2:] -= rect[:2]
                 return current_img, current_boxes, current_labels
 

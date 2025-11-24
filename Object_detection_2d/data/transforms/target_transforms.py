@@ -74,7 +74,6 @@ class CenterNetTargetTransform:
 
         if type(gt_labels) is np.ndarray:
             gt_labels = torch.from_numpy(gt_labels).to(device)
-        print("Start transform target!")
         for k in range(min(gt_boxes.shape[0], self.max_objs)):
             box = gt_boxes[k]
             cls_id = int(gt_labels[k])

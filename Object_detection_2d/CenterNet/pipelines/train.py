@@ -78,7 +78,7 @@ def train_model(args):
                     )
                 scheduler.step()
         torch.cuda.empty_cache()
-        # # Validation
+        # Validation
         # model.eval()
         # pred_results = {}
 
@@ -97,7 +97,7 @@ def train_model(args):
         # if is_main_process():
         #     print("Start computing metrics.")
         #     metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
-        #     print("Validation mAP of {} on {} ===> {:.4f}".format(args['model'], args['datasets']['name'], metrics['map']))
+        #     print("Validation mAP of {} on {} ===> {:.4f}".format(model_name, dataset_type, metrics['map']))
         #     for i, ap in enumerate(metrics['ap']):
         #         if i == 0:
         #             continue
@@ -105,6 +105,7 @@ def train_model(args):
         #     if metrics['map'] > best_metric:
         #         best_metric = metrics['map']
         #         torch.save(model.module.state_dict(), weight_path)
+        torch.save(model.module.state_dict(), weight_path)
 
 def parse_args():
     parse = argparse.ArgumentParser()
