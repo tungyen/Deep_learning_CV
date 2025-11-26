@@ -43,6 +43,7 @@ model:
   post_processor:
     post_process_score_thres: 0.3
     img_size: *img_size
+    topk: 50
   
 
 datasets:
