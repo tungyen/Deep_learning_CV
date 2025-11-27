@@ -89,4 +89,4 @@ nms_thres: 0.45
 topk: 100
 
 # Test
-score_thres: 0.7
+score_thres: 0.5

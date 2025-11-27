@@ -44,7 +44,7 @@ class PostProcessor:
         
 
         whs = _transpose_and_gather_feat(whs, inds).view(batch_size, self.topk, 2)
-        clses = clses.view(batch_size, self.topk, 1).float()
+        clses = clses.view(batch_size, self.topk, 1)
         scores = scores.view(batch_size, self.topk, 1)
 
         xs = xs.view(batch_size, self.topk, 1)

@@ -92,9 +92,6 @@ class CenterNetTargetTransform:
                 offsets[k] = ct - ct_int
                 offsets_mask[k] = 1
 
-                wh_concat[k, cls_id*2:cls_id*2+2] = wh[k]
-                mask_concat[k, cls_id*2:cls_id*2+2] = 1
-
         result = {
             'hm': hm,
             'wh': wh,
