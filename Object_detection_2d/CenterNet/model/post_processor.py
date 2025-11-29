@@ -49,14 +49,14 @@ class PostProcessor:
 
         xs = xs.view(batch_size, self.topk, 1)
         ys = ys.view(batch_size, self.topk, 1)
-        width = whs[..., 0].view(batch_size, self.topk, 1)
-        height = whs[..., 1].view(batch_size, self.topk, 1)
+        half_w = whs[..., 0].view(batch_size, self.topk, 1) / 2
+        half_h = whs[..., 1].view(batch_size, self.topk, 1) / 2
 
         bboxes = torch.cat([
-            xs - width / 2,
-            ys - height / 2,
-            xs + width / 2,
-            ys + height / 2,
+            xs - half_w,
+            ys - half_h,
+            xs + half_w,
+            ys + half_h,
         ], dim=2)
 
         bboxes[:, :, [0, 2]] *= self.img_width / width

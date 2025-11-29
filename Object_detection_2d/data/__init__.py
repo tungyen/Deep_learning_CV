@@ -4,7 +4,7 @@ from torch.utils.data.dataloader import default_collate
 import os
 import torch
 
-from Object_detection_2d.data.dataset import build_dataset
+from Object_detection_2d.data.dataset import build_dataset, build_cmap
 from Object_detection_2d.data.transforms import build_transforms, build_target_transform
 from Object_detection_2d.data.container import Container
 

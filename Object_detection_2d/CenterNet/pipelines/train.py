@@ -94,18 +94,18 @@ def train_model(args):
         # synchronize()
         # pred_results = gather_preds_ddp(pred_results)
 
-        # if is_main_process():
-        #     print("Start computing metrics.")
-        #     metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
-        #     print("Validation mAP of {} on {} ===> {:.4f}".format(model_name, dataset_type, metrics['map']))
-        #     for i, ap in enumerate(metrics['ap']):
-        #         if i == 0:
-        #             continue
-        #         print("{} ap: {:.4f}".format(class_dict[i], ap))
-        #     if metrics['map'] > best_metric:
-        #         best_metric = metrics['map']
-        #         torch.save(model.module.state_dict(), weight_path)
-        torch.save(model.module.state_dict(), weight_path)
+        if is_main_process():
+            # print("Start computing metrics.")
+            # metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
+            # print("Validation mAP of {} on {} ===> {:.4f}".format(model_name, dataset_type, metrics['map']))
+            # for i, ap in enumerate(metrics['ap']):
+            #     if i == 0:
+            #         continue
+            #     print("{} ap: {:.4f}".format(class_dict[i], ap))
+            # if metrics['map'] > best_metric:
+            #     best_metric = metrics['map']
+            #     torch.save(model.module.state_dict(), weight_path)
+            torch.save(model.module.state_dict(), weight_path)
 
 def parse_args():
     parse = argparse.ArgumentParser()

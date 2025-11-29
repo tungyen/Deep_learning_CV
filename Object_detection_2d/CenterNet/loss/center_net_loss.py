@@ -11,7 +11,7 @@ class RegressionL1Loss(nn.Module):
         pred = _transpose_and_gather_feat(pred, ind)
         mask = mask.unsqueeze(2).expand_as(pred).float()
         loss = nn.functional.l1_loss(pred * mask, gt * mask, reduction='sum')
-        loss = loss / (mask.sum() + 1e-4)
+        loss = loss / (mask.sum() + 1e-6)
         return loss
 
 class HeatmapLoss(nn.Module):

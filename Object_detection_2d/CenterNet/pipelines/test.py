@@ -7,7 +7,7 @@ import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from Object_detection_2d.data import build_dataloader
+from Object_detection_2d.data import build_dataloader, build_cmap
 from Object_detection_2d.CenterNet.model import build_model, PostProcessor
 from Object_detection_2d.CenterNet.utils.vis_utils import visualize_detection
 from Object_detection_2d.CenterNet.utils.config_utils import parse_config
@@ -30,6 +30,7 @@ def test_model(args):
     dataset_type = opts.datasets.dataset_name
     weight_path = os.path.join(root, 'runs', exp, "max-ap-val.pt")
     save_path = os.path.join(root, 'runs', exp)
+    cmap = build_cmap(opts)
 
     if is_main_process():
         print("Start testing model {} on {} dataset!".format(model_name, dataset_type))
@@ -52,7 +53,7 @@ def test_model(args):
         detections = model(imgs.to(local_rank), False)
         detections = [d.to(torch.device("cpu")) for d in detections]
 
-    visualize_detection(opts, test_dataloader.dataset, imgs_denorm, detections, idxes, class_dict, save_path, model_name, dataset_type)
+    visualize_detection(opts, test_dataloader.dataset, imgs_denorm, detections, idxes, class_dict, save_path, model_name, dataset_type, cmap)
 
 def parse_args():
     parse = argparse.ArgumentParser()

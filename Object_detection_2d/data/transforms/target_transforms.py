@@ -65,13 +65,12 @@ class CenterNetTargetTransform:
 
         ind = torch.zeros((self.max_objs), dtype=torch.long, device=device)
         offsets_mask = torch.zeros((self.max_objs), dtype=torch.uint8, device=device)
-        wh_concat = torch.zeros((self.max_objs, self.class_num * 2), dtype=torch.float32, device=device)
-        mask_concat = torch.zeros((self.max_objs, self.class_num * 2), dtype=torch.uint8, device=device)
 
         if type(gt_boxes) is np.ndarray:
             gt_boxes = torch.from_numpy(gt_boxes).to(device)
-        gt_boxes = gt_boxes / 4.0
-
+        gt_boxes = gt_boxes.to(torch.float32) / 4.0
+        gt_boxes[:, [0, 2]] = torch.clip(gt_boxes[:, [0, 2]], min=0, max=output_size-1)
+        gt_boxes[:, [1, 3]] = torch.clip(gt_boxes[:, [1, 3]], min=0, max=output_size-1)
         if type(gt_labels) is np.ndarray:
             gt_labels = torch.from_numpy(gt_labels).to(device)
         for k in range(min(gt_boxes.shape[0], self.max_objs)):
@@ -87,7 +86,7 @@ class CenterNetTargetTransform:
 
                 draw_umich_gaussian(hm[cls_id], ct_int, radius)
 
-                wh[k] = torch.tensor([w, h], device=device)
+                wh[k] = torch.tensor([1.0 * w, 1.0 * h], device=device)
                 ind[k] = ct_int[1] * output_size + ct_int[0]
                 offsets[k] = ct - ct_int
                 offsets_mask[k] = 1

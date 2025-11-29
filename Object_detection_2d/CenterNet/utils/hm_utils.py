@@ -48,3 +48,4 @@ def draw_umich_gaussian(heatmap, center, radius, k=1):
     if min(masked_gaussian.shape) > 0 and min(masked_heatmap.shape) > 0:
         torch.maximum(masked_heatmap, masked_gaussian * k, out=masked_heatmap)
     return heatmap
+
