@@ -1,10 +1,13 @@
 import torch
 
 from Object_detection_2d.data.container import Container
+from Object_detection_2d.CenterNet.utils import batched_nms
 from Object_detection_2d.CenterNet.utils import _gather_feat, _transpose_and_gather_feat
 
 def NMS(hm):
-    hm_max = torch.nn.functional.max_pool2d(hm, (3, 3), stride=1, padding=1)
+    k = 5
+    padding = (k-1) // 2
+    hm_max = torch.nn.functional.max_pool2d(hm, (k, k), stride=1, padding=padding)
     keep = (hm_max == hm).float()
     return hm * keep
 
@@ -26,8 +29,9 @@ def _topk(scores, K):
     return topk_score, topk_inds, topk_clses, topk_ys, topk_xs
 
 class PostProcessor:
-    def __init__(self, post_process_score_thres, img_size=512, topk=50):
+    def __init__(self, post_process_score_thres, nms_thres, img_size=512, topk=50):
         self.post_process_score_thres = post_process_score_thres
+        self.nms_thres = nms_thres
         self.img_width = img_size
         self.img_height = img_size
         self.topk = topk
@@ -40,8 +44,7 @@ class PostProcessor:
         scores, inds, clses, ys, xs = _topk(hms, K=self.topk)
         offsets = _transpose_and_gather_feat(offsets, inds).view(batch_size, self.topk, 2)
         xs = xs.view(batch_size, self.topk) + offsets[:, :, 0]
-        ys = xs.view(batch_size, self.topk) + offsets[:, :, 1]
-        
+        ys = ys.view(batch_size, self.topk) + offsets[:, :, 1]
 
         whs = _transpose_and_gather_feat(whs, inds).view(batch_size, self.topk, 2)
         clses = clses.view(batch_size, self.topk, 1)
@@ -67,6 +70,11 @@ class PostProcessor:
             bbox = bboxes[i]
             score = scores[i].reshape(-1)
             labels = clses[i].reshape(-1)
+
+            keep = batched_nms(bbox, score, labels, self.nms_thres)
+            bbox = bbox[keep]
+            score = score[keep]
+            labels = labels[keep]
             container = Container(boxes=bbox, labels=labels, scores=score)
             container.img_width = self.img_width
             container.img_height = self.img_height
