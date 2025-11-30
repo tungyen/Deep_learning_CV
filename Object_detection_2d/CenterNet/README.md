@@ -1,4 +1,4 @@
-# SSD #
+# Centernet #
 First you should follow [My Dataset Guidance](https://github.com/tungyen/Deep_learning_CV/tree/master/Dataset) to download the Paskal VOC 2007/2012 dataset. This part includes Centernet for image object detection. For the first time use of Paskal VOC dataset, please change download in the base config to true for downloading datasets.
 
 ## Experiment ##
