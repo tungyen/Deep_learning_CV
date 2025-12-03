@@ -7,34 +7,6 @@ import torch.distributed as dist
 from Segmentation_3d.PointNet.model.pointnet import PointNetCls, PointNetSemseg, PointNetPartseg
 from Segmentation_3d.PointNet.model.pointnet_plus import PointNetPlusCls, PointNetPlusSemseg, PointNetPlusPartseg
 
-def weights_init_kaiming(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv2d') != -1:
-        torch.nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
-        if m.bias is not None:
-            torch.nn.init.constant_(m.bias.data, 0.0)
-    elif classname.find('Conv1d') != -1:
-        torch.nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
-        if m.bias is not None:
-            torch.nn.init.constant_(m.bias.data, 0.0)
-    elif classname.find('Linear') != -1:
-        torch.nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
-        if m.bias is not None:
-            torch.nn.init.constant_(m.bias.data, 0.0)
-
-def weights_init_xavier(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv2d') != -1:
-        torch.nn.init.xavier_normal_(m.weight.data)
-        torch.nn.init.constant_(m.bias.data, 0.0)
-    elif classname.find('Conv1d') != -1:
-        torch.nn.init.xavier_normal_(m.weight.data)
-        torch.nn.init.constant_(m.bias.data, 0.0)
-    elif classname.find('Linear') != -1:
-        torch.nn.init.xavier_normal_(m.weight.data)
-        torch.nn.init.constant_(m.bias.data, 0.0)
-
-
 def get_model(args) -> nn.Module:
     model_name = args.model
     cls_class_num = args.cls_class_num
@@ -67,7 +39,6 @@ def get_model(args) -> nn.Module:
                 model = PointNetPlusPartseg(seg_class_num, cls_class_num, n_feats, config)
     else:
         raise ValueError(f'Unknown model {model_name}.')
-    model.apply(weights_init_xavier)
     return model
     
 def setup_args_with_dataset(dataset_type, args):
@@ -113,17 +84,3 @@ def setup_args_with_dataset(dataset_type, args):
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     return args
-
-def all_reduce_confusion_matrix(confusion_matrix, local_rank):
-    tensor = confusion_matrix.confusion_matrix.to(torch.device(f"cuda:{local_rank}"))
-    dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
-    confusion_matrix.confusion_matrix = tensor
-
-def gather_all_data(data):
-    world_size = dist.get_world_size()
-    data_list = [None for _ in range(world_size)]
-    dist.all_gather_object(data_list, data)
-    gathered_data = []
-    for part in data_list:
-        gathered_data.extend(part)
-    return gathered_data

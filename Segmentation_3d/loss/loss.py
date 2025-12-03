@@ -72,6 +72,7 @@ class CrossEntropyLoss(nn.Module):
     
 class LovaszSoftmaxLoss(nn.Module):
     def __init__(self, ignore_index=None, classes='present'):
+        super().__init__()
         self.ignore_index = ignore_index
         self.classes = classes
         
@@ -92,7 +93,7 @@ class LovaszSoftmaxLoss(nn.Module):
             
             for c in range(cls_num):
                 fg = (label == c).float()
-                if (self.classes is 'present' and fg.sum() == 0):
+                if (self.classes == 'present' and fg.sum() == 0):
                     continue
                 predict_class = prob[c]
                 errors = (fg - predict_class).abs()
@@ -112,16 +113,3 @@ class LovaszSoftmaxLoss(nn.Module):
             tmp = jaccard.clone()
             jaccard[1:] -= tmp[:-1]
         return jaccard
-
-def get_loss(args):
-    loss_func = args.loss_func
-    if loss_func == "ce":
-        return CrossEntropyLoss()
-    elif loss_func == "focal":
-        return FocalLoss()
-    elif loss_func == "ce_lovasz":
-        return CrossEntropyLoss(lovasz_weight=args.lovasz_weight)
-    elif loss_func == "focal_lovasz":
-        return FocalLoss(lovasz_weight=args.lovasz_weight)
-    else:
-        raise ValueError(f'Unknown loss function {loss_func}.')

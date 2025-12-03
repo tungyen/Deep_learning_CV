@@ -2,9 +2,6 @@ from torch.utils.data import Dataset
 import numpy as np
 import os
 
-from Segmentation_3d.dataset.transforms import normalize_pclouds, to_tensor, random_jitter_pclouds, \
-    random_rotate_pclouds, random_shift_pclouds, random_scale_pclouds, get_fps_indexes
-
 class ModelNet40Dataset(Dataset):
     def __init__(self, data_path, n_points, split):
         super().__init__()
@@ -45,10 +42,6 @@ class ModelNet40Dataset(Dataset):
         
         farthest_indexes = get_fps_indexes(pclouds, self.n_points)
         pclouds = pclouds[farthest_indexes, :]
-
-        # if self.split == 'train':
-        #     pclouds, _ = random_rotate_pclouds(pclouds)
-        #     pclouds = random_jitter_pclouds(pclouds)
 
         pclouds = np.transpose(pclouds)
         return to_tensor(pclouds, cls_labels)

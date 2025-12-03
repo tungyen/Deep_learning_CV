@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from torch.autograd import Variable
 import numpy as np
+
+from Segmentation_3d.utils import initialize_weights
 
 class STNkd(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -118,10 +119,13 @@ class ClsHead(nn.Module):
         return x
 
 class PointNetSemseg(nn.Module):
-    def __init__(self, class_num, n_feats):
+    def __init__(self, class_num, n_feats, weight_init=None):
         super().__init__()
         self.encoder = Encoder(n_feats+3)
         self.seg_head = SegHead(1088, class_num)
+
+        if weight_init is not None:
+            self.apply(initialize_weights(weight_init))
         
     def forward(self, x):
         _, x_seg, _, trans2 = self.encoder(x)
@@ -129,11 +133,14 @@ class PointNetSemseg(nn.Module):
         return seg_out, trans2
     
 class PointNetPartseg(nn.Module):
-    def __init__(self, seg_class_num, cls_class_num, n_feats):
+    def __init__(self, seg_class_num, cls_class_num, n_feats, weight_init=None):
         super().__init__()
         self.cls_class_num = cls_class_num
         self.encoder = Encoder(n_feats+3)
         self.seg_head = SegHead(1088+cls_class_num, seg_class_num)
+
+        if weight_init is not None:
+            self.apply(initialize_weights(weight_init))
         
     def forward(self, x, label):
         _, x_seg, _, trans2 = self.encoder(x)
@@ -144,11 +151,14 @@ class PointNetPartseg(nn.Module):
         return seg_out, trans2
     
 class PointNetCls(nn.Module):
-    def __init__(self, class_num, n_feats):
+    def __init__(self, class_num, n_feats, weight_init=None):
         super().__init__()
         self.class_num = class_num
         self.encoder = Encoder(n_feats+3)
         self.cls_head = ClsHead(self.class_num)
+
+        if weight_init is not None:
+            self.apply(initialize_weights(weight_init))
         
     def forward(self, x):
         x_cls, _, _, trans2 = self.encoder(x)

@@ -145,6 +145,9 @@ class VocSegmentationDataset(Dataset):
 
     def __len__(self):
         return len(self.images)
+
+    def get_class_dict(self):
+        return self.class_dict
     
     @classmethod
     def decode_target(cls, mask):

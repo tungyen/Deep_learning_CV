@@ -33,7 +33,7 @@ def eval_model(args):
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     model.eval()
     metrics = build_metrics(opts.metrics)
-    class_dict = val_dataloader.dataset.class_dict
+    class_dict = val_dataloader.dataset.get_class_dict()
 
     if is_main_process():
         print("Start evaluation model {}!".format(model_name))

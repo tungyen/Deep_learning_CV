@@ -45,6 +45,7 @@ def train_model(args):
 
     best_metric = 0.0
     world_size = dist.get_world_size()
+    class_dict = val_dataloader.dataset.get_class_dict()
 
     for epoch in range(epochs):
         train_dataloader.sampler.set_epoch(epoch)

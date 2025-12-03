@@ -1,0 +1,63 @@
+class_num: &class_num 4
+ignore_index: &ignore_index 255
+root: "Segmentation_3d/PointNet"
+task: "semseg"
+
+dataset_name: "Chair"
+data_path: Dataset/Chair_dataset
+train_batch_size: 16
+val_batch_size: 8
+test_batch_size: 4
+
+transforms:
+  train:
+    - type: NormalizePointClouds
+    - type: RandomRotatePointClouds
+      prob: 0.45
+    - type: FPS
+      num_points: 1500
+    - type: TransposePointClouds
+    - type: ToTensor
+  val:
+    - type: NormalizePointClouds
+    - type: FPS
+      num_points: 1500
+    - type: TransposePointClouds
+    - type: ToTensor
+  test:
+    - type: NormalizePointClouds
+    - type: FPS
+      num_points: 1500
+    - type: ToTensor
+
+model:
+  name: "PointNetSemseg"
+  n_feats: 0
+  class_num: *class_num
+  weight_init: "xavier"
+
+# Training
+epochs: 100
+scheduler:
+  name: "Exponential"
+  gamma: 0.9
+
+optimizer:
+  name: "Adam"
+  weight_decay: 0.0001
+  eps: 1e-8
+  betas: [0.9, 0.999]
+  lr: 0.01
+
+loss:
+  name: FocalLoss
+  alpha: 0.25
+  gamma: 2.0
+  mat_diff_loss_scale: 0.001
+  lovasz_weight: 1.5
+  ignore_index: *ignore_index
+
+metrics:
+  name: "ConfusionMatrix"
+  class_num: *class_num
+  ignore_index: *ignore_index

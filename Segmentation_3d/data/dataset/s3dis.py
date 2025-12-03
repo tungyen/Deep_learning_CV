@@ -4,8 +4,6 @@ import os
 import glob
 import math
 
-from Segmentation_3d.dataset.transforms import get_fps_indexes, to_tensor
-
 def prepare_input(block_xyz, block_rgb, xcenter, ycenter, room_xyz_max):
     block_data = np.zeros([len(block_xyz), 9], dtype=np.float32)
     block_data[:, 0:3] = block_xyz[:, 0:3] - [xcenter, ycenter, 0]
@@ -101,7 +99,7 @@ class S3disDynamic(Dataset):
         return indexes
 
 class S3disDataset(Dataset):
-    def __init__(self, dataset_dir, split, test_area, n_points, max_dropout, block_type='dynamic', block_size=1.0):
+    def __init__(self, dataset_dir, split, n_points, test_area=5, max_dropout=0.95, block_type='static', block_size=1.0):
         super().__init__()
 
         assert os.path.isdir(dataset_dir)

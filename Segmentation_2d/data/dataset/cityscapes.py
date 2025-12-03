@@ -89,6 +89,9 @@ class CityScapesDataset(Dataset):
                 sample["label_img_path"] = label_img_path
                 sample["img_id"] = img_id
                 self.data.append(sample)
+
+    def get_class_dict(self):
+        return self.class_dict
         
     def __len__(self):
         return len(self.data)

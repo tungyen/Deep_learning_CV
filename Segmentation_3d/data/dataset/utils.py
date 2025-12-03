@@ -1,17 +1,6 @@
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import Dataset, DataLoader
 import os
 from torch.utils.data.distributed import DistributedSampler
-
-from Segmentation_3d.dataset.chair import ChairDataset
-from Segmentation_3d.dataset.modelnet40 import ModelNet40Dataset
-from Segmentation_3d.dataset.s3dis import S3disDataset
-from Segmentation_3d.dataset.shapenet import ShapeNetDataset
-
-def split_dataset_train_val(dataset: Dataset, split=0.9):
-    train_size = int(split * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-    return train_dataset, val_dataset
     
 def get_dataset(args):
     dataset_type = args.dataset

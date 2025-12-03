@@ -60,6 +60,7 @@ def furthest_point_sampling(points_xyz, n_samples, cpp_impl=True):
             mask = new_distances < distances
             distances[mask] = new_distances[mask]
             current_farthest_idx = torch.max(distances, -1)[1]
+        return farthest_idx
             
     if cpp_impl:
         return _furthest_point_sampling_cuda(points_xyz, n_samples).to(torch.long)
