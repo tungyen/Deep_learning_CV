@@ -42,45 +42,24 @@ def get_model(args) -> nn.Module:
     return model
     
 def setup_args_with_dataset(dataset_type, args):
-    if dataset_type == 'chair':
-        args.cls_class_num = 4
-        args.seg_class_num = 4
-        args.n_points = 1600
-        args.n_feats = 0
-        args.task = 'semseg'
-        args.train_batch_size = 64
-        args.eval_batch_size = 16
-        args.test_batch_size = 6
-    elif dataset_type == 'modelnet40':
+    if dataset_type == 'modelnet40':
         args.cls_class_num = 40
         args.seg_class_num = 40
         args.n_points = 2048
         args.n_feats = 0
-        args.task = 'cls'
-        args.train_batch_size = 32
-        args.eval_batch_size = 16
-        args.test_batch_size = 6
     elif dataset_type == 's3dis':
         args.cls_class_num = 14
         args.seg_class_num = 14
         args.n_points = 8192
         args.n_feats = 6
-        args.task = 'semseg'
-        args.train_batch_size = 32
-        args.eval_batch_size = 16
-        args.test_batch_size = 4
     elif dataset_type == "shapenet":
         args.cls_class_num = 16
         args.seg_class_num = 50
         args.n_points = 2048
-        args.task = 'partseg'
         if args.normal_channel:
             args.n_feats = 3
         else:
             args.n_feats = 0
-        args.train_batch_size = 32
-        args.eval_batch_size = 16
-        args.test_batch_size = 6
     else:
         raise ValueError(f'Unknown dataset {dataset_type}.')
     return args

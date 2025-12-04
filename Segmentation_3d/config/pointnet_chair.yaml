@@ -1,13 +1,13 @@
 class_num: &class_num 4
 ignore_index: &ignore_index 255
 root: "Segmentation_3d/PointNet"
-task: "semseg"
+task: &task "semseg"
 
-dataset_name: "Chair"
+dataset_name: &dataset_name "Chair"
 data_path: Dataset/Chair_dataset
 train_batch_size: 16
 val_batch_size: 8
-test_batch_size: 4
+test_batch_size: &test_batch_size 6
 
 transforms:
   train:
@@ -28,10 +28,11 @@ transforms:
     - type: NormalizePointClouds
     - type: FPS
       num_points: 1500
+    - type: TransposePointClouds
     - type: ToTensor
 
 model:
-  name: "PointNetSemseg"
+  name: &model_name "PointNetSemseg"
   n_feats: 0
   class_num: *class_num
   weight_init: "xavier"
@@ -61,3 +62,13 @@ metrics:
   name: "ConfusionMatrix"
   class_num: *class_num
   ignore_index: *ignore_index
+
+visualizer:
+  name: "PointCloudSegVisualizer"
+  class_num: *class_num
+  model_name: *model_name
+  dataset_type: *dataset_name
+  pclouds_num: *test_batch_size
+  y_rotate: 50
+  elev: 80
+  azim: -90

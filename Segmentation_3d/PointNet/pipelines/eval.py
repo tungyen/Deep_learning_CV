@@ -6,10 +6,10 @@ import argparse
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from Segmentation_3d.dataset.utils import get_dataset
-from Segmentation_3d.utils import get_model, setup_args_with_dataset, all_reduce_confusion_matrix, gather_all_data
-from Segmentation_3d.metrics import compute_pcloud_partseg_metrics
-from Segmentation_3d.metrics import ConfusionMatrix
+from Segmentation_3d.data import build_dataloader
+from Segmentation_3d.PointNet.model import build_model
+from Segmentation_3d.metrics import build_metrics
+from Segmentation_3d.utils import is_main_process, parse_config, gather_all_data
 
 def eval_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -17,26 +17,30 @@ def eval_model(args):
     rank = int(os.environ["RANK"])
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
-    root = os.path.dirname(os.path.abspath(__file__))
-    model_name = args.model
-    dataset_type = args.dataset
-    args = setup_args_with_dataset(dataset_type, args)
-    task = args.task
-    ckpts_path = args.experiment
-    weight_path = os.path.join(root, ckpts_path, "{}_{}_{}.pth".format(model_name, dataset_type, task))
-    
-    if dist.get_rank() == 0:
-        print("Start evaluation model {} on {} dataset!".format(model_name, dataset_type))
-    _, val_dataloader, _, class_dict = get_dataset(args)
-    model = get_model(args).to(local_rank)
+    config_path = args.config_path
+    exp = args.exp
+    opts = parse_config(config_path)
+
+    root = opts.root
+    os.makedirs(os.path.join(root, 'runs'), exist_ok=True)
+    os.makedirs(os.path.join(root, 'runs', exp), exist_ok=True)
+    weight_path = os.path.join(root, 'runs', exp, "max-iou-val.pth")
+
+    if is_main_process():
+        print("Start evaluating model {}!".format(opts.model.name))
+
+    model_name = opts.model.name
+    dataset_type = opts.dataset_name
+    task = opts.task
+
+    _, val_dataloader, _ = build_dataloader(opts)
+    model = build_model(opts.model).to(local_rank)
     model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+    metrics = build_metrics(opts.metrics)
+    class_dict = val_dataloader.dataset.get_class_dict()
     model.eval()
-    
-    if args.task[-3:] == "seg":
-        confusion_matrix = ConfusionMatrix(class_num=args.seg_class_num)
-    else:
-        confusion_matrix = ConfusionMatrix(class_num=args.cls_class_num)
+
     all_preds = []
     all_labels = []
     with torch.no_grad():
@@ -60,21 +64,21 @@ def eval_model(args):
                 all_labels.append(labels)
             else:
                 raise ValueError(f'Too much input data.')
-            confusion_matrix.update(pred_classes.cpu(), labels)
+            metrics.update(pred_classes.cpu(), labels)
     all_preds = gather_all_data(all_preds)
     all_labels = gather_all_data(all_labels)
-    all_reduce_confusion_matrix(confusion_matrix, local_rank)
-    if dist.get_rank() == 0:
-        metrics = confusion_matrix.compute_metrics()
+    metrics.gather(local_rank)
+    if is_main_process():
+        metrics_results = metrics.compute_metrics()
         if task == "cls":
-            precision = metrics['mean_precision']
-            recall = metrics['mean_recall']
+            precision = metrics_results['mean_precision']
+            recall = metrics_results['mean_recall']
             print("Validation Precision of {} on {} ===> {:.4f}".format(model_name, dataset_type, precision))
             print("Validation Recall of {} on {} ===> {:.4f}".format(model_name, dataset_type, recall))
 
         elif task == "semseg":
-            ious = metrics['ious']
-            mious = metrics['mious']
+            ious = metrics_results['ious']
+            mious = metrics_results['mious']
             print("Validation mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, mious))
             for cls in class_dict:
                 print("{} IoU: {:.4f}".format(class_dict[cls], ious[cls]))
@@ -91,24 +95,8 @@ def eval_model(args):
 
 def parse_args():
     parse = argparse.ArgumentParser()
-    # Dataset
-    parse.add_argument('--dataset', type=str, default="shapenet")
-    
-    # S3DIS
-    parse.add_argument('--test_area', type=int, default=5)
-    parse.add_argument('--max_dropout', type=float, default=0.95)
-    parse.add_argument('--block_type', type=str, default='static')
-    parse.add_argument('--block_size', type=float, default=1.0)
-    
-    # ShapeNet
-    parse.add_argument('--normal_channel', type=bool, default=True)
-    parse.add_argument('--class_choice', type=list, default=None)
-    
-    # Model
-    parse.add_argument('--model', type=str, default="pointnet")
-    
-    # Eval
-    parse.add_argument('--experiment', type=str, required=True)
+    parse.add_argument('--exp', type=str, required=True)
+    parse.add_argument('--config_path', type=str, required=True)
     args = parse.parse_args()
     return args
         

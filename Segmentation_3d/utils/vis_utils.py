@@ -5,93 +5,96 @@ from matplotlib.lines import Line2D
 import os
 import open3d as o3d
 
-def rotate_points_around_y(points, angle_deg):
-    angle_rad = np.radians(angle_deg)
-    R_y = np.array([
-        [np.cos(angle_rad), 0, np.sin(angle_rad)],
-        [0, 1, 0],
-        [-np.sin(angle_rad), 0, np.cos(angle_rad)]
-    ])
-    return points @ R_y.T
+class BasePointCloudVisualizer:
+    def __init__(self, class_num, model_name, dataset_type,
+                 pclouds_num, y_rotate=50, elev=80, azim=-90):
+        self.class_num = class_num
+        self.model_name = model_name
+        self.dataset_type = dataset_type
+        self.pclouds_num = pclouds_num
+        self.y_rotate = y_rotate
+        self.elev = elev
+        self.azim = azim
 
-def rgb_to_hex(rgb):
-    return '#%02x%02x%02x' % tuple(int(255*x) for x in rgb)
+        self.n_rows = 2
+        self.n_cols = int(np.ceil(self.pclouds_num / self.n_rows))
+        color_maps = self.generate_color_map(class_num)
+        self.color_maps = [color_maps.copy() for _ in range(pclouds_num)]
 
-def generate_color_map(class_num):
-    cmap = plt.get_cmap('hsv')
-    color_map = {}
-    for i in range(class_num):
-        rgba = cmap(i / class_num)
-        rgb = [round(c, 3) for c in rgba[:3]]
-        color_map[i] = rgb
-    return color_map
+    def visualize(self, pclouds, pred_labels, class_dict):
+        raise NotImplementedError
 
+    def rgb_to_hex(self, rgb):
+        return '#%02x%02x%02x' % tuple(int(255*x) for x in rgb)
 
-def get_color_map(args):
-    task = args.task
-    if task == "cls":
-        class_num = args.cls_class_num
-    elif task in ["semseg", "partseg"]:
-        class_num = args.seg_class_num
-    else:
-        raise ValueError(f'Unknown task {task}.')
-    return generate_color_map(class_num)
-    
-def visualize_pcloud(args, pcloud, color_maps, predict_class, save_path,
-                    class_dict=None, y_rotate=50, elev=80, azim=-90):
-    n_rows = 2
-    n_cols = int(np.ceil(args.test_batch_size / n_rows))
-    fig = plt.figure(figsize=(4 * n_cols, 4 * n_rows))
-    task = args.task
-    if not isinstance(color_maps, list):
-        color_maps = [color_maps.copy() for _ in range(args.test_batch_size)]
-    for i in range(args.test_batch_size):
-        color_map = color_maps[i]
-        points_np = pcloud[i, :3, :].T.numpy()
-        points_np = rotate_points_around_y(points_np, y_rotate)
+    def generate_color_map(self, class_num):
+        cmap = plt.get_cmap('hsv')
+        color_map = {}
+        for i in range(class_num):
+            rgba = cmap(i / class_num)
+            rgb = [round(c, 3) for c in rgba[:3]]
+            color_map[i] = rgb
+        return color_map
+
+    def rotate_points_around_y(self, points, angle_deg):
+        angle_rad = np.radians(angle_deg)
+        R_y = np.array([
+            [np.cos(angle_rad), 0, np.sin(angle_rad)],
+            [0, 1, 0],
+            [-np.sin(angle_rad), 0, np.cos(angle_rad)]
+        ])
+        return points @ R_y.T
+
+class PointCloudSegVisualizer(BasePointCloudVisualizer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def visualize(self, pclouds, pred_labels, class_dict, save_path):
+        fig = plt.figure(figsize=(4 * self.n_cols, 4 * self.n_rows))
+        for i in range(self.pclouds_num):
+            color_map = self.color_maps[i]
+            pclouds_np = pclouds[i, :3, :].T.numpy()
+            pclouds_np = self.rotate_points_around_y(pclouds_np, self.y_rotate)
         
-        if task in ["semseg", "partseg"]:
-            colors = np.array([color_map[label] for label in predict_class[i]])
-        elif task == "cls":
-            colors = np.array([color_map[predict_class[i]] for _ in range(args.n_points)])
-        else:
-            raise ValueError(f'Unknown task {task}')
-        
-        ax = fig.add_subplot(n_rows, n_cols, i + 1, projection='3d')
-        ax.scatter(points_np[:, 0], points_np[:, 1], points_np[:, 2], c=colors, s=1)
-        ax.view_init(elev=elev, azim=azim)
-        
-        if task == "cls" and class_dict is not None:
-            ax.set_title(f'{class_dict[predict_class[i]]}')
-        plt.axis('off')
+            colors = np.array([color_map[label] for label in pred_labels[i]])
+            ax = fig.add_subplot(self.n_rows, self.n_cols, i + 1, projection='3d')
+            ax.scatter(pclouds_np[:, 0], pclouds_np[:, 1], pclouds_np[:, 2], c=colors, s=1)
+            ax.view_init(elev=self.elev, azim=self.azim)
+            plt.axis('off')
 
-        ###############
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(points_np)
-
-        # Ensure color values are normalized to [0, 1]
-        if np.max(colors) > 1.0:
-            colors = colors / 255.0
-        pcd.colors = o3d.utility.Vector3dVector(colors)
-        o3d.visualization.draw_geometries([pcd],
-                                        zoom=0.6,
-                                        front=[0.0, 0.0, -1.0],
-                                        lookat=[0.0, 0.0, 0.0],
-                                        up=[0.0, -1.0, 0.0])
-        ############
-
-    if task == "semseg":
         legend_elements = []
         for class_id, color in color_map.items():
             legend_elements.append(Line2D([0], [0], marker='o', color='w',
                             label=f'{class_dict[class_id]}',
-                            markerfacecolor=rgb_to_hex(color),
+                            markerfacecolor=self.rgb_to_hex(color),
                             markersize=10))
         fig.legend(handles=legend_elements, loc='lower center', ncol=len(color_map), fontsize='large')
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.9, bottom=0.05)
+        fig.suptitle(self.model_name, fontsize=16)
+        plt.savefig(os.path.join(save_path, '{}_{}.png'.format(self.model_name, self.dataset_type)), dpi=300, bbox_inches='tight')
+        plt.show()
+
+class PointCloudClsVisualizer(BasePointCloudVisualizer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def visualize(self, pclouds, pred_labels, class_dict, save_path):
+        fig = plt.figure(figsize=(4 * self.n_cols, 4 * self.n_rows))
+        for i in range(self.pclouds_num):
+            color_map = self.color_maps[i]
+            pclouds_np = pclouds[i, :3, :].T.numpy()
+            pclouds_np = self.rotate_points_around_y(pclouds_np, self.y_rotate)
+        
+            colors = np.array([color_map[pred_labels[i]] for _ in range(pclouds_np.shape[0])])
+            ax = fig.add_subplot(self.n_rows, self.n_cols, i + 1, projection='3d')
+            ax.scatter(pclouds_np[:, 0], pclouds_np[:, 1], pclouds_np[:, 2], c=colors, s=1)
+            ax.view_init(elev=self.elev, azim=self.azim)
+            ax.set_title(f'{class_dict[predi_labels[i]]}')
+            plt.axis('off')
     
-    model2title = {"pointnet": "PointNet", "pointnet_plus_ssg": "PointNet++ SSG", "pointnet_plus_msg": "PointNet++ MSG"} 
-    plt.tight_layout()
-    plt.subplots_adjust(top=0.9, bottom=0.05)
-    fig.suptitle(model2title[args.model], fontsize=16)
-    plt.savefig(os.path.join(save_path, '{}_{}_{}.png'.format(args.model, args.dataset, task)), dpi=300, bbox_inches='tight')
-    plt.show()
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.9, bottom=0.05)
+        fig.suptitle(self.model_name, fontsize=16)
+        plt.savefig(os.path.join(save_path, '{}_{}.png'.format(self.model_name, self.dataset_type)), dpi=300, bbox_inches='tight')
+        plt.show()

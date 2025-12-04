@@ -1,6 +1,9 @@
 import numpy as np
 import torch
 from tqdm import tqdm
+import torch.distributed as dist
+
+from Segmentation_3d.utils import is_main_process
 
 class ConfusionMatrix:
     def __init__(self, class_num, ignore_index=None, eps=1e-7, device='cpu'):
@@ -40,6 +43,12 @@ class ConfusionMatrix:
             'recall': recall,
             'mean_recall': recall.mean(),
         }
+
+    def gather(self, local_rank):
+        if is_main_process():
+            tensor = self.confusion_matrix.to(torch.device(f"cuda:{local_rank}"))
+            dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
+            self.confusion_matrix = tensor
 
     def reset(self):
         self.confusion_matrix.zero_()

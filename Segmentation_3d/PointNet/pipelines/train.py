@@ -13,7 +13,7 @@ from Segmentation_3d.optimizer import build_optimizer
 from Segmentation_3d.scheduler import build_scheduler
 from Segmentation_3d.metrics import build_metrics
 from Segmentation_3d.loss import build_loss
-from Segmentation_3d.utils import all_reduce_confusion_matrix, is_main_process, parse_config, gather_all_data
+from Segmentation_3d.utils import is_main_process, parse_config, gather_all_data
 
 def train_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -104,7 +104,7 @@ def train_model(args):
                 metrics.update(pred_classes.cpu(), labels)
         all_preds = gather_all_data(all_preds)
         all_labels = gather_all_data(all_labels)
-        all_reduce_confusion_matrix(metrics, local_rank)
+        metrics.gather(local_rank)
         if is_main_process():
             metrics_results = metrics.compute_metrics()
             if task == "cls":

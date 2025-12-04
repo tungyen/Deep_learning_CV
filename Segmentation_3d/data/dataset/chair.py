@@ -32,12 +32,12 @@ class ChairDataset(Dataset):
     def __getitem__(self, idx):
         pclouds_path = self.pclouds_paths[idx]
         label_path = pclouds_path[:-3] + "txt"
+        pclouds_file = os.path.join(self.data_path, "pts", pclouds_path)
         if self.label_paths is not None:
-            pclouds_file = os.path.join(self.data_path, "pts", pclouds_path)
             label_file = os.path.join(self.data_path, "label", label_path)
             return self.load_pclouds(pclouds_file, label_file)
         else:
-            return self.load_pclouds(os.path.join(self.data_path, pclouds_path))
+            return self.load_pclouds(pclouds_file)
             
     def load_pclouds(self, pclouds_file, label_path=None):
         pclouds = o3d.io.read_point_cloud(pclouds_file, format='xyz')
