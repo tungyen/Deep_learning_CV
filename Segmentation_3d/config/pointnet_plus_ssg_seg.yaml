@@ -1,5 +1,0 @@
-n_samples_list: [1024, 256, 64, 16]
-radius_list: [0.1, 0.2, 0.4, 0.8]
-n_points_per_group_list: [32, 32, 32, 32]
-sa_mlp_out_channels_list: [[32, 48, 64], [64, 96, 128], [128, 196, 256], [256, 384, 512]]
-fp_mlp_out_channels_list: [[1024, 512], [512, 512], [512, 256], [256, 256, 128]]

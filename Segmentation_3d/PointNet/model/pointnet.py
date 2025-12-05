@@ -149,7 +149,16 @@ class PointNetPartseg(nn.Module):
         x_seg = torch.cat([x_seg, one_hot], dim=1)
         seg_out = self.seg_head(x_seg)
         return seg_out, trans2
-    
+
+    def post_process(self, outputs, cls_labels, class_dict):
+        instance2parts, _, label2class = class_dict
+        pred_classes = torch.zeros((outputs.shape[0], outputs.shape[2]))
+        for i in range(outputs.shape[0]):
+            instance = label2class[cls_labels[i].item()]
+            logits = outputs[i, :, :].cpu()
+            pred_classes[i, :] = torch.argmax(logits[instance2parts[instance], :], 0) + instance2parts[instance][0]
+        return pred_classes
+
 class PointNetCls(nn.Module):
     def __init__(self, class_num, n_feats, weight_init=None):
         super().__init__()

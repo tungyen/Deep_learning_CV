@@ -41,8 +41,6 @@ def eval_model(args):
     class_dict = val_dataloader.dataset.get_class_dict()
     model.eval()
 
-    all_preds = []
-    all_labels = []
     with torch.no_grad():
         for pclouds, *labels in tqdm(val_dataloader, desc="Evaluation", disable=dist.get_rank() != 0):
             # Semantic Segmentation or Classification
@@ -55,42 +53,14 @@ def eval_model(args):
                 cls_labels, labels = labels
                 instance2parts, _, label2class = class_dict
                 outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
-                pred_classes = torch.zeros((outputs.shape[0], outputs.shape[2])).to(local_rank)
-                for i in range(outputs.shape[0]):
-                    instance = label2class[cls_labels[i].item()]
-                    logits = outputs[i, :, :]
-                    pred_classes[i, :] = torch.argmax(logits[instance2parts[instance], :], 0) + instance2parts[instance][0]
-                all_preds.append(pred_classes.cpu())
-                all_labels.append(labels)
+                pred_classes = model.post_process(outputs, cls_labels, class_dict)
             else:
                 raise ValueError(f'Too much input data.')
-            metrics.update(pred_classes.cpu(), labels)
-    all_preds = gather_all_data(all_preds)
-    all_labels = gather_all_data(all_labels)
+            metrics.update(pred_classes, labels)
+
     metrics.gather(local_rank)
     if is_main_process():
-        metrics_results = metrics.compute_metrics()
-        if task == "cls":
-            precision = metrics_results['mean_precision']
-            recall = metrics_results['mean_recall']
-            print("Validation Precision of {} on {} ===> {:.4f}".format(model_name, dataset_type, precision))
-            print("Validation Recall of {} on {} ===> {:.4f}".format(model_name, dataset_type, recall))
-
-        elif task == "semseg":
-            ious = metrics_results['ious']
-            mious = metrics_results['mious']
-            print("Validation mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, mious))
-            for cls in class_dict:
-                print("{} IoU: {:.4f}".format(class_dict[cls], ious[cls]))
-
-        elif task == 'partseg':
-            instance_ious, instance_mious, class_mious = compute_pcloud_partseg_metrics(all_preds, all_labels, class_dict)
-            print("Validation Instance mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, instance_mious))
-            print("Validation Class mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, class_mious))
-            for cls in instance_ious:
-                print("{} IoU: {:.4f}".format(cls, instance_ious[cls]))
-        else:
-            raise ValueError(f'Unknown segmentation task {task}.')  
+        results = metrics.compute_metrics(class_dict)
     dist.destroy_process_group()
 
 def parse_args():

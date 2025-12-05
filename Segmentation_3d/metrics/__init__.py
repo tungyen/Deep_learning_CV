@@ -1,9 +1,9 @@
 from Segmentation_3d.metrics.confusion_matrix import ConfusionMatrix
-from Segmentation_3d.metrics.part_seg_metrics import compute_pcloud_partseg_metrics
+from Segmentation_3d.metrics.part_seg_metrics import PartSegIOU
 
 METRICS_DICT = {
     "ConfusionMatrix": ConfusionMatrix,
-    "PartSegMetrics": compute_pcloud_partseg_metrics,
+    "PartSegIOU": PartSegIOU,
 }
 
 def build_metrics(opts):

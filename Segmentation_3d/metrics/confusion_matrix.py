@@ -6,8 +6,9 @@ import torch.distributed as dist
 from Segmentation_3d.utils import is_main_process
 
 class ConfusionMatrix:
-    def __init__(self, class_num, ignore_index=None, eps=1e-7, device='cpu'):
+    def __init__(self, class_num, task="seg", ignore_index=None, eps=1e-7, device='cpu'):
         self.class_num = class_num
+        self.task = task
         self.ignore_index = ignore_index
         self.eps = eps
         self.device = device
@@ -27,7 +28,7 @@ class ConfusionMatrix:
         cm = cm.reshape(self.class_num, self.class_num)
         self.confusion_matrix += cm
 
-    def compute_metrics(self):
+    def compute_metrics(self, class_dict):
         TP = self.confusion_matrix.diag()
         FP = self.confusion_matrix.sum(0) - TP
         FN = self.confusion_matrix.sum(1) - TP
@@ -35,7 +36,7 @@ class ConfusionMatrix:
         precision = TP.float() / (TP + FP + self.eps)
         recall = TP.float() / (TP + FN + self.eps)
 
-        return {
+        results = {
             'ious': ious,
             'mious': ious.mean(),
             'precision': precision,
@@ -43,6 +44,21 @@ class ConfusionMatrix:
             'recall': recall,
             'mean_recall': recall.mean(),
         }
+
+        if self.task == "cls":
+            precision = results['mean_precision']
+            recall = results['mean_recall']
+            print("Validation Precision ===> {:.4f}".format(precision))
+            print("Validation Recall ===> {:.4f}".format(recall))
+            return precision
+
+        elif self.task == "semseg":
+            ious = results['ious']
+            mious = results['mious']
+            print("Validation mIoU ===> {:.4f}".format(mious))
+            for cls in class_dict:
+                print("{} IoU: {:.4f}".format(class_dict[cls], ious[cls]))
+            return mious
 
     def gather(self, local_rank):
         if is_main_process():

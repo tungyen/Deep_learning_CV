@@ -76,9 +76,7 @@ def train_model(args):
                     postfix_dict = {k: f"{v.item():.4f}" for k, v in loss.items()}
                     pbar.set_postfix(postfix_dict)
             scheduler.step()    
-        
-        all_preds = []
-        all_labels = []
+
         # Validation
         with torch.no_grad():
             for pclouds, *labels in tqdm(val_dataloader, desc="Evaluation"):
@@ -90,52 +88,18 @@ def train_model(args):
                 # Part Segmentation
                 elif len(labels) == 2:
                     cls_labels, labels = labels
-                    instance2parts, _, label2class = class_dict
                     outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
-                    pred_classes = torch.zeros((outputs.shape[0], outputs.shape[2])).to(local_rank)
-                    for i in range(outputs.shape[0]):
-                        instance = label2class[cls_labels[i].item()]
-                        logits = outputs[i, :, :]
-                        pred_classes[i, :] = torch.argmax(logits[instance2parts[instance], :], 0) + instance2parts[instance][0]
-                    all_preds.append(pred_classes.cpu())
-                    all_labels.append(labels)
+                    pred_classes = model.post_process(outputs, cls_labels, class_dict)
                 else:
                     raise ValueError(f'Too much input data.')
                 metrics.update(pred_classes.cpu(), labels)
-        all_preds = gather_all_data(all_preds)
-        all_labels = gather_all_data(all_labels)
+
         metrics.gather(local_rank)
         if is_main_process():
-            metrics_results = metrics.compute_metrics()
-            if task == "cls":
-                precision = metrics_results['mean_precision']
-                recall = metrics_results['mean_recall']
-                print("Validation Precision of {} on {} ===> {:.4f}".format(model_name, dataset_type, precision))
-                print("Validation Recall of {} on {} ===> {:.4f}".format(model_name, dataset_type, recall))
-
-                if precision > best_metric:
-                    best_metric = precision
-                    torch.save(model.state_dict(), weight_path)
-            elif task == "semseg":
-                ious = metrics_results['ious']
-                mious = metrics_results['mious']
-                print("Validation mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, mious))
-                for cls in class_dict:
-                    print("{} IoU: {:.4f}".format(class_dict[cls], ious[cls]))
-                if mious > best_metric:
-                    best_metric = mious
-                    torch.save(model.state_dict(), weight_path)
-            elif task == 'partseg':
-                instance_ious, instance_mious, class_mious = compute_pcloud_partseg_metrics(all_preds, all_labels, class_dict)
-                print("Validation Instance mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, instance_mious))
-                print("Validation Class mIoU of {} on {} ===> {:.4f}".format(model_name, dataset_type, class_mious))
-                for cls in instance_ious:
-                    print("{} IoU: {:.4f}".format(cls, instance_ious[cls]))
-                if instance_mious > best_metric:
-                    best_metric = instance_mious
-                    torch.save(model.state_dict(), weight_path)
-            else:
-                raise ValueError(f'Unknown segmentation task {task}.')
+            metrics_results = metrics.compute_metrics(class_dict)
+            if metrics_results > best_metric:
+                best_metric = metrics_results
+                torch.save(model.module.state_dict(), weight_path)
         metrics.reset() 
 
 def parse_args():
