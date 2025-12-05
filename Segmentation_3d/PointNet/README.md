@@ -45,23 +45,14 @@ python setup.py build_ext --inplace
 For classification task, ModelNet40 is used.
 ### Training ###
 ```bash
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/train.py --experiment ckpts --dataset modelnet40 --model pointnet
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/train.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_ssg
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/train.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_msg
-```
+# PointNet
+bash Segmentation_3d/PointNet/run_pointnet.sh 1 test2 Segmentation_3d/config/pointnet_modelnet40.yaml 
 
-### Evaluation ###
-```bash
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset modelnet40 --model pointnet
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_ssg
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_msg
-```
+# PointNetPlusSsg
+bash Segmentation_3d/PointNet/run_pointnet.sh 1 test2 Segmentation_3d/config/pointnet_plus_ssg_modelnet40.yaml 
 
-### Testing ###
-```bash
-torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts --dataset modelnet40 --model pointnet
-torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_ssg
-torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts --dataset modelnet40 --model pointnet_plus_msg
+# PointNetPlusMsg
+bash Segmentation_3d/PointNet/run_pointnet.sh 1 test2 Segmentation_3d/config/pointnet_plus_msg_modelnet40.yaml 
 ```
 
 ### Result of Modelnet40 Dataset ###
@@ -77,23 +68,14 @@ torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts 
 In this part, ShapeNetPart is used.
 ### Training ###
 ```bash
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/train.py --experiment ckpts --dataset shapenet --model pointnet
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/train.py --experiment ckpts --dataset shapenet --model pointnet_plus_ssg
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/train.py --experiment ckpts --dataset shapenet --model pointnet_plus_msg
-```
+# PointNet
+bash Segmentation_3d/PointNet/run_pointnet.sh 1 test2 Segmentation_3d/config/pointnet_shapenet.yaml 
 
-### Evaluation ###
-```bash
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset shapenet --model pointnet
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset shapenet --model pointnet_plus_ssg
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset shapenet --model pointnet_plus_msg
-```
+# PointNetPlusSsg
+bash Segmentation_3d/PointNet/run_pointnet.sh 1 test2 Segmentation_3d/config/pointnet_plus_ssg_shapenet.yaml 
 
-### Testing ###
-```bash
-torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts --dataset shapenet --model pointnet
-torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts --dataset shapenet --model pointnet_plus_ssg
-torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts --dataset shapenet --model pointnet_plus_msg
+# PointNetPlusMsg
+bash Segmentation_3d/PointNet/run_pointnet.sh 1 test2 Segmentation_3d/config/pointnet_plus_msg_shapenet.yaml 
 ```
 
 ### Result of Shapenet Dataset ###
@@ -109,23 +91,14 @@ torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts 
 In this part, Chair Dataset and S3DIS are used. Following command is based on Chair Dataset. In semantic segmentation task, we use Lovasz Softmax Loss and Focal Loss:
 ### Training ###
 ```bash
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/train.py --experiment ckpts --dataset chair --model pointnet --loss_func focal_lovasz
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/train.py --experiment ckpts --dataset chair --model pointnet_plus_ssg --loss_func focal_lovasz
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/train.py --experiment ckpts --dataset chair --model pointnet_plus_msg --loss_func focal_lovasz
-```
+# PointNet
+bash Segmentation_3d/PointNet/run_pointnet.sh 1 test2 Segmentation_3d/config/pointnet_chair.yaml 
 
-### Evaluation ###
-```bash
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset chair --model pointnet
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset chair --model pointnet_plus_ssg
-torchrun --nproc_per_node=2 Segmentation_3d/PointNet/eval.py --experiment ckpts --dataset chair --model pointnet_plus_msg
-```
+# PointNetPlusSsg
+bash Segmentation_3d/PointNet/run_pointnet.sh 1 test2 Segmentation_3d/config/pointnet_plus_ssg_chair.yaml 
 
-### Testing ###
-```bash
-torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts --dataset chair --model pointnet
-torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts --dataset chair --model pointnet_plus_ssg
-torchrun --nproc_per_node=1 Segmentation_3d/PointNet/test.py --experiment ckpts --dataset chair --model pointnet_plus_msg
+# PointNetPlusMsg
+bash Segmentation_3d/PointNet/run_pointnet.sh 1 test2 Segmentation_3d/config/pointnet_plus_msg_chair.yaml 
 ```
 
 ### Result of Chair Dataset ###
