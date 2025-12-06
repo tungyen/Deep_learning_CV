@@ -55,19 +55,15 @@ def train_model(args):
 
         # Train
         with tqdm(train_dataloader, desc=f"Train Epoch {epoch+1}", disable=not is_main_process()) as pbar:
-            for pclouds, *labels in pbar:
-                pclouds = pclouds.to(local_rank).float()
-                if len(labels) == 1:
-                    labels = labels[0].to(local_rank)
-                    outputs, trans_feats = model(pclouds)
-                elif len(labels) == 2:
-                    cls_labels, labels = labels
-                    cls_labels = cls_labels.to(local_rank)
+            for pclouds, labels in pbar:
+                if not isinstance(labels, list):
                     labels = labels.to(local_rank)
-                    outputs, trans_feats = model(pclouds, cls_labels)
+                    outputs, trans_feats = model(pclouds.to(local_rank))
                 else:
-                    raise ValueError(f'Too much input data.')
-
+                    cls_labels = labels[0]
+                    labels = labels[1]
+                    labels = labels.to(local_rank)
+                    outputs, trans_feats = model(pclouds.to(local_rank), cls_labels.to(local_rank))
                 loss = criterion(outputs, labels, trans_feats)
                 optimizer.zero_grad()
                 loss['loss'].backward()
@@ -75,23 +71,22 @@ def train_model(args):
                 if is_main_process():
                     postfix_dict = {k: f"{v.item():.4f}" for k, v in loss.items()}
                     pbar.set_postfix(postfix_dict)
+                break
             scheduler.step()    
 
         # Validation
         with torch.no_grad():
-            for pclouds, *labels in tqdm(val_dataloader, desc="Evaluation"):
-                # Semantic Segmentation or Classification
-                if len(labels) == 1:
-                    labels = labels[0]
+            for pclouds, labels in tqdm(val_dataloader, desc="Evaluation"):
+
+                if not isinstance(labels, list):
                     outputs, _ = model(pclouds.to(local_rank))
                     pred_classes = torch.argmax(outputs, dim=1).cpu()
-                # Part Segmentation
-                elif len(labels) == 2:
-                    cls_labels, labels = labels
-                    outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
-                    pred_classes = model.post_process(outputs, cls_labels, class_dict)
                 else:
-                    raise ValueError(f'Too much input data.')
+                    cls_labels = labels[0]
+                    labels = labels[1]
+                    outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
+                    pred_classes = model.module.post_process(outputs, cls_labels, class_dict)
+
                 metrics.update(pred_classes.cpu(), labels)
 
         metrics.gather(local_rank)

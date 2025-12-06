@@ -42,31 +42,19 @@ def test_model(args):
     _, _, test_dataloader = build_dataloader(opts)
     class_dict = test_dataloader.dataset.get_class_dict()
     pclouds_visualizer = build_visualizer(opts.visualizer)
-    
-    if task in ["cls", "semseg"]:
-        pclouds = next(iter(test_dataloader))
-        with torch.no_grad():
+
+    inputs = next(iter(test_dataloader))
+    with torch.no_grad():
+        if not isinstance(inputs, list):
+            pclouds = inputs
             outputs, _ = model(pclouds.to(local_rank).float())
             pred_labels = torch.argmax(outputs, dim=1).cpu().numpy()
-        pclouds_visualizer.visualize(pclouds, pred_labels, class_dict, save_path)
-
-    elif task == "partseg":
-        pclouds, cls_labels, _ = next(iter(test_dataloader))
-        instance2parts, _, label2class = class_dict
-        color_map = []
-        with torch.no_grad():
+        else:
+            pclouds = inputs[0]
+            cls_labels = inputs[1]
             outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
-            outputs = outputs.cpu().numpy()
-            pred_labels = np.zeros((outputs.shape[0], outputs.shape[2])).astype(np.int32)
-            for i in range(outputs.shape[0]):
-                cls = label2class[cls_labels[i].item()]
-                parts_len = len(instance2parts[cls])
-                color_map.append(generate_color_map(parts_len))
-                logits = outputs[i, :, :]
-                pred_labels[i, :] = np.argmax(logits[instance2parts[cls], :], 0)
-        pclouds_visualizer.visualize(pclouds, pred_labels, class_dict, save_path)
-    else:
-        raise ValueError(f'Unknown dataset {dataset_type}.')
+            pred_labels = model.module.post_process(outputs, cls_labels, class_dict).cpu().numpy()
+    pclouds_visualizer.visualize(pclouds, pred_labels, class_dict, save_path)
 
 def parse_args():
     parse = argparse.ArgumentParser()

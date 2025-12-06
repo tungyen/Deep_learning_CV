@@ -52,4 +52,4 @@ class PartSegIOU:
         for cls in instance_ious:
             print("{} IoU: {:.4f}".format(cls, instance_ious[cls]))
 
-        return instance_ious
+        return instance_mious

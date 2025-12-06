@@ -42,20 +42,15 @@ def eval_model(args):
     model.eval()
 
     with torch.no_grad():
-        for pclouds, *labels in tqdm(val_dataloader, desc="Evaluation", disable=dist.get_rank() != 0):
-            # Semantic Segmentation or Classification
-            if len(labels) == 1:
-                labels = labels[0]
-                outputs, _ = model(pclouds.to(local_rank))
-                pred_classes = torch.argmax(outputs, dim=1).cpu()
-            # Part Segmentation
-            elif len(labels) == 2:
-                cls_labels, labels = labels
-                instance2parts, _, label2class = class_dict
-                outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
-                pred_classes = model.post_process(outputs, cls_labels, class_dict)
+        for pclouds, labels in tqdm(val_dataloader, desc="Evaluation", disable=dist.get_rank() != 0):
+            if not isinstance(labels, list):
+                    outputs, _ = model(pclouds.to(local_rank))
+                    pred_classes = torch.argmax(outputs, dim=1).cpu()
             else:
-                raise ValueError(f'Too much input data.')
+                cls_labels = labels[0]
+                labels = labels[1]
+                outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
+                pred_classes = model.module.post_process(outputs, cls_labels, class_dict)
             metrics.update(pred_classes, labels)
 
     metrics.gather(local_rank)

@@ -4,14 +4,14 @@ import os
 import json
     
 class ShapeNetDataset(Dataset):
-    def __init__(self, root, n_points, split='train', class_choice=None, normal_channel=True):
+    def __init__(self, data_path, split='train', class_choice=None, normal_channel=True, transforms=None):
         super().__init__()
-        self.n_points = n_points
-        self.root = root
-        self.category_file = os.path.join(root, 'synsetoffset2category.txt')
+        self.data_path = data_path
+        self.category_file = os.path.join(data_path, 'synsetoffset2category.txt')
         self.class2id = {}
         self.normal_channel = normal_channel
         self.split = split
+        self.transforms = transforms
         
         with open(self.category_file, 'r') as f:
             for line in f:
@@ -22,12 +22,12 @@ class ShapeNetDataset(Dataset):
 
         self.meta = {}
         assert split in ["train", "val", "test"], "Unknown split is used."
-        with open(os.path.join(self.root, 'train_test_split', f'shuffled_{split}_file_list.json'), 'r') as f:
+        with open(os.path.join(self.data_path, 'train_test_split', f'shuffled_{split}_file_list.json'), 'r') as f:
             data_ids = set([str(d.split('/')[2]) for d in json.load(f)])
             
         for category in self.class2id:
             self.meta[category] = []
-            pclouds_dir = os.path.join(self.root, self.class2id[category])
+            pclouds_dir = os.path.join(self.data_path, self.class2id[category])
             pclouds_files = sorted(os.listdir(pclouds_dir))
             
             pclouds_files = [file for file in pclouds_files if ((file[0:-4] in data_ids))]
@@ -35,10 +35,10 @@ class ShapeNetDataset(Dataset):
                 file_name = (os.path.splitext(os.path.basename(pclouds_file))[0])
                 self.meta[category].append(os.path.join(pclouds_dir, file_name + '.txt'))
                 
-        self.data_path = []
+        self.data_list = []
         for category in self.class2id:
             for file_name in self.meta[category]:
-                self.data_path.append((category, file_name))
+                self.data_list.append((category, file_name))
         self.cache = {}
         self.cache_size = 20000
         
@@ -56,13 +56,13 @@ class ShapeNetDataset(Dataset):
         self.label2class = {label: cls for cls, label in self.class2label.items()}
         
     def __len__(self):
-        return len(self.data_path)
+        return len(self.data_list)
     
     def __getitem__(self, index):
         if index in self.cache:
             return self.cache[index]
         else:
-            cls_names, file_name = self.data_path[index]
+            cls_names, file_name = self.data_list[index]
             cls_labels = self.class2label[cls_names]
             data = np.loadtxt(file_name).astype(np.float32)
             if not self.normal_channel:
@@ -70,18 +70,16 @@ class ShapeNetDataset(Dataset):
             else:
                 pclouds = data[:, 0:6]
             seg_labels = data[:, -1]
-            
-            farthest_indexes = get_fps_indexes(pclouds[:, :3], self.n_points)
-            pclouds = pclouds[farthest_indexes, :]
-            pclouds[:, :3] = normalize_pclouds(pclouds[:, :3])
-            if self.split == "train":
-                pclouds[:, :3] = random_scale_pclouds(pclouds[:, :3])
-                pclouds[:, :3] = random_jitter_pclouds(pclouds[:, :3])
+            labels = (cls_labels, seg_labels)
+            if self.transforms:
+                pclouds, labels = self.transforms(pclouds, labels)
 
-            pclouds = np.transpose(pclouds)
-            seg_labels = seg_labels[farthest_indexes]
-            pclouds, cls_labels = to_tensor(pclouds, cls_labels)
-            pclouds, seg_labels = to_tensor(pclouds, seg_labels)
             if len(self.cache) < self.cache_size:
-                self.cache[index] = (pclouds, cls_labels, seg_labels)
-            return (pclouds, cls_labels, seg_labels)
+                if self.split != 'test':
+                    self.cache[index] = (pclouds, cls_labels)
+                else:
+                    self.cache[index] = (pclouds, labels)
+            return (pclouds, cls_labels)
+
+    def get_class_dict(self):
+        return (self.instance2parts, self.parts2instance, self.label2class)

@@ -8,20 +8,8 @@ def get_dataset(args):
     eval_batch_size = args.eval_batch_size
     test_batch_size = args.test_batch_size
     n_points = args.n_points
-    
-    if dataset_type == "chair":
-        path = os.path.join("Dataset", "Chair_dataset")
-        train_dataset = ChairDataset(path, n_points=n_points)
-        train_dataset, val_dataset = split_dataset_train_val(train_dataset)
-        test_dataset = ChairDataset(path, train=False, n_points=n_points)
-        class_dict = {
-            0: "Armrest",
-            1: "Backrest",
-            2: "Chair legs",
-            3: "Cushion"
-        }
         
-    elif dataset_type == "modelnet40":
+    if dataset_type == "modelnet40":
         path = os.path.join("Dataset", "ModelNet40_npz")
         train_dataset = ModelNet40Dataset(path, n_points, "train")
         class_dict = train_dataset.id2name
@@ -41,16 +29,6 @@ def get_dataset(args):
         class_list = ['clutter', 'ceiling', 'floor', 'wall', 'beam', 'column', 'door',
                'window', 'table', 'chair', 'sofa', 'bookcase', 'board', 'stairs']
         class_dict = {i: name for i, name in enumerate(class_list)}
-    elif dataset_type =='shapenet':
-        class_choice = args.class_choice
-        normal_channel = args.normal_channel
-        path = os.path.join("Dataset", "ShapeNetPart")
-        train_dataset = ShapeNetDataset(root=path, n_points=n_points, split="train", class_choice=class_choice, normal_channel=normal_channel)
-        val_dataset = ShapeNetDataset(root=path, n_points=n_points, split="val", class_choice=class_choice, normal_channel=normal_channel)
-        test_dataset = ShapeNetDataset(root=path, n_points=n_points, split="test", class_choice=class_choice, normal_channel=normal_channel)
-        class_dict = (train_dataset.instance2parts, train_dataset.parts2instance, train_dataset.label2class)
-    else:
-        raise ValueError(f'unknown dataset {dataset_type}')
 
     ocal_rank = int(os.environ["LOCAL_RANK"])
     world_size = int(os.environ["WORLD_SIZE"])

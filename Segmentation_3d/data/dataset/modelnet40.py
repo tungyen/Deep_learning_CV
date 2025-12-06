@@ -3,11 +3,10 @@ import numpy as np
 import os
 
 class ModelNet40Dataset(Dataset):
-    def __init__(self, data_path, n_points, split):
+    def __init__(self, data_path, split, transforms=None):
         super().__init__()
         self.data_path = data_path
         self.split = split
-        self.n_points = n_points
         self.class_dict = self.load_class_dict()
         self.id2name = list(self.class_dict.keys())
         self.model_indexes = self.load_model_indexes()
@@ -38,10 +37,7 @@ class ModelNet40Dataset(Dataset):
         cls_labels = self.class_name2id(class_name)
         filepath = os.path.join(self.data_path, class_name, model_idx + '.npz')
         pclouds = np.load(filepath)['xyz'].astype(np.float32)
-        pclouds = normalize_pclouds(pclouds)
-        
-        farthest_indexes = get_fps_indexes(pclouds, self.n_points)
-        pclouds = pclouds[farthest_indexes, :]
 
-        pclouds = np.transpose(pclouds)
-        return to_tensor(pclouds, cls_labels)
+        if self.transforms is not None:
+            pclouds, cls_labels = self.transforms(pclouds, cls_labels)
+        return pclouds, cls_labels

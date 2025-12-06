@@ -49,7 +49,8 @@ class RandomScalePointClouds(object):
         if x >= self.prob:
             return pclouds, labels
         scale = np.random.uniform(*self.scale_range)
-        return pclouds * scale, labels
+        pclouds[:, 0:3] = pclouds[:, 0:3] * scale
+        return pclouds, labels
 
 class RandomShiftPointClouds(object):
     def __init__(self, prob=0.05, shift_range=(-0.1, 0.1)):
@@ -61,7 +62,8 @@ class RandomShiftPointClouds(object):
         if x >= self.prob:
             return pclouds, labels
         shift = np.random.uniform(self.shift_range[0], self.shift_range[1], size=(1, 3))
-        return pclouds + shift, labels
+        pclouds[:, :3] = pclouds[:, :3] + shift
+        return pclouds, labels
 
 class RandomRotatePointClouds(object):
     def __init__(self, prob=0.45):
@@ -74,7 +76,7 @@ class RandomRotatePointClouds(object):
         rot_angle = np.random.uniform() * 2 * np.pi
         sin, cos = np.sin(rot_angle), np.cos(rot_angle)
         rot_matrix = np.array([[cos, 0, sin], [0, 1, 0], [-sin, 0, cos]])
-        pclouds = np.dot(pclouds, rot_matrix)
+        pclouds[:, :3] = np.dot(pclouds[:, :3], rot_matrix)
         return pclouds, labels
 
 class RandomJitterPointClouds(object):
@@ -87,18 +89,26 @@ class RandomJitterPointClouds(object):
         x = random.random()
         if x >= self.prob:
             return pclouds, labels
-        return pclouds + np.clip(self.sigma * np.random.randn(*pclouds.shape), -self.clip, self.clip)
+        pclouds_xyz = pclouds[:, :3]
+        pclouds[:, :3] = pclouds_xyz + np.clip(self.sigma * np.random.randn(*pclouds_xyz.shape), -self.clip, self.clip)
+        return pclouds, labels
 
 class FPS(object):
     def __init__(self, num_points):
         self.num_points = num_points
 
     def __call__(self, pclouds, labels=None):
-        pclouds_input = torch.from_numpy(pclouds).unsqueeze(0).to(torch.float32)
+        pclouds_xyz = pclouds[:, :3]
+        pclouds_input = torch.from_numpy(pclouds_xyz).unsqueeze(0).to(torch.float32)
         fps_indexes = furthest_point_sampling(pclouds_input, self.num_points, cpp_impl=False).squeeze().cpu()
         pclouds = pclouds[fps_indexes, :]
         if labels is not None:
-            labels = labels[fps_indexes]
+            if isinstance(labels, tuple):
+                seg_labels = labels[1]
+                seg_labels = seg_labels[fps_indexes]
+                labels = (labels[0], seg_labels)
+            else:
+                labels = labels[fps_indexes]
         return pclouds, labels
 
 class ToTensor(object):
@@ -108,5 +118,11 @@ class ToTensor(object):
     def __call__(self, pclouds, labels=None):
         pclouds = torch.tensor(pclouds, dtype=torch.float32)
         if labels is not None:
-            labels = torch.tensor(labels, dtype=torch.long)
+            if isinstance(labels, tuple):
+                cls_labels, seg_labels = labels
+                cls_labels = torch.tensor(cls_labels, dtype=torch.long)
+                seg_labels = torch.tensor(seg_labels, dtype=torch.long)
+                labels = (cls_labels, seg_labels)
+            else:
+                labels = torch.tensor(labels, dtype=torch.long)
         return pclouds, labels

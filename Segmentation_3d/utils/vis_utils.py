@@ -47,7 +47,9 @@ class BasePointCloudVisualizer:
 
 class PointCloudSegVisualizer(BasePointCloudVisualizer):
     def __init__(self, *args, **kwargs):
+        is_part_seg = kwargs.pop('is_part_seg', False)
         super().__init__(*args, **kwargs)
+        self.is_part_seg = is_part_seg
 
     def visualize(self, pclouds, pred_labels, class_dict, save_path):
         fig = plt.figure(figsize=(4 * self.n_cols, 4 * self.n_rows))
@@ -62,13 +64,15 @@ class PointCloudSegVisualizer(BasePointCloudVisualizer):
             ax.view_init(elev=self.elev, azim=self.azim)
             plt.axis('off')
 
-        legend_elements = []
-        for class_id, color in color_map.items():
-            legend_elements.append(Line2D([0], [0], marker='o', color='w',
-                            label=f'{class_dict[class_id]}',
-                            markerfacecolor=self.rgb_to_hex(color),
-                            markersize=10))
-        fig.legend(handles=legend_elements, loc='lower center', ncol=len(color_map), fontsize='large')
+        if not self.is_part_seg:
+            legend_elements = []
+            for class_id, color in color_map.items():
+                legend_elements.append(Line2D([0], [0], marker='o', color='w',
+                                label=f'{class_dict[class_id]}',
+                                markerfacecolor=self.rgb_to_hex(color),
+                                markersize=10))
+            fig.legend(handles=legend_elements, loc='lower center', ncol=len(color_map), fontsize='large')
+
         plt.tight_layout()
         plt.subplots_adjust(top=0.9, bottom=0.05)
         fig.suptitle(self.model_name, fontsize=16)
