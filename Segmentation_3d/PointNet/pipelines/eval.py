@@ -42,7 +42,7 @@ def eval_model(args):
     model.eval()
 
     with torch.no_grad():
-        for pclouds, labels in tqdm(val_dataloader, desc="Evaluation", disable=dist.get_rank() != 0):
+        for pclouds, labels in tqdm(val_dataloader, desc="Evaluation", disable=not is_main_process()):
             if not isinstance(labels, list):
                     outputs, _ = model(pclouds.to(local_rank))
                     pred_classes = torch.argmax(outputs, dim=1).cpu()

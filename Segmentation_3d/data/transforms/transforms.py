@@ -94,14 +94,19 @@ class RandomJitterPointClouds(object):
         return pclouds, labels
 
 class FPS(object):
-    def __init__(self, num_points):
+    def __init__(self, num_points, use_labels=True):
         self.num_points = num_points
+        self.use_labels = use_labels
 
     def __call__(self, pclouds, labels=None):
         pclouds_xyz = pclouds[:, :3]
         pclouds_input = torch.from_numpy(pclouds_xyz).unsqueeze(0).to(torch.float32)
         fps_indexes = furthest_point_sampling(pclouds_input, self.num_points, cpp_impl=False).squeeze().cpu()
         pclouds = pclouds[fps_indexes, :]
+
+        if not self.use_labels:
+            return pclouds, labels
+
         if labels is not None:
             if isinstance(labels, tuple):
                 seg_labels = labels[1]

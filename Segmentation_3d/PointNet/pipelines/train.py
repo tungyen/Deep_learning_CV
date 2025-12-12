@@ -71,13 +71,11 @@ def train_model(args):
                 if is_main_process():
                     postfix_dict = {k: f"{v.item():.4f}" for k, v in loss.items()}
                     pbar.set_postfix(postfix_dict)
-                break
             scheduler.step()    
 
         # Validation
         with torch.no_grad():
             for pclouds, labels in tqdm(val_dataloader, desc="Evaluation"):
-
                 if not isinstance(labels, list):
                     outputs, _ = model(pclouds.to(local_rank))
                     pred_classes = torch.argmax(outputs, dim=1).cpu()

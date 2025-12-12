@@ -39,13 +39,18 @@ Go to [Celeba](https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) and download `
 ## Point Cloud ##
 
 ### ChairDataset ###
-Go to the my drive for [ChairDataset](https://drive.google.com/file/d/12O18QBLeaeKfmXeTTNSJbNBDuCeoFoJk/view?usp=sharing). Unzip under this folder as `Dataset/Chair_dataset`.
+Go to the my drive for [ChairDataset](https://drive.google.com/file/d/12O18QBLeaeKfmXeTTNSJbNBDuCeoFoJk/view?usp=sharing). Unzip under this folder as `Dataset/Chair_dataset`. And create a `pts` folder under `Dataset/Chair_dataset/test`, and move all test files into `pts` folder. Afterward, run the following command to split the dataset to `train/val`:
+
+```bash
+python split_chair_dataset.py
+```
 
 ### ModelNet40 ###
 Go to the [ModelNet-40](https://www.kaggle.com/datasets/balraj98/modelnet40-princeton-3d-object-dataset) for downloading and unzip as `Dataset/ModelNet40`. And then run the following command:
 
 ```bash
 python prepare_modelnet40.py
+sudo mv ModelNet40/medadata_modelnet40.csv ModelNet40_npz/metadata_modelnet40.csv
 ```
 
 After this command, we use ModelNet40_npz as our dataset folder.

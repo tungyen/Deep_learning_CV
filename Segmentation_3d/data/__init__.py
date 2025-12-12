@@ -21,9 +21,9 @@ def build_dataloader(opts):
     test_sampler = DistributedSampler(test_dataset, num_replicas=world_size, rank=rank, shuffle=True)
         
     train_dataloader = DataLoader(train_dataset, batch_size=opts.train_batch_size // world_size,
-                                  sampler=train_sampler, num_workers=2)
+                                  sampler=train_sampler, num_workers=2, drop_last=True)
     val_dataloader = DataLoader(val_dataset, batch_size=opts.val_batch_size // world_size,
-                                sampler=val_sampler, num_workers=2)
+                                sampler=val_sampler, num_workers=2, drop_last=True)
     test_dataloader = DataLoader(test_dataset, batch_size=opts.test_batch_size // world_size, sampler=test_sampler)
     
     return train_dataloader, val_dataloader, test_dataloader
