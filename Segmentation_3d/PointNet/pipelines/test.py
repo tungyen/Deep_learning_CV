@@ -32,7 +32,6 @@ def test_model(args):
 
     model_name = opts.model.name
     dataset_type = opts.dataset_name
-    task = opts.task
     
     model = build_model(opts.model).to(local_rank)
     model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))

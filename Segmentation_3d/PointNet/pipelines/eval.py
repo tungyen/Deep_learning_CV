@@ -31,7 +31,6 @@ def eval_model(args):
 
     model_name = opts.model.name
     dataset_type = opts.dataset_name
-    task = opts.task
 
     _, val_dataloader, _ = build_dataloader(opts)
     model = build_model(opts.model).to(local_rank)

@@ -36,7 +36,6 @@ def train_model(args):
     model_name = opts.model.name
     dataset_type = opts.dataset_name
     epochs = opts.epochs
-    task = opts.task
 
     train_dataloader, val_dataloader, _ = build_dataloader(opts)
     model = build_model(opts.model).to(local_rank)
@@ -84,7 +83,6 @@ def train_model(args):
                     labels = labels[1]
                     outputs, _ = model(pclouds.to(local_rank), cls_labels.to(local_rank))
                     pred_classes = model.module.post_process(outputs, cls_labels, class_dict)
-
                 metrics.update(pred_classes.cpu(), labels)
 
         metrics.gather(local_rank)

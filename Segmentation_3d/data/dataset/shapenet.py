@@ -75,11 +75,14 @@ class ShapeNetDataset(Dataset):
                 pclouds, labels = self.transforms(pclouds, labels)
 
             if len(self.cache) < self.cache_size:
-                if self.split != 'test':
+                if self.split == 'test':
                     self.cache[index] = (pclouds, cls_labels)
                 else:
                     self.cache[index] = (pclouds, labels)
-            return (pclouds, cls_labels)
+            if self.split == 'test':
+                return (pclouds, cls_labels)
+            else:
+                return (pclouds, labels)
 
     def get_class_dict(self):
         return (self.instance2parts, self.parts2instance, self.label2class)

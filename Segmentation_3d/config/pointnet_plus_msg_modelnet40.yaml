@@ -60,6 +60,7 @@ model:
       - [256, 256, 512]
       - [256, 384, 512]
       - [256, 384, 512]
+  fc_out_channels: [512, 256]
   weight_init: "xavier"
 
 # Training
