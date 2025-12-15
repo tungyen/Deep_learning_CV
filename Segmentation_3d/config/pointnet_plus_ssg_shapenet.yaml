@@ -8,6 +8,7 @@ data_path: Dataset/ShapeNetPart
 train_batch_size: 16
 val_batch_size: 8
 test_batch_size: &test_batch_size 6
+num_points: &num_points 2048
 
 transforms:
   train:
@@ -15,19 +16,19 @@ transforms:
     - type: RandomRotatePointClouds
       prob: 0.45
     - type: FPS
-      num_points: 2048
+      num_points: *num_points
     - type: TransposePointClouds
     - type: ToTensor
   val:
     - type: NormalizePointClouds
     - type: FPS
-      num_points: 2048
+      num_points: *num_points
     - type: TransposePointClouds
     - type: ToTensor
   test:
     - type: NormalizePointClouds
     - type: FPS
-      num_points: 2048
+      num_points: *num_points
     - type: TransposePointClouds
     - type: ToTensor
 

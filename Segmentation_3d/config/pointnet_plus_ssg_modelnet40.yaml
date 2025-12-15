@@ -2,6 +2,7 @@ class_num: &class_num 40
 ignore_index: &ignore_index 255
 root: "Segmentation_3d/PointNet"
 task: &task "cls"
+num_points: &num_points 2048
 
 dataset_name: &dataset_name "ModelNet40"
 data_path: Dataset/ModelNet40_npz
@@ -15,21 +16,21 @@ transforms:
     - type: RandomRotatePointClouds
       prob: 0.45
     - type: FPS
-      num_points: 2048
+      num_points: *num_points
       use_labels: False
     - type: TransposePointClouds
     - type: ToTensor
   val:
     - type: NormalizePointClouds
     - type: FPS
-      num_points: 2048
+      num_points: *num_points
       use_labels: False
     - type: TransposePointClouds
     - type: ToTensor
   test:
     - type: NormalizePointClouds
     - type: FPS
-      num_points: 2048
+      num_points: *num_points
       use_labels: False
     - type: TransposePointClouds
     - type: ToTensor

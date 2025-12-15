@@ -2,6 +2,7 @@ class_num: &class_num 50
 instances_num: &instances_num 16
 ignore_index: &ignore_index 255
 root: "Segmentation_3d/PointNet"
+num_points: &num_points 2048
 
 dataset_name: &dataset_name "ShapeNet"
 data_path: Dataset/ShapeNetPart
@@ -15,19 +16,19 @@ transforms:
     - type: RandomRotatePointClouds
       prob: 0.45
     - type: FPS
-      num_points: 2048
+      num_points: *num_points
     - type: TransposePointClouds
     - type: ToTensor
   val:
     - type: NormalizePointClouds
     - type: FPS
-      num_points: 2048
+      num_points: *num_points
     - type: TransposePointClouds
     - type: ToTensor
   test:
     - type: NormalizePointClouds
     - type: FPS
-      num_points: 2048
+      num_points: *num_points
     - type: TransposePointClouds
     - type: ToTensor
 

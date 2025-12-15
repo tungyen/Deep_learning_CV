@@ -101,6 +101,9 @@ class S3disDynamic(Dataset):
 class S3disDataset(Dataset):
     def __init__(self, dataset_dir, split, n_points, test_area=5, max_dropout=0.95, block_type='static', block_size=1.0):
         super().__init__()
+        self.class_list = ['clutter', 'ceiling', 'floor', 'wall', 'beam', 'column', 'door',
+                           'window', 'table', 'chair', 'sofa', 'bookcase', 'board', 'stairs']
+        self.class_dict = {i: name for i, name in enumerate(self.class_list)}
 
         assert os.path.isdir(dataset_dir)
         assert split == 'train' or split == 'test'
@@ -129,3 +132,6 @@ class S3disDataset(Dataset):
 
     def __getitem__(self, index):
         return self.dataset[index]
+
+    def get_class_dict(self):
+        return self.class_dict
