@@ -44,12 +44,10 @@ class S3disStatic(Dataset):
         xcenter, ycenter = np.amin(block_xyz, axis=0)[:2] + block_size / 2
         block_data = prepare_input(block_xyz, block_rgb, xcenter, ycenter, room_xyz_max)
 
-        farthest_indexes = get_fps_indexes(block_data[:, :3], self.n_points)
-        farthest_indexes = random_dropout(farthest_indexes.numpy(), self.max_dropout)
+        # farthest_indexes = get_fps_indexes(block_data[:, :3], self.n_points)
+        # farthest_indexes = random_dropout(farthest_indexes.numpy(), self.max_dropout)
 
-        pclouds = block_data[farthest_indexes].transpose()
-        seg_labels = block_gt[farthest_indexes]
-        return to_tensor(pclouds, seg_labels)
+        return block_data, block_gt
 
 class S3disDynamic(Dataset):
     def __init__(self, dataset_path, area_ids, n_points, max_dropout, block_size=1.0, sample_aug=1):
@@ -83,9 +81,8 @@ class S3disDynamic(Dataset):
         indexes = random_dropout(indexes, self.max_dropout)
 
         block_xyz, block_rgb, seg_labels = room_xyz[indexes], room_rgb[indexes], room_gt[indexes]
-        block_data = prepare_input(block_xyz, block_rgb, xcenter, ycenter, room_xyz_max)
-        pclouds = np.transpose(block_data)
-        return to_tensor(pclouds, seg_labels)
+        pclouds = prepare_input(block_xyz, block_rgb, xcenter, ycenter, room_xyz_max)
+        return pclouds, seg_labels
     
     def get_block_indexes(self, room_xyz, xcenter, ycenter):
         xmin, xmax = xcenter - self.block_size / 2, xcenter + self.block_size / 2,
@@ -99,14 +96,14 @@ class S3disDynamic(Dataset):
         return indexes
 
 class S3disDataset(Dataset):
-    def __init__(self, dataset_dir, split, n_points, test_area=5, max_dropout=0.95, block_type='static', block_size=1.0):
+    def __init__(self, dataset_path, split, n_points, transforms=None, test_area=5, max_dropout=0.95, block_type='static', block_size=1.0):
         super().__init__()
         self.class_list = ['clutter', 'ceiling', 'floor', 'wall', 'beam', 'column', 'door',
                            'window', 'table', 'chair', 'sofa', 'bookcase', 'board', 'stairs']
         self.class_dict = {i: name for i, name in enumerate(self.class_list)}
-
-        assert os.path.isdir(dataset_dir)
-        assert split == 'train' or split == 'test'
+        self.transforms = transforms
+        assert os.path.isdir(dataset_path)
+        assert split == 'train' or split == 'val' or split == 'test'
         assert type(test_area) == int and 1 <= test_area <= 6
         assert 0 <= max_dropout <= 1
 
@@ -114,16 +111,18 @@ class S3disDataset(Dataset):
         for area_id in range(1, 7):
             if split == 'train' and area_id == test_area:
                 continue
+            if split == 'val' and area_id == test_area:
+                continue
             if split == 'test' and area_id != test_area:
                 continue
             area_ids.append(area_id)
 
         if block_type == 'static':
             offset_name = 'zero' if split == 'test' else ''
-            self.dataset = S3disStatic(dataset_dir, area_ids, n_points, max_dropout, offset_name)
+            self.dataset = S3disStatic(dataset_path, area_ids, n_points, max_dropout, offset_name)
         elif block_type == 'dynamic':
             sample_aug = 1 if split == 'test' else 2
-            self.dataset = S3disDynamic(dataset_dir, area_ids, n_points, max_dropout, block_size, sample_aug)
+            self.dataset = S3disDynamic(dataset_path, area_ids, n_points, max_dropout, block_size, sample_aug)
         else:
             raise NotImplementedError('Unknown block type: %s' % block_type)
 
@@ -131,7 +130,10 @@ class S3disDataset(Dataset):
         return len(self.dataset)
 
     def __getitem__(self, index):
-        return self.dataset[index]
+        pclouds, seg_labels = self.dataset[index]
+        if self.transforms is not None:
+            pclouds, seg_labels = self.transforms(pclouds, seg_labels)
+        return pclouds, seg_labels
 
     def get_class_dict(self):
         return self.class_dict
