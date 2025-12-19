@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
 
-from Segmentation_3d.utils import initialize_weights
+from core.utils import initialize_weights
 
 class STNkd(nn.Module):
     def __init__(self, in_channels, out_channels):

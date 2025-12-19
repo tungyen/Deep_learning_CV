@@ -105,5 +105,7 @@ loss:
   center_variance: *center_variance
   size_variance: *size_variance
 
-# Test
-score_thres: 0.7
+visualizer:
+  name: "ImageDetectionVisualizer"
+  mean: *img_mean
+  score_thres: 0.7

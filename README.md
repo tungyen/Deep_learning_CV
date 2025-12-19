@@ -40,10 +40,6 @@ Model with task category:
 4. **VoxelNet (todo)**
 
 
-## 6D Pose Estimation ##
-1. **PoseCNN**
-
-
 ## GenAI ##
 ### Diffusion Model ###
 1. **Denoising Diffusion Probability Model (DDPM)**
@@ -51,13 +47,16 @@ Model with task category:
 3. **Classifier-Free Diffusion Guidance (CFDG)**
 4. **Image Super-Resolution via Iterative Refinement (SR3) (todo)**
 
+
 ### Auto Encoder ###
 1. **Variational Autoencoder (VAE)**
 2. **Vector Quantization Variational Autoencoder (VQVAE)**
 
+
 ### Pixel CNN ###
 1. **PixelCNN**
 2. **Gated PixelCNN**
+
 
 ### GAN ###
 1. **CGAN**

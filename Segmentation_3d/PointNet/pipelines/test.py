@@ -6,10 +6,12 @@ import numpy as np
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+from core.utils import is_main_process
+
 from Segmentation_3d.data import build_dataloader
 from Segmentation_3d.PointNet.model import build_model
-from Segmentation_3d.utils import is_main_process, parse_config
 from Segmentation_3d.utils import build_visualizer
+from Segmentation_3d.utils import parse_config
 
 def test_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])

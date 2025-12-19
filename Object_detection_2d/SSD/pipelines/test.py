@@ -8,10 +8,10 @@ import torch.optim as optim
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+from core.utils import parse_config, is_main_process
+
 from Object_detection_2d.data import build_dataloader
 from Object_detection_2d.SSD.model import build_model
-from Object_detection_2d.SSD.utils.config_utils import parse_config
-from Object_detection_2d.SSD.utils.ddp_utils import is_main_process
 from Object_detection_2d.SSD.utils.vis_utils import visualize_detection
 
 def test_model(args):

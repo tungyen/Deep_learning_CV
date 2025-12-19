@@ -8,11 +8,11 @@ import torch.optim as optim
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+from core.metrics import build_metrics
+from core.utils import is_main_process, parse_config
+
 from Object_detection_2d.data import build_dataloader
 from Object_detection_2d.CenterNet.model import build_model, PostProcessor
-from Object_detection_2d.CenterNet.utils.config_utils import parse_config
-from Object_detection_2d.CenterNet.utils.ddp_utils import synchronize, gather_preds_ddp, is_main_process
-from Object_detection_2d.metrics import compute_object_detection_metrics
 
 def eval_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])

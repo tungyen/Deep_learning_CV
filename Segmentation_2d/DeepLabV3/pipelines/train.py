@@ -7,13 +7,15 @@ import argparse
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+from core.optimizer import build_optimizer
+from core.scheduler import build_scheduler
+from core.metrics import build_metrics
+from core.utils import is_main_process, parse_config
+
 from Segmentation_2d.data import build_dataloader
 from Segmentation_2d.DeepLabV3.model import build_model
-from Segmentation_2d.optimizer import build_optimizer
-from Segmentation_2d.scheduler import build_scheduler
-from Segmentation_2d.metrics import build_metrics
 from Segmentation_2d.loss import build_loss
-from Segmentation_2d.utils import all_reduce_confusion_matrix, is_main_process, parse_config
+
 
 def train_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -72,21 +74,17 @@ def train_model(args):
                 scheduler.step()
         # Validation
         model.eval()
-        for imgs, labels in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=dist.get_rank() != 0):
+        for imgs, labels in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
             with torch.no_grad():
                 outputs = model(imgs.to(local_rank))
                 pred_class = torch.argmax(outputs, dim=1)
                 metrics.update(pred_class.cpu(), labels)
 
-        all_reduce_confusion_matrix(metrics, local_rank)
+        metrics.gather(local_rank)
         if is_main_process:
-            metrics_results = metrics.compute_metrics()
-            print("Validation mIoU  ===>{:.4f}".format(metrics['mious'].item()))
-            for i, iou in enumerate(metrics['ious']):
-                print("{} IoU: {:.4f}".format(class_dict[i], iou))
-                
+            metrics_results = metrics.compute_metrics(class_dict)
             if metrics['mious'] > best_metric:
-                best_metric = metrics['mious']
+                best_metric = metrics_results
                 torch.save(model.module.state_dict(), weight_path)
         metrics.reset()
     dist.destroy_process_group()

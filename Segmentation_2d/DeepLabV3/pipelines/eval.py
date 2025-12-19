@@ -6,10 +6,11 @@ import os
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+from core.metrics import build_metrics
+from core.utils import is_main_process, parse_config
+
 from Segmentation_2d.data import build_dataloader
 from Segmentation_2d.DeepLabV3.model import build_model
-from Segmentation_2d.metrics import build_metrics
-from Segmentation_2d.utils import all_reduce_confusion_matrix, is_main_process, parse_config
 
 def eval_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -39,17 +40,14 @@ def eval_model(args):
         print("Start evaluation model {}!".format(model_name))
     
     with torch.no_grad():
-        for imgs, labels in tqdm(val_dataloader, desc="Evaluate", disable=dist.get_rank() != 0):
+        for imgs, labels in tqdm(val_dataloader, desc="Evaluate", disable=not is_main_process()):
             output = model(imgs.to(local_rank))
             pred_class = torch.argmax(output, dim=1)
             metrics.update(pred_class.cpu(), labels)
     
-    all_reduce_confusion_matrix(metrics, local_rank)
+    metrics.gather(local_rank)
     if is_main_process:
-        metrics_result = metrics.compute_metrics()
-        print("Validation mIoU of {} ===>{:.4f}".format(model_name, metrics_result['mious'].item()))
-        for i, iou in enumerate(metrics_result['ious']):
-            print("{} IoU: {:.4f}".format(class_dict[i], iou))
+        metrics_result = metrics.compute_metrics(class_dict)
     dist.destroy_process_group()
 
 def parse_args():

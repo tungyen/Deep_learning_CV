@@ -102,5 +102,7 @@ loss:
   prior: *prior
   neg_pos_ratio: 3
 
-# Test
-score_thres: 0.7
+visualizer:
+  name: "ImageDetectionVisualizer"
+  mean: *img_mean
+  score_thres: 0.7

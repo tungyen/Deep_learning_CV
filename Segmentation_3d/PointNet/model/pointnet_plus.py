@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
-from Segmentation_3d.utils import initialize_weights
+from core.utils import initialize_weights
 from Segmentation_3d.PointNet.model.pointnet_plus_layers import PointNetPlusSetAbstraction, PointNetPlusFeaturePropagation
 
 class PointNetPlusBaseModel(nn.Module):
