@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import torch
 
 from Segmentation_2d.data.dataset import VocSegmentationDataset, CityScapesDataset
 
@@ -10,11 +11,20 @@ DECODE_DICT = {
 }
 
 class ImageSegVisualizer:
-    def __init__(self, dataset_name, alpha=0.6):
+    def __init__(self, dataset_name, mean, std, alpha=0.6):
         self.dataset = DECODE_DICT[dataset_name]
         self.alpha = alpha
+        self.mean = torch.tensor(mean).view(3, 1, 1)
+        self.std = torch.tensor(std).view(3, 1, 1)
 
-    def visualize(masks, imgs, save_path):
+    def denormalize(self, img_tensor):
+        img_tensor = img_tensor * self.std + self.mean if self.std is not None else img_tensor + self.mean
+        img_tensor = img_tensor.permute(0, 2, 3, 1).numpy()
+        return img_tensor
+
+    def visualize(self, masks, imgs, save_path):
+        imgs = self.denormalize(imgs)
+        imgs = (imgs * 255).astype(np.uint8)
         colorized_masks = self.dataset.decode_target(masks).astype('uint8')
         imgs_f = imgs.astype(np.float32)
         colorized_masks_f = colorized_masks.astype(np.float32)

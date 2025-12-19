@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from Segmentation_2d.utils import set_bn_momentum, initialize_weights
+from core.utils import set_bn_momentum, initialize_weights
 from Segmentation_2d.DeepLabV3.model import resnet
 from Segmentation_2d.DeepLabV3.model.utils import IntermediateLayerGetter
 

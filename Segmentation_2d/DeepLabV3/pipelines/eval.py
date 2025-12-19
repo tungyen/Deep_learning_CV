@@ -7,10 +7,11 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from core.metrics import build_metrics
-from core.utils import is_main_process, parse_config
+from core.utils import is_main_process
 
 from Segmentation_2d.data import build_dataloader
 from Segmentation_2d.DeepLabV3.model import build_model
+from Segmentation_2d.utils import parse_config
 
 def eval_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -33,9 +34,9 @@ def eval_model(args):
     model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     model.eval()
-    metrics = build_metrics(opts.metrics)
     class_dict = val_dataloader.dataset.get_class_dict()
-
+    metrics = build_metrics(class_dict, val_dataloader.dataset, opts.metrics)
+    
     if is_main_process():
         print("Start evaluation model {}!".format(model_name))
     
@@ -46,8 +47,8 @@ def eval_model(args):
             metrics.update(pred_class.cpu(), labels)
     
     metrics.gather(local_rank)
-    if is_main_process:
-        metrics_result = metrics.compute_metrics(class_dict)
+    if is_main_process():
+        metrics_result = metrics.compute_metrics()
     dist.destroy_process_group()
 
 def parse_args():

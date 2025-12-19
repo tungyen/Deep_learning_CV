@@ -6,11 +6,12 @@ import numpy as np
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from core.utils import is_main_process, parse_config
+from core.utils import is_main_process
 
 from Segmentation_2d.data import build_dataloader
 from Segmentation_2d.DeepLabV3.model import build_model
 from Segmentation_2d.utils import build_visualizer
+from Segmentation_2d.utils import parse_config
 
 
 def test_model(args):
@@ -43,15 +44,10 @@ def test_model(args):
     img_visualizer = build_visualizer(opts.visualizer)
 
     imgs, _ = next(iter(test_dataloader))
-    std = torch.tensor(opts.img_std).view(1, 3, 1, 1)
-    mean = torch.tensor(opts.img_mean).view(1, 3, 1, 1)
-    imgs_denorm = imgs * std + mean
-    imgs_denorm = imgs_denorm.permute(0, 2, 3, 1).numpy()
-    imgs_denorm = (imgs_denorm * 255).astype(np.uint8)
     with torch.no_grad():
         outputs = model(imgs.to(local_rank))
         pred_classes = torch.argmax(outputs, dim=1).cpu().numpy()
-        img_visualizer.visualize(pred_classes, imgs_denorm, save_path)
+        img_visualizer.visualize(pred_classes, imgs, save_path)
 
 def parse_args():
     parse = argparse.ArgumentParser()

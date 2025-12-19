@@ -58,6 +58,8 @@ class ConfusionMatrix:
             mious = results['mious']
             print("Validation mIoU ===> {:.4f}".format(mious))
             for cls in self.class_dict:
+                if cls >= len(ious):
+                    continue
                 print("{} IoU: {:.4f}".format(self.class_dict[cls], ious[cls]))
             return mious
 
