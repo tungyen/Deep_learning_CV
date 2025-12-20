@@ -1,8 +1,8 @@
 import torch
 
 from Object_detection_2d.data.container import Container
-from Object_detection_2d.CenterNet.utils import batched_nms
-from Object_detection_2d.CenterNet.utils import _gather_feat, _transpose_and_gather_feat
+from core.utils.nms import batched_nms
+from core.utils.feats_utils import _gather_feat, _transpose_and_gather_feat
 
 def NMS(hm):
     k = 5

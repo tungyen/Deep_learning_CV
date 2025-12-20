@@ -54,6 +54,9 @@ def train_model(args):
     scheduler = build_scheduler(opts.scheduler, optimizer)
     criterion = build_loss(opts.loss)
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+    
+    class_dict = val_dataloader.dataset.get_class_dict()
+    metrics = build_metrics(class_dict, val_dataloader.dataset, opts.metrics)
     best_metric = 0.0
             
     for epoch in range(epochs):

@@ -47,7 +47,7 @@ def test_model(args):
     with torch.no_grad():
         detections = model(imgs.to(local_rank), False)
         detections = [d.to(torch.device("cpu")) for d in detections]
-    img_info = [test_dataloader.dataset.get_img_info(idxes[i]) for i in range imgs_denorm.shape[0]]
+    img_info = [test_dataloader.dataset.get_img_info(idxes[i]) for i in range(imgs.shape[0])]
     visualizer.visualize_detection(imgs, detections, img_info, save_path)
 
 def parse_args():
