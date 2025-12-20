@@ -105,6 +105,10 @@ loss:
   center_variance: *center_variance
   size_variance: *size_variance
 
+metrics:
+  name: "DetectionMap"
+  iou_thres: 0.5
+
 visualizer:
   name: "ImageDetectionVisualizer"
   mean: *img_mean

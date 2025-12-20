@@ -9,7 +9,6 @@ import numpy as np
 import bisect
 
 from Object_detection_2d.data.container import Container
-from Object_detection_2d.CenterNet.utils.vis_utils import visualize_gt, visualize_heatmap, visualize_wh_offsets
 
 class2id = {
     'background': 0,
@@ -163,24 +162,8 @@ class VocDetectionDataset(Dataset):
             "boxes": boxes,
             "labels": labels
         }
-        ####
-        # print("Shape of img: ", img.shape)
-        # print("Shape of boxes: ", boxes.shape)
-        # print("Shape of labels: ", labels.shape)
-        # visualize_gt(img, boxes, labels, self.class_dict)
-        ####
         if self.target_transform is not None:
             result = self.target_transform(boxes, labels, self.device)
-        ####
-        # print("Shape of heatmap: ", result['hm'].shape)
-        # for i in range(1, 21):
-        #     visualize_heatmap(result['hm'], i, img)
-        # whs = result['wh']
-        # offsets = result['offsets']
-        # inds = result['ind']
-        # offsets_mask = result['offsets_mask']
-        # visualize_wh_offsets(whs, offsets, inds, offsets_mask, img)
-        ####
         targets = Container(result)
         return img, targets, index
 
@@ -233,5 +216,8 @@ class VocDetectionDataset(Dataset):
         size = annotation.find("size")
         img_info = tuple(map(int, (size.find("height").text, size.find("width").text)))
         return {"height": img_info[0], "width": img_info[1]}
+
+    def get_class_dict(self):
+        return id2class
     
     

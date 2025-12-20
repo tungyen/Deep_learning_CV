@@ -5,7 +5,7 @@ import numpy as np
 import types
 from numpy import random
 
-from Object_detection_2d.SSD.utils.box_utils import *
+from core.utils.box_utils import *
 
 class Compose(object):
     def __init__(self, transforms):

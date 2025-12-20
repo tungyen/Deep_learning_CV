@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 
 from Object_detection_2d.SSD.model.layer import L2Norm
-from Object_detection_2d.SSD.utils import load_state_dict_from_url
+from core.utils import load_state_dict_from_url
 
 model_urls = {
     'vgg': 'https://s3.amazonaws.com/amdegroot-models/vgg16_reducedfc.pth',

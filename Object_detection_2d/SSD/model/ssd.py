@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from Object_detection_2d.SSD.model.vgg import VGG
 from Object_detection_2d.SSD.model.post_processor import PostProcessor
 from Object_detection_2d.SSD.model.anchors import PriorBox
-from Object_detection_2d.SSD.utils.box_utils import *
+from core.utils.box_utils import *
 
 class DetectionHead(nn.Module):
     def __init__(self, class_num, boxes_per_feature_map=[], input_channels=[]):

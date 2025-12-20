@@ -18,7 +18,7 @@ class ImageDetectionVisualizer:
                  stride=None,
                  img_size=None):
         self.mean = torch.tensor(mean).view(3, 1, 1)
-        self.std = torch.tensor(std).view(3, 1, 1)
+        self.std = torch.tensor(std).view(3, 1, 1) if std is not None else None
         self.class_dict = class_dict
         self.cmap = cmap
         self.hm_alpha = hm_alpha
@@ -28,7 +28,7 @@ class ImageDetectionVisualizer:
 
     def denormalize(self, img_tensor):
         img_tensor = img_tensor * self.std + self.mean if self.std is not None else img_tensor + self.mean
-        img_tensor = img_tensor.permute(1, 2, 0).clamp(0, 1).numpy()
+        img_tensor = img_tensor.permute(0, 2, 3, 1).numpy()
         return img_tensor
 
     def visualize_gt(img_tensor, boxes, labels):
@@ -110,10 +110,12 @@ class ImageDetectionVisualizer:
         plt.axis("off")
         plt.show()
 
-    def visualize_detection(imgs, detections, img_info, save_path):
+    def visualize_detection(self, imgs, detections, img_info, save_path):
         batch_size = len(detections)
-        imgs = denormalize(imgs)
-        imgs = (imgs * 255).astype(np.uint8)
+        imgs = self.denormalize(imgs)
+        if np.max(imgs) <= 1.0:
+            imgs = imgs * 255.0 
+        imgs = imgs.astype(np.uint8)
         
         colors = self.cmap(len(self.class_dict), normalized=True)
         row = 2
@@ -137,7 +139,7 @@ class ImageDetectionVisualizer:
             labels = labels[mask]
             scores = scores[mask]
 
-            img_resized = Image.fromarray(img).resize((img_info['width'], img_info['height']), Image.Resampling.LANCZOS)
+            img_resized = Image.fromarray(img).resize((img_info[i]['width'], img_info[i]['height']), Image.Resampling.LANCZOS)
             ax.imshow(img_resized)
             for box, label, score in zip(bboxes, labels, scores):
                 xmin, ymin, xmax, ymax = box
@@ -151,7 +153,7 @@ class ImageDetectionVisualizer:
                     facecolor='none'
                 )
                 ax.add_patch(rect)
-                class_name = class_dict[label]
+                class_name = self.class_dict[label]
                 ax.text(
                     xmin, ymin - 5,
                     f"{class_name} {score:.2f}",

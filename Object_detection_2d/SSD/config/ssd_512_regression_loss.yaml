@@ -102,6 +102,10 @@ loss:
   prior: *prior
   neg_pos_ratio: 3
 
+metrics:
+  name: "DetectionMap"
+  iou_thres: 0.5
+
 visualizer:
   name: "ImageDetectionVisualizer"
   mean: *img_mean

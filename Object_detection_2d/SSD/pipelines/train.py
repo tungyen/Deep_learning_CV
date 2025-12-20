@@ -11,11 +11,12 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from core.optimizer import build_optimizer
 from core.scheduler import build_scheduler
 from core.metrics import build_metrics
-from core.utils import is_main_process, parse_config
+from core.utils import is_main_process
 
 from Object_detection_2d.data import build_dataloader
 from Object_detection_2d.SSD.loss import build_loss
 from Object_detection_2d.SSD.model import build_model, PostProcessor
+from Object_detection_2d.utils import parse_config
 
 def train_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -38,7 +39,6 @@ def train_model(args):
     if is_main_process():
         print("Start training model {} on {} dataset!".format(model_name, dataset_type))
     train_dataloader, val_dataloader, _ = build_dataloader(opts)
-    class_dict = val_dataloader.dataset.class_dict
     model = build_model(opts.model).to(local_rank)
     epochs = opts.epochs
 
@@ -49,6 +49,9 @@ def train_model(args):
     scheduler = build_scheduler(opts.scheduler, optimizer)
     criterion = build_loss(opts.loss)
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+
+    class_dict = val_dataloader.dataset.get_class_dict()
+    metrics = build_metrics(class_dict, val_dataloader.dataset, opts.metrics)
     best_metric = 0.0
             
     for epoch in range(epochs):
@@ -74,34 +77,24 @@ def train_model(args):
                         boxes_loss=f"{loss['boxes_loss'].item():.4f}"
                     )
                 scheduler.step()
-        torch.cuda.empty_cache()
+
         # Validation
         model.eval()
-        pred_results = {}
 
         for imgs, targets, img_ids in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
             imgs = imgs.to(local_rank)
             with torch.no_grad():
                 detections = model(imgs, False)
                 detections = [d.to(torch.device("cpu")) for d in detections]
-            pred_results.update(
-                {int(img_id): d for img_id, d in zip(img_ids, detections)}
-            )
+            metrics.update(img_ids, detections)
 
-        synchronize()
-        pred_results = gather_preds_ddp(pred_results)
-
+        metrics.gather(local_rank)
         if is_main_process():
-            print("Start computing metrics.")
-            metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
-            print("Validation mAP of {} on {} ===> {:.4f}".format(args['model'], args['datasets']['name'], metrics['map']))
-            for i, ap in enumerate(metrics['ap']):
-                if i == 0:
-                    continue
-                print("{} ap: {:.4f}".format(class_dict[i], ap))
-            if metrics['map'] > best_metric:
-                best_metric = metrics['map']
+            metrics_results = metrics.compute_metrics()
+            if metrics_results > best_metric:
+                best_metric = metrics_results
                 torch.save(model.module.state_dict(), weight_path)
+        metrics.reset()
 
 def parse_args():
     parse = argparse.ArgumentParser()

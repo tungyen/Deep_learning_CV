@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from Object_detection_2d.SSD.utils.box_utils import *
+from core.utils.box_utils import *
 
 class BaseIouLoss(nn.Module):
     def __init__(self, eps):

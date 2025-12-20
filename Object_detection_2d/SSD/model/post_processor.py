@@ -1,7 +1,7 @@
 import torch
 from Object_detection_2d.data.container import Container
-from Object_detection_2d.SSD.utils import batched_nms
-import time
+from core.utils import batched_nms
+
 class PostProcessor:
     def __init__(self, img_size=300, confidence_thres=0.01,
                  nms_thres=0.45, topk=100):
@@ -18,7 +18,6 @@ class PostProcessor:
         results = []
 
         for i in range(batch_size):
-            batch_start_time = time.time()
             boxes, scores = pred_boxes[i], pred_scores[i]
             boxes_number = boxes.shape[0]
             class_num = scores.shape[1]

@@ -8,11 +8,11 @@ import torch.optim as optim
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from core.utils import parse_config, is_main_process
+from core.utils import is_main_process
 
 from Object_detection_2d.data import build_dataloader
 from Object_detection_2d.SSD.model import build_model
-from Object_detection_2d.SSD.utils.vis_utils import visualize_detection
+from Object_detection_2d.utils import parse_config, build_visualizer, build_cmap
 
 def test_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -43,15 +43,15 @@ def test_model(args):
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     model.eval()
 
+    cmap = build_cmap(dataset_type)
+    img_visualizer = build_visualizer(class_dict, cmap, opts.visualizer)
+
     imgs, _, idxes = next(iter(test_dataloader))
-    mean = opts.img_mean
-    imgs_denorm = imgs + torch.tensor(mean).view(1, 3, 1, 1)
-    imgs_denorm = imgs_denorm.permute(0, 2, 3, 1).numpy()
-    imgs_denorm = imgs_denorm.astype(np.uint8)
     with torch.no_grad():
         detections = model(imgs.to(local_rank), False)
         detections = [d.to(torch.device("cpu")) for d in detections]
-    visualize_detection(opts, test_dataloader.dataset, imgs_denorm, detections, idxes, class_dict, save_path, model_name, dataset_type)
+    img_info = [test_dataloader.dataset.get_img_info(idxes[i]) for i in range(imgs.shape[0])]
+    img_visualizer.visualize_detection(imgs, detections, img_info, save_path)
 
 def parse_args():
     parse = argparse.ArgumentParser()

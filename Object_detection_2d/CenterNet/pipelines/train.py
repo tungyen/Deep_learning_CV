@@ -11,11 +11,12 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from core.optimizer import build_optimizer
 from core.scheduler import build_scheduler
 from core.metrics import build_metrics
-from core.utils import is_main_process, parse_config
+from core.utils import is_main_process
 
 from Object_detection_2d.data import build_dataloader
 from Object_detection_2d.CenterNet.loss import build_loss
 from Object_detection_2d.CenterNet.model import build_model, PostProcessor
+from Object_detection_2d.utils import parse_config
 
 def train_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])

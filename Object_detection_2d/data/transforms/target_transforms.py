@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 
-from Object_detection_2d.SSD.utils.box_utils import *
-from Object_detection_2d.CenterNet.utils.hm_utils import *
+from core.utils.box_utils import *
+from core.utils.hm_utils import *
 
 class Compose_target(object):
     def __init__(self, target_transforms):

@@ -84,10 +84,9 @@ loss:
   wh_loss_weight: 0.1
   offset_loss_weight: 1.0
 
-# Evaluation
-confidence_thres: 0.01
-nms_thres: 0.45
-topk: 100
+metrics:
+  name: "DetectionMap"
+  iou_thres: 0.5
 
 visualizer:
   name: "ImageDetectionVisualizer"

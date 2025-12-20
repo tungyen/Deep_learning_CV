@@ -22,7 +22,7 @@ class DetectionMap:
         synchronize()
         self.pred_results = gather_dict(self.pred_results)
 
-    def compute_metrics():
+    def compute_metrics(self):
         pred_boxes_all = []
         pred_labels_all = []
         pred_scores_all = []

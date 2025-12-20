@@ -9,10 +9,11 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from core.metrics import build_metrics
-from core.utils import is_main_process, parse_config
+from core.utils import is_main_process
 
 from Object_detection_2d.data import build_dataloader
 from Object_detection_2d.SSD.model import build_model, PostProcessor
+from Object_detection_2d.utils import parse_config
 
 def eval_model(args):
     local_rank = int(os.environ["LOCAL_RANK"])
@@ -36,13 +37,14 @@ def eval_model(args):
         print("Start evaluating model {} on {} dataset!".format(model_name, dataset_type))
     _, val_dataloader, _ = build_dataloader(opts)
     class_dict = val_dataloader.dataset.class_dict
+    metrics = build_metrics(class_dict, val_dataloader.dataset, opts.metrics)
+
     model = build_model(opts.model).to(local_rank)
     model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
 
     # Validation
     model.eval()
-    pred_results = {}
 
     with torch.no_grad():
         for imgs, targets, img_ids in tqdm(val_dataloader, desc=f"Evaluate", disable=not is_main_process()):
@@ -50,19 +52,11 @@ def eval_model(args):
             with torch.no_grad():
                 detections = model(imgs, False)
                 detections = [d.to(torch.device("cpu")) for d in detections]
-            pred_results.update(
-                {int(img_id): d for img_id, d in zip(img_ids, detections)}
-            )
-    synchronize()
-    pred_results = gather_preds_ddp(pred_results)
+            metrics.update(img_ids, detections)
+    metrics.gather(local_rank)
 
     if is_main_process():
-        metrics = compute_object_detection_metrics(val_dataloader.dataset, pred_results)
-        print("Validation mAP of {} on {} ===> {:.4f}".format(model_name, dataset_type, metrics['map']))
-        for i, ap in enumerate(metrics['ap']):
-            if i == 0:
-                continue
-            print("{} ap: {:.4f}".format(class_dict[i], ap))
+        metrics_results = metrics.compute_metrics()
 
 def parse_args():
     parse = argparse.ArgumentParser()

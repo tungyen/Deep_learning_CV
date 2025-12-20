@@ -7,10 +7,10 @@ import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from core.utils import parse_config, synchronize, gather_preds_ddp, is_main_process
+from core.utils import is_main_process
 
 from Object_detection_2d.data import build_dataloader, build_cmap
-from Object_detection_2d.utils import build_visualizer
+from Object_detection_2d.utils import build_visualizer, parse_config
 from Object_detection_2d.CenterNet.model import build_model, PostProcessor
 
 def test_model(args):
