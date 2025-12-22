@@ -16,4 +16,9 @@ def parse_config(config_path):
         if opts.dataset_name == "Flower":
             if split == 'test':
                 opts.datasets[split].split = 'val'
+        elif opts.dataset_name == "CIFAR10" or opts.dataset_name == "CIFAR100":
+            if split == "train":
+                opts.datasets[split].download = True
+            else:
+                opts.datasets[split].download = False
     return opts

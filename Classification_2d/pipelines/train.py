@@ -35,6 +35,13 @@ def train_model(args):
     epochs = opts.epochs
     model_name = opts.model.name
     model = build_model(opts.model).to(local_rank)
+    opts.optimizer.lr *= world_size
+    train_size = len(train_dataloader)
+
+    if opts.scheduler.name == "CosineAnnealingWarmup":
+        warmup_epochs = opts.scheduler.pop('warmup_epochs', None)
+        opts.scheduler.first_cycle_steps = train_size * (epochs - warmup_epochs)
+        opts.scheduler.warmup_steps = train_size * warmup_epochs
     optimizer = build_optimizer(opts.optimizer, model.parameters())
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     scheduler = build_scheduler(opts.scheduler, optimizer)

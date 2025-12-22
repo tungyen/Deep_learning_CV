@@ -67,9 +67,24 @@ def weights_init_xavier(m):
         torch.nn.init.xavier_normal_(m.weight.data)
         torch.nn.init.constant_(m.bias.data, 0.0)
 
+def weights_init_attn(m):
+    classname = m.__class__.__name__
+    if classname.find('Linear') != -1:
+        nn.init.trunc_normal_(m.weight, std=.01)
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    if classname.find('Conv2d') != -1:
+        nn.init.kaiming_normal_(m.weight, mode="fan_out")
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
+    if classname.find('LayerNorm') != -1:
+        nn.init.zeros_(m.bias)
+        nn.init.ones_(m.weight)
+
 WEIGHT_INIT_DICT = {
     "xavier": weights_init_xavier,
-    "kaiming": weights_init_kaiming
+    "kaiming": weights_init_kaiming,
+    "attention": weights_init_attn,
 }
 
 def initialize_weights(weight_init_name):

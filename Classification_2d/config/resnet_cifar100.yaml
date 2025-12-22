@@ -1,0 +1,69 @@
+class_num: &class_num 100
+root: "Classification_2d"
+task: &task "cls"
+
+img_mean: &img_mean [0.491, 0.4822, 0.4465]
+img_std: &img_std [0.270, 0.2435, 0.2616]
+img_size: &img_size 32
+dataset_name: &dataset_name "CIFAR100"
+
+data_path: "Dataset/cifar100/"
+train_batch_size: 32
+val_batch_size: 32
+test_batch_size: 4
+
+transforms:
+  train:
+    - type: Resize
+      size: [*img_size, *img_size]
+    - type: RandomHorizontalFlip
+      prob: 0.5
+    - type: ToTensor
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+  val:
+    - type: Resize
+      size: [*img_size, *img_size]
+    - type: ToTensor
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+  test:
+    - type: Resize
+      size: [*img_size, *img_size]
+    - type: ToTensor
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+
+model:
+  name: "ResNet"
+  layer_num: 34
+  class_num: *class_num
+  bn_momentum: 0.1
+  weight_init: "kaiming"
+
+# Training
+epochs: 100
+scheduler:
+  name: "Poly"
+  max_iters: 90000
+
+optimizer:
+  name: "Adam"
+  weight_decay: 0.00005
+  lr: 0.0002
+
+loss:
+  name: CrossEntropyLoss
+
+metrics:
+  name: "ConfusionMatrix"
+  class_num: *class_num
+  task: *task
+
+visualizer:
+  name: "ImageClsVisualizer"
+  mean: *img_mean
+  std: *img_std

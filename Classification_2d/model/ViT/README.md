@@ -3,25 +3,8 @@ In this part, I implement three kinds of ViT based on different position encodin
 
 Here is the pipeline command for ViT with relative distance position embedding, please change to other type of position embedding on your will.
 
-## Training ##
 ```bash
-python Classification_2d/ViT/train.py --dataset flower --model vit_relative
-python Classification_2d/ViT/train.py --dataset cifar10 --model vit_relative
-python Classification_2d/ViT/train.py --dataset cifar100 --model vit_relative
-```
-
-## Evaluating ##
-```bash
-python Classification_2d/ViT/eval.py --dataset flower --model vit_relative
-python Classification_2d/ViT/eval.py --dataset cifar10 --model vit_relative
-python Classification_2d/ViT/eval.py --dataset cifar100 --model vit_relative
-```
-
-## Testing ##
-```bash
-python Classification_2d/ViT/test.py --dataset flower --model vit_relative
-python Classification_2d/ViT/test.py --dataset cifar10 --model vit_relative
-python Classification_2d/ViT/test.py --dataset cifar100 --model vit_relative
+bash Classification_2d/run_cls_model.sh 1 test Classification_2d/config/vit_flower.yaml
 ```
 
 
@@ -29,42 +12,42 @@ python Classification_2d/ViT/test.py --dataset cifar100 --model vit_relative
 
 ### Sinusoidal Position Encoding ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ViT/imgs/vit_sinusoidal_flower.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/imgs/vit_sinusoidal_flower.png)
 
 ### Relative Distance Position Encoding ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ViT/imgs/vit_relative_flower.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/imgs/vit_relative_flower.png)
 
 ### Rotatory Position Encoding ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ViT/imgs/vit_rope_flower.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/imgs/vit_rope_flower.png)
 
 
 ## CIFAR10 classification ##
 
 ### Sinusoidal Position Encoding ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ViT/imgs/vit_sinusoidal_cifar10.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/imgs/vit_sinusoidal_cifar10.png)
 
 ### Relative Distance Position Encoding ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ViT/imgs/vit_relative_cifar10.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/imgs/vit_relative_cifar10.png)
 
 ### Rotatory Position Encoding ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ViT/imgs/vit_rope_cifar10.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/imgs/vit_rope_cifar10.png)
 
 
 ## CIFAR100 classification ##
 
 ### Sinusoidal Position Encoding ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ViT/imgs/vit_sinusoidal_cifar100.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/imgs/vit_sinusoidal_cifar100.png)
 
 ### Relative Distance Position Encoding ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ViT/imgs/vit_relative_cifar100.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/imgs/vit_relative_cifar100.png)
 
 ### Rotatory Position Encoding ###
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/ViT/imgs/vit_rope_cifar100.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Classification_2d/imgs/vit_rope_cifar100.png)

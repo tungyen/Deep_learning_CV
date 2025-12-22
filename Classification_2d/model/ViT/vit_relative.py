@@ -173,28 +173,25 @@ class MLP_head(nn.Module):
         
         
 class VitRelative(nn.Sequential):
-    def __init__(self, input_channel=3, patch_size=16, emb_dim=768, img_size=224, L=12, class_num=5):
+    def __init__(
+        self,
+        input_channel=3,
+        patch_size=16,
+        emb_dim=768,
+        img_size=224,
+        L=12,
+        class_num=5,
+        weight_init=None
+    ):
         seq_len = (img_size // patch_size)**2+1
-        super(ViT_relative, self).__init__(
+        super(VitRelative, self).__init__(
             PatchEmbedding(img_size, patch_size, input_channel, emb_dim),
             TransformerEncoder(seq_len=seq_len, L=L),
             MLP_head(emb_dim, class_num)
         )
-        self.apply(_init_vit_weights)
+        if weight_init is not None:
+            self.apply(initialize_weights(weight_init))
         
-
-def _init_vit_weights(m):
-    if isinstance(m, nn.Linear):
-        nn.init.trunc_normal_(m.weight, std=.01)
-        if m.bias is not None:
-            nn.init.zeros_(m.bias)
-    elif isinstance(m, nn.Conv2d):
-        nn.init.kaiming_normal_(m.weight, mode="fan_out")
-        if m.bias is not None:
-            nn.init.zeros_(m.bias)
-    elif isinstance(m, nn.LayerNorm):
-        nn.init.zeros_(m.bias)
-        nn.init.ones_(m.weight) 
         
         
         
