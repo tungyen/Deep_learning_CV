@@ -1,7 +1,8 @@
-import torch
-from tqdm import tqdm
-import argparse
 import os
+import argparse
+import torch
+import torch.nn as nn
+from tqdm import tqdm
 
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -9,9 +10,9 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from core.metrics import build_metrics
 from core.utils import is_main_process, init_ddp
 
-from Segmentation_2d.data import build_dataloader
-from Segmentation_2d.DeepLabV3.model import build_model
-from Segmentation_2d.utils import parse_config
+from Classification_2d.data import build_dataloader
+from Classification_2d.model import build_model
+from Classification_2d.utils import parse_config
 
 def eval_model(args):
     local_rank, rank, world_size = init_ddp()
@@ -22,30 +23,31 @@ def eval_model(args):
     root = opts.root
     os.makedirs(os.path.join(root, 'runs'), exist_ok=True)
     os.makedirs(os.path.join(root, 'runs', exp), exist_ok=True)
-    weight_path = os.path.join(root, 'runs', exp, "max-iou-val.pth")
+    weight_path = os.path.join(root, 'runs', exp, "max-f1-val.pth")
+
+    if is_main_process():
+        print("Start training model {}!".format(opts.model.name))
     
-    model_name = opts.model.name
     _, val_dataloader, _ = build_dataloader(opts)
+    model_name = opts.model.name
     model = build_model(opts.model).to(local_rank)
-    model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
-    model.eval()
     class_dict = val_dataloader.dataset.get_class_dict()
     metrics = build_metrics(class_dict, val_dataloader.dataset, opts.metrics)
-    
-    if is_main_process():
-        print("Start evaluation model {}!".format(model_name))
-    
+
+    best_metrics = 0.0
+    # Validation
+    model.eval()
     with torch.no_grad():
         for imgs, labels in tqdm(val_dataloader, desc="Evaluate", disable=not is_main_process()):
-            output = model(imgs.to(local_rank))
-            pred_class = torch.argmax(output, dim=1)
-            metrics.update(pred_class.cpu(), labels)
-    
+            outputs = model(imgs.to(local_rank))
+            pred_classes = torch.argmax(outputs, dim=1)
+            metrics.update(pred_classes.cpu(), labels)
+
     metrics.gather(local_rank)
     if is_main_process():
-        metrics_result = metrics.compute_metrics()
-    dist.destroy_process_group()
+        metrics_results = metrics.compute_metrics()
+    dist.destroy_process_group() 
 
 def parse_args():
     parse = argparse.ArgumentParser()
@@ -54,6 +56,6 @@ def parse_args():
     args = parse.parse_args()
     return args
 
-if __name__ =='__main__':
+if __name__ == '__main__':
     args = parse_args()
     eval_model(args)

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from einops import repeat
 
-from Classification_2d.ViT.model.model_utils import *
+from core.utils.model_utils import *
 
 class SinusoidalPositionEmbedding2D(nn.Module):
     def __init__(self, n_patches, emb_dim):
@@ -141,7 +141,7 @@ class MLP_head(nn.Module):
         return x
         
         
-class ViT_sinusoidal(nn.Sequential):
+class VitSinusoidal(nn.Sequential):
     def __init__(self, input_channel=3, patch_size=16, emb_dim=768, img_size=224, L=12, class_num=5, **kwargs):
         super(ViT_sinusoidal, self).__init__(
             PatchEmbedding(img_size, patch_size, input_channel, emb_dim),

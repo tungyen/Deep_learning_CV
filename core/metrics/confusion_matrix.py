@@ -36,6 +36,7 @@ class ConfusionMatrix:
         ious = TP.float() / (TP + FP + FN + self.eps)
         precision = TP.float() / (TP + FP + self.eps)
         recall = TP.float() / (TP + FN + self.eps)
+        f1_score = 2 * precision * recall / (precision + recall + self.eps)
 
         results = {
             'ious': ious,
@@ -44,14 +45,18 @@ class ConfusionMatrix:
             'mean_precision': precision.mean(),
             'recall': recall,
             'mean_recall': recall.mean(),
+            'f1_score': f1_score,
+            'mean_f1_score': f1_score.mean()
         }
 
         if self.task == "cls":
             precision = results['mean_precision']
             recall = results['mean_recall']
+            f1_score = results['mean_f1_score']
             print("Validation Precision ===> {:.4f}".format(precision))
             print("Validation Recall ===> {:.4f}".format(recall))
-            return precision
+            print("Validation F1 Score ===> {:.4f}".format(f1_score))
+            return f1_score
 
         elif self.task == "semseg":
             ious = results['ious']

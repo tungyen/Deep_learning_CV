@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 
+from core.utils import set_bn_momentum, initialize_weights
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -74,10 +75,20 @@ class Bottleneck(nn.Module):
         return out
 
 
-class ResNet(nn.Module):
-
-    def __init__(self, block, blocks_num, channels=[64, 128, 256, 512], strides=[1, 2, 2, 2], class_num=1000, include_top=True, groups=1, width_per_group=64):
-        super(ResNet, self).__init__()
+class resnet(nn.Module):
+    def __init__(self,
+                 block,
+                 blocks_num,
+                 channels=[64, 128, 256, 512],
+                 strides=[1, 2, 2, 2],
+                 class_num=1000,
+                 include_top=True,
+                 groups=1,
+                 width_per_group=64,
+                 weight_init=None,
+                 bn_momentum=None,
+    ):
+        super(resnet, self).__init__()
         self.include_top = include_top
         self.in_channel = channels[0]
 
@@ -89,11 +100,6 @@ class ResNet(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         
-        # modules = []
-        # for i in range(len(channels)):
-        #     modules.append(self._make_layer(block, channels[i], blocks_num[i], stride=strides[i]))
-        # self.layers = nn.Sequential(*modules)
-        
         self.layer1 = self._make_layer(block, 64, blocks_num[0])
         self.layer2 = self._make_layer(block, 128, blocks_num[1], stride=2)
         self.layer3 = self._make_layer(block, 256, blocks_num[2], stride=2)
@@ -102,9 +108,11 @@ class ResNet(nn.Module):
             self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
             self.fc = nn.Linear(512 * block.expansion, class_num)
 
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+        if bn_momentum is not None:
+            set_bn_momentum(self, momentum=bn_momentum)
+
+        if weight_init is not None:
+            self.apply(initialize_weights(weight_init))
 
     def _make_layer(self, block, channel, block_num, stride=1):
         downsample = None
@@ -149,34 +157,38 @@ class ResNet(nn.Module):
 
         return x
 
+RESNET_LAYER_DICT = {
+    34: [3, 4, 6, 3],
+    50: [3, 4, 6, 3],
+    101: [3, 4, 23, 3],
+}
 
-def resnet34(class_num=1000, include_top=True):
-    return ResNet(BasicBlock, [3, 4, 6, 3], class_num=class_num, include_top=include_top)
+RESNET_BLOCK_DICT = {
+    34: BasicBlock,
+    50: Bottleneck,
+    101: Bottleneck,
+}
 
-
-def resnet50(class_num=1000, include_top=True):
-    return ResNet(Bottleneck, [3, 4, 6, 3], class_num=class_num, include_top=include_top)
-
-
-def resnet101(class_num=1000, include_top=True):
-    return ResNet(Bottleneck, [3, 4, 23, 3], class_num=class_num, include_top=include_top)
-
-
-def resnext50_32x4d(class_num=1000, include_top=True):
-    groups = 32
-    width_per_group = 4
-    return ResNet(Bottleneck, [3, 4, 6, 3],
-                class_num=class_num,
-                include_top=include_top,
-                groups=groups,
-                width_per_group=width_per_group)
-
-
-def resnext101_32x8d(class_num=1000, include_top=True):
-    groups = 32
-    width_per_group = 8
-    return ResNet(Bottleneck, [3, 4, 23, 3],
-                class_num=class_num,
-                include_top=include_top,
-                groups=groups,
-                width_per_group=width_per_group)
+def ResNet(
+    layer_num=34,
+    class_num=1000,
+    include_top=True,
+    weight_init=None,
+    bn_momentum=None,
+    groups=1,
+    width_per_group=64
+):
+    if layer_num not in RESNET_LAYER_DICT:
+        raise ValueError("Not a valid layer number for ResNet.")
+    layer_list = RESNET_LAYER_DICT[layer_num]
+    block = RESNET_BLOCK_DICT[layer_num]
+    model = resnet(
+        block,
+        layer_list,
+        class_num=class_num,
+        include_top=include_top,
+        weight_init=weight_init,
+        bn_momentum=bn_momentum,
+        groups=groups,
+        width_per_group=width_per_group)
+    return model

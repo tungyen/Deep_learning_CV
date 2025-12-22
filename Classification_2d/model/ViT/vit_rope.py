@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import repeat
 
-from Classification_2d.ViT.model.model_utils import *
+from core.utils.model_utils import *
 
 
 class RotatoryPositionEmbedding2D(nn.Module):
@@ -170,7 +170,7 @@ class MLP_head(nn.Module):
         return x
         
         
-class ViT_rope(nn.Sequential):
+class VitRope(nn.Sequential):
     def __init__(self, input_channel=3, patch_size=16, emb_dim=768, img_size=224, L=12, class_num=5):
         seq_len = (img_size // patch_size)**2+1
         super(ViT_rope, self).__init__(

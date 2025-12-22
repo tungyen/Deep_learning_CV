@@ -1,8 +1,8 @@
 import os
-import torch
-import numpy as np
-from tqdm import tqdm
 import argparse
+import torch
+import torch.nn as nn
+from tqdm import tqdm
 
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -12,11 +12,10 @@ from core.scheduler import build_scheduler
 from core.metrics import build_metrics
 from core.utils import is_main_process, init_ddp
 
-from Segmentation_2d.data import build_dataloader
-from Segmentation_2d.DeepLabV3.model import build_model
-from Segmentation_2d.loss import build_loss
-from Segmentation_2d.utils import parse_config
-
+from Classification_2d.data import build_dataloader
+from Classification_2d.model import build_model
+from Classification_2d.loss import build_loss
+from Classification_2d.utils import parse_config
 
 def train_model(args):
     local_rank, rank, world_size = init_ddp()
@@ -27,7 +26,7 @@ def train_model(args):
     root = opts.root
     os.makedirs(os.path.join(root, 'runs'), exist_ok=True)
     os.makedirs(os.path.join(root, 'runs', exp), exist_ok=True)
-    weight_path = os.path.join(root, 'runs', exp, "max-iou-val.pth")
+    weight_path = os.path.join(root, 'runs', exp, "max-f1-val.pth")
 
     if is_main_process():
         print("Start training model {}!".format(opts.model.name))
@@ -43,49 +42,39 @@ def train_model(args):
     class_dict = val_dataloader.dataset.get_class_dict()
     metrics = build_metrics(class_dict, val_dataloader.dataset, opts.metrics)
 
-    best_metric = 0.0
-
+    best_metrics = 0.0
     for epoch in range(epochs):
+        # Train
         train_dataloader.sampler.set_epoch(epoch)
         model.train()
-        
-        # Train
+
         with tqdm(train_dataloader, desc=f"Train Epoch {epoch+1}", disable=not is_main_process()) as pbar:
             for imgs, labels in pbar:
-                imgs = imgs.to(local_rank)
-                labels = labels.type(torch.LongTensor).to(local_rank)
-                outputs = model(imgs)
-
-                loss = criterion(outputs, labels)
+                outputs = model(imgs.to(local_rank))
+                loss = criterion(outputs, labels.to(local_rank))
                 optimizer.zero_grad()
                 loss['loss'].backward()
                 optimizer.step()
-                if is_main_process():
-                    pbar.set_postfix(
-                        total_loss=f"{loss['loss'].item():.4f}",
-                        ce_loss=f"{loss['ce_loss'].item():.4f}",
-                        lovasz_softmax_loss=f"{loss['lovasz_softmax_loss'].item():.4f}" if 'lovasz_softmax_loss' in loss else "0.0000",
-                        boundary_loss=f"{loss['boundary_loss'].item():.4f}" if 'boundary_loss' in loss else "0.0000"
-                    )
-
                 scheduler.step()
+                pbar.set_postfix(total_loss=f"{loss['loss'].item():.4f}")
+
         # Validation
         model.eval()
-        for imgs, labels in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
-            with torch.no_grad():
+        with torch.no_grad():
+            for imgs, labels in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
                 outputs = model(imgs.to(local_rank))
-                pred_class = torch.argmax(outputs, dim=1)
-                metrics.update(pred_class.cpu(), labels)
+                pred_classes = torch.argmax(outputs, dim=1)
+                metrics.update(pred_classes.cpu(), labels)
 
         metrics.gather(local_rank)
         if is_main_process():
             metrics_results = metrics.compute_metrics()
-            if metrics_results > best_metric:
-                best_metric = metrics_results
+            if metrics_results > best_metrics:
+                best_metrics = metrics_results
                 torch.save(model.module.state_dict(), weight_path)
         metrics.reset()
-    dist.destroy_process_group()
-    
+    dist.destroy_process_group() 
+
 def parse_args():
     parse = argparse.ArgumentParser()
     parse.add_argument('--exp', type=str, required=True)
@@ -93,6 +82,6 @@ def parse_args():
     args = parse.parse_args()
     return args
 
-if __name__ =='__main__':
+if __name__ == '__main__':
     args = parse_args()
     train_model(args)

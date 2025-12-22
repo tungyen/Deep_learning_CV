@@ -9,4 +9,5 @@ def parse_config(config_path):
     for split in ['train', 'val', 'test']:
         opts.datasets[split].name = opts.datasets.dataset_name
         opts.datasets[split].data_path = opts.datasets.data_path
+
     return opts

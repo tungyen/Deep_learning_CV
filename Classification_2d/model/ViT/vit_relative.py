@@ -3,8 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import repeat
 
-from Classification_2d.ViT.model.model_utils import *
-
+from core.utils.model_utils import *
 
 class RelativePositionEmbedding2D(nn.Module):
     def __init__(self, emb_dim, seq_len, max_relative_dist):
@@ -173,7 +172,7 @@ class MLP_head(nn.Module):
         return x
         
         
-class ViT_relative(nn.Sequential):
+class VitRelative(nn.Sequential):
     def __init__(self, input_channel=3, patch_size=16, emb_dim=768, img_size=224, L=12, class_num=5):
         seq_len = (img_size // patch_size)**2+1
         super(ViT_relative, self).__init__(

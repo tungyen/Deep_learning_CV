@@ -11,7 +11,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from core.optimizer import build_optimizer
 from core.scheduler import build_scheduler
 from core.metrics import build_metrics
-from core.utils import is_main_process
+from core.utils import is_main_process, init_ddp
 
 from Object_detection_2d.data import build_dataloader
 from Object_detection_2d.SSD.loss import build_loss
@@ -19,11 +19,7 @@ from Object_detection_2d.SSD.model import build_model, PostProcessor
 from Object_detection_2d.utils import parse_config
 
 def train_model(args):
-    local_rank = int(os.environ["LOCAL_RANK"])
-    world_size = int(os.environ["WORLD_SIZE"])
-    rank = int(os.environ["RANK"])
-    dist.init_process_group("nccl", rank=rank, world_size=world_size)
-
+    local_rank, rank, world_size = init_ddp()
     config_path = args.config_path
     exp = args.exp
     opts = parse_config(config_path)

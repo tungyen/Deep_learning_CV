@@ -1,17 +1,18 @@
-from tqdm import tqdm
-import argparse
-import numpy as np
-import os
 import torch
+import argparse
+import os
+import numpy as np
 
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from core.utils import is_main_process, init_ddp
 
-from Object_detection_2d.data import build_dataloader, build_cmap
-from Object_detection_2d.utils import build_visualizer, parse_config
-from Object_detection_2d.CenterNet.model import build_model, PostProcessor
+from Classification_2d.data import build_dataloader
+from Classification_2d.model import build_model
+from Classification_2d.utils import build_visualizer
+from Classification_2d.utils import parse_config
+
 
 def test_model(args):
     local_rank, rank, world_size = init_ddp()
@@ -22,29 +23,30 @@ def test_model(args):
     root = opts.root
     os.makedirs(os.path.join(root, 'runs'), exist_ok=True)
     os.makedirs(os.path.join(root, 'runs', exp), exist_ok=True)
-    model_name = opts.model.name
-    dataset_type = opts.datasets.dataset_name
-    weight_path = os.path.join(root, 'runs', exp, "max-ap-val.pt")
+    weight_path = os.path.join(root, 'runs', exp, "max-f1-val.pth")
     save_path = os.path.join(root, 'runs', exp)
-    cmap = build_cmap(opts)
-
+    model_name = opts.model.name
+    dataset_name = opts.dataset_name
+    
     if is_main_process():
-        print("Start testing model {} on {} dataset!".format(model_name, dataset_type))
+        print("Start testing model {}!".format(model_name))
+
     _, _, test_dataloader = build_dataloader(opts)
-    class_dict = test_dataloader.dataset.class_dict
     model = build_model(opts.model).to(local_rank)
     model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     model.eval()
 
-    visualizer = build_visualizer(class_dict, cmap, opts.visualizer)
+    class_dict = test_dataloader.dataset.get_class_dict()
+    img_visualizer = build_visualizer(class_dict, opts.visualizer)
 
-    imgs, _, idxes = next(iter(test_dataloader))
+    imgs, _ = next(iter(test_dataloader))
     with torch.no_grad():
-        detections = model(imgs.to(local_rank), False)
-        detections = [d.to(torch.device("cpu")) for d in detections]
-    img_info = [test_dataloader.dataset.get_img_info(idxes[i]) for i in range(imgs.shape[0])]
-    visualizer.visualize_detection(imgs, detections, img_info, save_path)
+        outputs = model(imgs.to(local_rank))
+        outputs = torch.softmax(outputs, dim=1)
+        pred_classes = torch.argmax(outputs, dim=1).cpu().numpy()
+        outputs = outputs.cpu().numpy()
+        img_visualizer.visualize(imgs, pred_classes, outputs, save_path)
 
 def parse_args():
     parse = argparse.ArgumentParser()
@@ -56,7 +58,3 @@ def parse_args():
 if __name__ =='__main__':
     args = parse_args()
     test_model(args)
-    
-    
-    
-    

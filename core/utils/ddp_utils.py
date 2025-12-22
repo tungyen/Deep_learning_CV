@@ -1,6 +1,14 @@
 import torch.nn as nn
 import torch
 import torch.distributed as dist
+import os
+
+def init_ddp():
+    local_rank = int(os.environ["LOCAL_RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    rank = int(os.environ["RANK"])
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+    return local_rank, rank, world_size
 
 def gather_list(data):
     world_size = dist.get_world_size()
@@ -22,10 +30,6 @@ def is_main_process():
     return get_rank() == 0
 
 def synchronize():
-    """
-       Helper function to synchronize (barrier) among all processes when
-       using distributed training
-    """
     if not dist.is_available():
         return
     if not dist.is_initialized():

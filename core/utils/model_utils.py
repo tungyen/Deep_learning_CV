@@ -8,24 +8,8 @@ from torch.hub import HASH_REGEX
 
 from core.utils.ddp_utils import is_main_process, synchronize
 
-
+# Loading the model weight.
 def cache_url(url, model_dir=None, progress=True):
-    r"""Loads the Torch serialized object at the given URL.
-    If the object is already present in `model_dir`, it's deserialized and
-    returned. The filename part of the URL should follow the naming convention
-    ``filename-<sha256>.ext`` where ``<sha256>`` is the first eight or more
-    digits of the SHA256 hash of the contents of the file. The hash is used to
-    ensure unique names and to verify the contents of the file.
-    The default value of `model_dir` is ``$TORCH_HOME/models`` where
-    ``$TORCH_HOME`` defaults to ``~/.torch``. The default directory can be
-    overridden with the ``$TORCH_MODEL_ZOO`` environment variable.
-    Args:
-        url (string): URL of the object to download
-        model_dir (string, optional): directory in which to save the object
-        progress (bool, optional): whether or not to display a progress bar to stderr
-    Example:
-        >>> cached_file = maskrcnn_benchmark.utils.model_zoo.cache_url('https://s3.amazonaws.com/pytorch/models/resnet18-5c106cde.pth')
-    """
     if model_dir is None:
         torch_home = os.path.expanduser(os.getenv("TORCH_HOME", "~/.torch"))
         model_dir = os.getenv("TORCH_MODEL_ZOO", os.path.join(torch_home, "models"))
@@ -52,6 +36,7 @@ def load_state_dict_from_url(url, map_location='cpu'):
     return torch.load(cached_file, map_location=map_location)
 
 
+# Model Init
 def set_bn_momentum(model, momentum=0.1):
     for m in model.modules():
         if isinstance(m, nn.BatchNorm2d):
@@ -91,3 +76,21 @@ def initialize_weights(weight_init_name):
     if weight_init_name not in WEIGHT_INIT_DICT:
         raise ValueError(f'Unknown weight initialization method {weight_init_name}')
     return WEIGHT_INIT_DICT[weight_init_name]
+
+
+# Position Embedding
+def get_xpos(n_patches, start_idx=0):
+    n_patches_ = int(n_patches ** 0.5)
+    x_positions = torch.arange(start_idx, n_patches_ + start_idx)
+    x_positions = x_positions.unsqueeze(0)
+    x_positions = torch.repeat_interleave(x_positions, n_patches_, 0)
+    x_positions = x_positions.reshape(-1)
+
+    return x_positions
+
+def get_ypos(n_patches, start_idx=0):
+    n_patches_ = int(n_patches ** 0.5)
+    y_positions = torch.arange(start_idx, n_patches_+start_idx)
+    y_positions = torch.repeat_interleave(y_positions, n_patches_, 0)
+
+    return y_positions
