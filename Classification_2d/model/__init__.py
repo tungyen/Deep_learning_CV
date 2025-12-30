@@ -7,6 +7,7 @@ MODEL_DICT = {
     "VitSinusoidal": VitSinusoidal,
     "VitRelative": VitRelative,
     "VitRope": VitRope,
+    "SwinTransformer": SwinTransformer,
 }
 
 def build_model(opts):
