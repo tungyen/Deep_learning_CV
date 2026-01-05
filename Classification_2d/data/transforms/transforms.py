@@ -46,8 +46,57 @@ class RandomVerticalFlip(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '(p={})'.format(self.prob)
-    
-    
+
+
+class RandomResizeCrop(object):
+    def __init__(self, size, scale=(0.08, 1.0), ratio=(3./4., 4./3.), interpolation=Image.BILINEAR):
+        if isinstance(size, int):
+            self.size = (size, size)
+        else:
+            self.size = size
+        self.scale = scale
+        self.ratio = ratio
+        self.interpolation = interpolation
+
+    @staticmethod
+    def get_params(img, scale, ratio):
+        width, height = img.size
+        area = height * width
+
+        for _ in range(10):
+            target_area = random.uniform(scale[0], scale[1]) * area
+            log_ratio = (np.log(ratio[0]), np.log(ratio[1]))
+            aspect_ratio = np.exp(random.uniform(log_ratio[0], log_ratio[1]))
+
+            w = int(round(np.sqrt(target_area * aspect_ratio)))
+            h = int(round(np.sqrt(target_area / aspect_ratio)))
+
+            if 0 < w <= width and 0 < h <= height:
+                i = random.randint(0, height - h)
+                j = random.randint(0, width - w)
+                return i, j, h, w
+
+        # Fallback to center crop
+        in_ratio = float(width) / float(height)
+        if in_ratio < min(ratio):
+            w = width
+            h = int(round(w / min(ratio)))
+        elif in_ratio > max(ratio):
+            h = height
+            w = int(round(h * max(ratio)))
+        else:
+            w = width
+            h = height
+        i = (height - h) // 2
+        j = (width - w) // 2
+        return i, j, h, w
+
+    def __call__(self, img, label):
+        i, j, h, w = self.get_params(img, self.scale, self.ratio)
+        img = F.crop(img, i, j, h, w)
+        img = F.resize(img, self.size, self.interpolation)
+        return img, label
+
 class CenterCrop(object):
     def __init__(self, crop_size):
         if isinstance(crop_size, numbers.Number):

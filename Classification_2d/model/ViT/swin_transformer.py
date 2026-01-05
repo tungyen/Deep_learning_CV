@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from timm.models.layers import trunc_normal_
+from timm.models.layers import trunc_normal_, DropPath
 
 from Classification_2d.model.ViT.attention_block import *
 from core.utils.model_utils import *
@@ -16,7 +16,7 @@ def window_partition(x, window_size):
 
 def window_reverse(windows, window_size, img_size):
     b, c, _, _ = windows.shape
-    h, w = img_size
+    h, w = img_size, img_size
     h_windows = h // window_size
     w_windows = w // window_size
     n_windows = h_windows * w_windows
@@ -62,7 +62,7 @@ class WindowAttention(nn.Module):
         self.scale = (embed_dims // n_heads) ** -0.5
 
         self.relative_position_bias_table = nn.Parameter(
-            torch.zeros((2 * window_reverse - 1) * (2 * window_size - 1), n_heads)
+            torch.zeros((2 * window_size - 1) * (2 * window_size - 1), n_heads)
         )
 
         trunc_normal_(self.relative_position_bias_table, std=0.02)
@@ -86,7 +86,7 @@ class WindowAttention(nn.Module):
 
         q *= self.scale
         attn_weight = q @ k.transpose(-2, -1)
-        relative_position_embedding = self.relative_position_bias_table[self.relative_position_index.view(1)]
+        relative_position_embedding = self.relative_position_bias_table[self.relative_position_index.view(-1)]
         relative_position_embedding = relative_position_embedding.view(self.window_size ** 2, self.window_size ** 2, -1).permute(2, 0, 1)
         attn_weight = attn_weight + relative_position_embedding.unsqueeze(0)
 
@@ -118,11 +118,12 @@ class SwinTransformerBlock(nn.Module):
         qkv_bias=True,
         drop=0.,
         attn_drop=0.,
+        drop_path=0.,
         norm_layer=nn.LayerNorm,
     ):
         super().__init__()
         self.embed_dims = embed_dims
-        self.n_heads = self.n_heads
+        self.n_heads = n_heads
         self.window_size = window_size
         self.shift_size = shift_size
         self.mlp_ratio= mlp_ratio
@@ -131,7 +132,9 @@ class SwinTransformerBlock(nn.Module):
         self.norm_0 = norm_layer(embed_dims)
         self.attn = WindowAttention(window_size, n_heads, embed_dims, qkv_bias, attn_drop, drop)
         self.norm_1 = norm_layer(embed_dims)
+        self.norm_2 = norm_layer(embed_dims)
         self.mlp = Mlp(in_channels=embed_dims, hidden_channels=int(mlp_ratio * embed_dims))
+        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
         if self.shift_size > 0:
             attn_mask = get_mask(img_size, window_size, shift_size)
@@ -140,8 +143,8 @@ class SwinTransformerBlock(nn.Module):
         self.register_buffer('attn_mask', attn_mask)
 
     def forward(self, x):
-        residual = x
         x = x.permute(0, 2, 3, 1)
+        residual = x
         x = self.norm_0(x)
         x = x.permute(0, 3, 1, 2)
         if self.shift_size > 0:
@@ -153,9 +156,9 @@ class SwinTransformerBlock(nn.Module):
         if self.shift_size > 0:
             x = torch.roll(x, shifts=(self.shift_size, self.shift_size), dims=(2, 3))
 
-        x = residual + x
         x = x.permute(0, 2, 3, 1)
-        x = x + self.mlp(self.norm_1(x))
+        x = residual + self.drop_path(self.norm_1(x))
+        x = x + self.drop_path(self.mlp(self.norm_2(x)))
         x = x.permute(0, 3, 1, 2)
         return x
 
@@ -171,14 +174,15 @@ class SwinTransformerBlockStack(nn.Module):
         qkv_bias=True,
         drop=0.,
         attn_drop=0.,
-        norm_layer=norm_layer
+        drop_path=0.,
+        norm_layer=nn.LayerNorm
     ):
         super().__init__()
         self.WMHA = SwinTransformerBlock(
-            embed_dims, n_heads, img_size, window_size, 0, mlp_ratio, qkv_bias, drop, attn_drop, norm_layer
+            embed_dims, n_heads, img_size, window_size, 0, mlp_ratio, qkv_bias, drop, attn_drop, drop_path[0], norm_layer
         )
         self.SWMHA = SwinTransformerBlock(
-            embed_dims, n_heads, img_size, window_size, window_size // 2, mlp_ratio, qkv_bias, drop, attn_drop, norm_layer
+            embed_dims, n_heads, img_size, window_size, window_size // 2, mlp_ratio, qkv_bias, drop, attn_drop, drop_path[1], norm_layer
         )
 
     def forward(self, x):
@@ -199,11 +203,13 @@ class SwinTransformer(nn.Module):
         qkv_bias=True,
         drop_rate=0.,
         attn_drop_rate=0.,
+        drop_path_rate=0.1,
         patch_norm=True,
         depths=[2, 2, 6, 2],
         n_heads=[3, 6, 12, 24],
         norm_layer=nn.LayerNorm,
         include_top=True,
+        class_num=5,
         weight_init=None
     ):
         super().__init__()
@@ -215,17 +221,19 @@ class SwinTransformer(nn.Module):
 
         self.patch_embedding = PatchEmbedding(patch_size, in_channels, embed_dims, patch_norm)
         self.pos_drop = nn.Dropout(drop_rate)
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
 
         img_size //= patch_size
         in_channels = embed_dims
         self.layers = nn.ModuleList()
+        cur_idx = 0
         for i in range(self.n_layers):
             cur_layer = nn.ModuleList()
             if i > 0:
                 cur_layer.append(PatchMerging(in_channels=in_channels))
                 img_size //= 2
                 in_channels *= 2
-            for _ in range(depths[i] // 2):
+            for j in range(depths[i] // 2):
                 cur_layer.append(
                     SwinTransformerBlockStack(
                         embed_dims=in_channels,
@@ -236,20 +244,21 @@ class SwinTransformer(nn.Module):
                         qkv_bias=qkv_bias,
                         drop=drop_rate,
                         attn_drop=attn_drop_rate,
-                        norm_layer=norm_layer
+                        norm_layer=norm_layer,
+                        drop_path=dpr[cur_idx:cur_idx + 2]
                     )
                 )
+                cur_idx += 2
 
             cur_layer = nn.Sequential(*cur_layer)
             self.layers.append(cur_layer)
 
         self.norm = norm_layer(self.out_channels)
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.include_top = include_top
 
         if include_top:
+            self.avg_pool = nn.AdaptiveAvgPool2d(1)
             self.cls_head = nn.Linear(self.out_channels, class_num)
-        else:
-            self.cls_head = None
 
         if weight_init is not None:
             self.apply(initialize_weights(weight_init))
@@ -265,10 +274,10 @@ class SwinTransformer(nn.Module):
         x = x.permute(0, 2, 3, 1)
         x = self.norm(x)
         x = x.permute(0, 3, 1, 2)
-        x = self.avg_pool(x)
-        x = torch.flatten(x, 1)
 
-        if self.cls_head is not None:
+        if self.include_top:
+            x = self.avg_pool(x)
+            x = torch.flatten(x, 1)
             x = self.cls_head(x)
         return x
 

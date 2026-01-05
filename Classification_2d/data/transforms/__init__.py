@@ -3,6 +3,7 @@ from Classification_2d.data.transforms.transforms import *
 TRANSFORM_DICT = {
     "RandomHorizontalFlip": RandomHorizontalFlip,
     "RandomVerticalFlip": RandomVerticalFlip,
+    "RandomResizeCrop": RandomResizeCrop,
     "CenterCrop": CenterCrop,
     "RandomScale": RandomScale,
     "Scale": Scale,
