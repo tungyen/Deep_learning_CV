@@ -164,13 +164,14 @@ class Normalize(object):
     
     
 class RandomCrop(object):
-    def __init__(self, crop_size, padding=0, pad_if_needed=False):
+    def __init__(self, crop_size, ignore_index, padding=0, pad_if_needed=False):
         if isinstance(crop_size, numbers.Number):
             self.crop_size = (int(crop_size), int(crop_size))
         else:
             self.crop_size = crop_size
         self.padding = padding
         self.pad_if_needed = pad_if_needed
+        self.ignore_index = ignore_index
 
     @staticmethod
     def get_params(img, output_size):
@@ -191,12 +192,12 @@ class RandomCrop(object):
         # pad the width if needed
         if self.pad_if_needed and img.size[0] < self.crop_size[1]:
             img = F.pad(img, padding=int((1 + self.crop_size[1] - img.size[0]) / 2))
-            label = F.pad(label, padding=int((1 + self.crop_size[1] - label.size[0]) / 2))
+            label = F.pad(label, padding=int((1 + self.crop_size[1] - label.size[0]) / 2), fill=self.ignore_index)
 
         # pad the height if needed
         if self.pad_if_needed and img.size[1] < self.crop_size[0]:
             img = F.pad(img, padding=int((1 + self.crop_size[0] - img.size[1]) / 2))
-            label = F.pad(label, padding=int((1 + self.crop_size[0] - label.size[1]) / 2))
+            label = F.pad(label, padding=int((1 + self.crop_size[0] - label.size[1]) / 2), fill=self.ignore_index)
 
         i, j, h, w = self.get_params(img, self.crop_size)
 
@@ -216,6 +217,19 @@ class Resize(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={0}, interpolation=bilinear)'.format(self.size)
+
+class ResizeShorterSide(object):
+    def __init__(self, shorter_size, interpolation=Image.BILINEAR):
+        self.shorter_size = shorter_size
+        self.interpolation = interpolation
+
+    def __call__(self, img, label):
+        w, h = img.size
+        if w < h:
+            target_size = (self.shorter_size, int(h/w * self.shorter_size))
+        else:
+            target_size = (int(w/h * self.shorter_size), self.shorter_size)
+        return F.resize(img, target_size, self.interpolation), F.resize(label, target_size, Image.NEAREST)
     
     
 class ColorJitter(object):

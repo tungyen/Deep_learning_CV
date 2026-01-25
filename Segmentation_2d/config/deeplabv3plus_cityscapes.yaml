@@ -1,6 +1,6 @@
 class_num: &class_num 19
 ignore_index: &ignore_index 19
-root: "Segmentation_2d/DeepLabV3"
+root: "Segmentation_2"
 task: &task "semseg"
 
 img_mean: &img_mean [0.485, 0.456, 0.406]

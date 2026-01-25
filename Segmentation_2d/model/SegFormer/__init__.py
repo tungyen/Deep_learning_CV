@@ -1,0 +1,1 @@
+from Segmentation_2d.model.SegFormer.seg_former import SegFormer

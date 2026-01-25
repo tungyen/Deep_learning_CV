@@ -13,7 +13,7 @@ from core.metrics import build_metrics
 from core.utils import is_main_process, init_ddp
 
 from Segmentation_2d.data import build_dataloader
-from Segmentation_2d.DeepLabV3.model import build_model
+from Segmentation_2d.model import build_model
 from Segmentation_2d.loss import build_loss
 from Segmentation_2d.utils import parse_config
 

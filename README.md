@@ -6,8 +6,7 @@ Model with task category:
 ## Image Classification ##
 1. **ResNet**
 2. **Vision Transformer**
-3. **Swin Transformer (todo)**
-4. **Pyramid Vision Transformer (todo)**
+3. **Swin Transformer**
 
 
 ## 2D Object Detection ##

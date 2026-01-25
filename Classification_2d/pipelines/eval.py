@@ -26,11 +26,12 @@ def eval_model(args):
     weight_path = os.path.join(root, 'runs', exp, "max-f1-val.pth")
 
     if is_main_process():
-        print("Start training model {}!".format(opts.model.name))
+        print("Start evaluating model {}!".format(opts.model.name))
     
     _, val_dataloader, _ = build_dataloader(opts)
     model_name = opts.model.name
     model = build_model(opts.model).to(local_rank)
+    model.load_state_dict(torch.load(weight_path, map_location=f"cuda:{local_rank}"))
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     class_dict = val_dataloader.dataset.get_class_dict()
     metrics = build_metrics(class_dict, val_dataloader.dataset, opts.metrics)

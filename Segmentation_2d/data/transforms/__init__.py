@@ -13,6 +13,7 @@ TRANSFORM_DICT = {
     "RandomCrop": RandomCrop,
     "ColorJitter": ColorJitter,
     "Resize": Resize,
+    "ResizeShorterSide": ResizeShorterSide,
 }
 
 

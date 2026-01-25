@@ -178,7 +178,9 @@ class VitRope(nn.Sequential):
         emb_dim=768,
         img_size=224,
         L=12,
-        class_num=5):
+        class_num=5,
+        weight_init=None
+    ):
         seq_len = (img_size // patch_size)**2+1
         super(VitRope, self).__init__(
             PatchEmbedding(img_size, patch_size, input_channel, emb_dim),

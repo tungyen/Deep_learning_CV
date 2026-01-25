@@ -1,0 +1,75 @@
+class_num: &class_num 5
+root: "Classification_2d"
+task: &task "cls"
+
+img_mean: &img_mean [0.5, 0.5, 0.5]
+img_std: &img_std [0.5, 0.5, 0.5]
+img_size: &img_size 224
+dataset_name: &dataset_name "Flower"
+
+data_path: "Dataset/flower_data/"
+train_batch_size: 32
+val_batch_size: 32
+test_batch_size: 4
+
+transforms:
+  train:
+    - type: Resize
+      size: [*img_size, *img_size]
+    - type: RandomHorizontalFlip
+      prob: 0.5
+    - type: ToTensor
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+  val:
+    - type: Resize
+      size: [*img_size, *img_size]
+    - type: ToTensor
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+  test:
+    - type: Resize
+      size: [*img_size, *img_size]
+    - type: ToTensor
+    - type: Normalize
+      mean: *img_mean
+      std: *img_std
+
+model:
+  name: "VitRelative"
+  class_num: *class_num
+  input_channel: 3
+  patch_size: 16
+  emb_dim: 768
+  img_size: 224
+  L: 12
+  weight_init: "attention"
+
+# Training
+epochs: 100
+scheduler:
+  name: "CosineAnnealingWarmup"
+  max_lr: 0.0002
+  min_lr: 0.000001
+  warmup_epochs: 5
+
+optimizer:
+  name: "SGD"
+  momentum: 0.9
+  weight_decay: 0.00005
+  lr: 0.0002
+
+loss:
+  name: CrossEntropyLoss
+
+metrics:
+  name: "ConfusionMatrix"
+  class_num: *class_num
+  task: *task
+
+visualizer:
+  name: "ImageClsVisualizer"
+  mean: *img_mean
+  std: *img_std

@@ -1,10 +1,11 @@
-from Segmentation_2d.DeepLabV3.model.deeplabv3 import DeepLabV3, DeepLabV3Plus
-from Segmentation_2d.DeepLabV3.model.resnet import *
+from Segmentation_2d.model.DeepLabV3 import *
+from Segmentation_2d.model.SegFormer import SegFormer
 
 
 MODEL_DICT = {
     "DeepLabV3": DeepLabV3,
     "DeepLabV3Plus": DeepLabV3Plus,
+    "SegFormer": SegFormer,
 }
 
 def build_model(opts):

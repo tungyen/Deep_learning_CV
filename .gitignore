@@ -2,6 +2,7 @@ venv
 runs
 training_logs
 flower_data
+food-101
 MNIST
 cifar
 FashionMNIST
