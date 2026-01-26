@@ -43,12 +43,12 @@ def eval_model(args):
     model.eval()
 
     with torch.no_grad():
-        for imgs, targets, img_ids in tqdm(val_dataloader, desc=f"Evaluate", disable=not is_main_process()):
-            imgs = imgs.to(local_rank)
+        for input_dict in tqdm(val_dataloader, desc=f"Evaluate", disable=not is_main_process()):
+            imgs = input_dict['img'].to(local_rank)
             with torch.no_grad():
                 detections = model(imgs, False)
                 detections = [d.to(torch.device("cpu")) for d in detections]
-            metrics.update(img_ids, detections)
+            metrics.update(input_dict, detections)
     metrics.gather(local_rank)
 
     if is_main_process():

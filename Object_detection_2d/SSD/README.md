@@ -9,7 +9,7 @@ Test and evaluation are based on Paskal VOC 2012 val dataset. While training is 
 #### SSD 300 ####
 | Box Weight | Box Loss | mAP |
 |-----|----- |----------|
-| 1.0 | SmoothL1 | 87.61% |
+| 1.0 | SmoothL1 | 94.77% |
 | 1.0 | CIoU | 72.91% |
 
 #### SSD 512 ####

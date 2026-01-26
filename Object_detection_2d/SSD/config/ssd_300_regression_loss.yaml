@@ -14,19 +14,21 @@ transforms:
   train:
     - type: ConvertFromInts
     - type: PhotometricDistort
-    - type: Expand
-      mean: *img_mean
+    # - type: Expand
+    #   mean: *img_mean
     - type: RandomSampleCrop
     - type: RandomMirror
-    - type: ToPercentCoords
-    - type: ResizeImg
+    - type: ResizeImgBoxes
       size: *img_size
+      resize_boxes: True
+    - type: ToPercentCoords
     - type: SubtractMeans
       mean: *img_mean
     - type: ToTensor
   val:
     - type: ResizeImgBoxes
       size: *img_size
+      resize_boxes: False
     - type: SubtractMeans
       mean: *img_mean
     - type: ToTensor

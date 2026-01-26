@@ -18,15 +18,17 @@ transforms:
       mean: *img_mean
     - type: RandomSampleCrop
     - type: RandomMirror
-    - type: ToPercentCoords
-    - type: ResizeImg
+    - type: ResizeImgBoxes
       size: *img_size
+      resize_boxes: True
+    - type: ToPercentCoords
     - type: SubtractMeans
       mean: *img_mean
     - type: ToTensor
   val:
     - type: ResizeImgBoxes
       size: *img_size
+      resize_boxes: False
     - type: SubtractMeans
       mean: *img_mean
     - type: ToTensor
@@ -83,7 +85,7 @@ datasets:
     download_data: [False]
 
 # Training
-epochs: 200
+epochs: 100
 scheduler:
   name: "WarmupMultiStep"
   milestones: [80000, 100000]

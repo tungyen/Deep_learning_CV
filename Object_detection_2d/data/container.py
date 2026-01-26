@@ -39,5 +39,13 @@ class Container:
         boxes[:, 1::2] *= (new_height / img_height)
         return self
 
+    def rescale(self, scale, padding):
+        assert 'boxes' in self._data_dict
+        boxes = self._data_dict['boxes']
+        boxes[:, 0::2] -= (padding[0])
+        boxes[:, 1::2] -= (padding[1])
+        boxes /= scale
+        return self
+
     def __repr__(self):
         return self._data_dict.__repr__()

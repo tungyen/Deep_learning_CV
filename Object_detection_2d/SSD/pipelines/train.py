@@ -55,11 +55,10 @@ def train_model(args):
         train_dataloader.sampler.set_epoch(epoch)
         model.train()
         with tqdm(train_dataloader, desc=f"Train Epoch {epoch+1}", disable=not is_main_process()) as pbar:
-            for imgs, targets, _ in pbar:
-                imgs = imgs.to(local_rank)
-                targets = targets.to(local_rank)
-                boxes = targets['bboxes']
-                labels = targets['labels']
+            for input_dict in pbar:
+                imgs = input_dict['img'].to(local_rank)
+                boxes = input_dict['boxes'].to(local_rank)
+                labels = input_dict['labels'].to(local_rank)
                 pred_boxes, pred_logits = model(imgs)
                 loss = criterion(pred_boxes, pred_logits, boxes, labels)
                 optimizer.zero_grad()
@@ -77,12 +76,12 @@ def train_model(args):
         # Validation
         model.eval()
 
-        for imgs, targets, img_ids in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
-            imgs = imgs.to(local_rank)
+        for input_dict in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
+            imgs = input_dict['img'].to(local_rank)
             with torch.no_grad():
                 detections = model(imgs, False)
                 detections = [d.to(torch.device("cpu")) for d in detections]
-            metrics.update(img_ids, detections)
+            metrics.update(input_dict, detections)
 
         metrics.gather(local_rank)
         if is_main_process():

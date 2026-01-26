@@ -110,12 +110,15 @@ class ImageDetectionVisualizer:
         plt.axis("off")
         plt.show()
 
-    def visualize_detection(self, imgs, detections, img_info, save_path):
+    def visualize_detection(self, input_dict: dict, detections, img_info, save_path):
         batch_size = len(detections)
-        imgs = self.denormalize(imgs)
+        imgs = self.denormalize(input_dict['img'])
         if np.max(imgs) <= 1.0:
             imgs = imgs * 255.0 
         imgs = imgs.astype(np.uint8)
+        scale = input_dict['scale']
+        padding = input_dict['padding']
+        rescale_size = input_dict['rescale_size']
         
         colors = self.cmap(len(self.class_dict), normalized=True)
         row = 2
@@ -129,7 +132,10 @@ class ImageDetectionVisualizer:
                 continue
 
             img = imgs[i] # (H, W, C)
-            detections[i] = detections[i].resize((img_info[i]['width'], img_info[i]['height'])).numpy()
+            pad_w, pad_h = padding[i, 0], padding[i, 1]
+            rescale_w, rescale_h = rescale_size[i, 0], rescale_size[i, 1]
+            img = img[pad_h:pad_h+rescale_h, pad_w:pad_w+rescale_w, :]
+            detections[i] = detections[i].rescale(scale[i], padding[i]).numpy()
             bboxes = detections[i]['boxes']
             labels = detections[i]['labels']
             scores = detections[i]['scores']

@@ -8,10 +8,10 @@ class Compose_target(object):
     def __init__(self, target_transforms):
         self.target_transforms = target_transforms
         
-    def __call__(self, gt_boxes, gt_labels, device=None):
+    def __call__(self, input_dict: dict, device=None):
         for t in self.target_transforms:
-            result_dict = t(gt_boxes=gt_boxes, gt_labels=gt_labels, device=device)
-        return result_dict
+            input_dict = t(input_dict, device=device)
+        return input_dict
 
 class SSDTargetTransformOffset:
     def __init__(self, priors_cxcy, center_variance=0.1, size_variance=0.2,
@@ -22,7 +22,9 @@ class SSDTargetTransformOffset:
         self.size_variance = size_variance
         self.iou_thres = iou_thres
 
-    def __call__(self, gt_boxes, gt_labels, device=None):
+    def __call__(self, input_dict: dict, device=None):
+        gt_boxes = input_dict['boxes']
+        gt_labels = input_dict['labels']
         if type(gt_boxes) is np.ndarray:
             gt_boxes = torch.from_numpy(gt_boxes)
 
@@ -31,7 +33,10 @@ class SSDTargetTransformOffset:
         boxes_xy, labels = assign_priors(gt_boxes, gt_labels, self.priors_xy, self.iou_thres)
         boxes_cxcy = xy_to_cxcy(boxes_xy)
         offsets = cxcy_to_offset(boxes_cxcy, self.priors_cxcy, self.center_variance, self.size_variance)
-        return {"bboxes": offsets, "labels": labels}
+
+        input_dict['boxes'] = offsets
+        input_dict['labels'] = labels
+        return input_dict
 
 class SSDTargetTransformCoord:
     def __init__(self, priors_cxcy, center_variance=0.1, size_variance=0.2,
@@ -42,14 +47,18 @@ class SSDTargetTransformCoord:
         self.size_variance = size_variance
         self.iou_thres = iou_thres
 
-    def __call__(self, gt_boxes, gt_labels, device=None):
+    def __call__(self, input_dict: dict, device=None):
+        gt_boxes = input_dict['boxes']
+        gt_labels = input_dict['labels']
         if type(gt_boxes) is np.ndarray:
             gt_boxes = torch.from_numpy(gt_boxes)
 
         if type(gt_labels) is np.ndarray:
             gt_labels = torch.from_numpy(gt_labels)
         boxes_xy, labels = assign_priors(gt_boxes, gt_labels, self.priors_xy, self.iou_thres)
-        return {"bboxes": boxes_xy, "labels": labels}
+        input_dict['boxes'] = boxes_xy
+        input_dict['labels'] = labels
+        return input_dict
 
 class CenterNetTargetTransform:
     def __init__(self, img_size=300, class_num=21, max_objs=100):
@@ -57,7 +66,9 @@ class CenterNetTargetTransform:
         self.class_num = class_num
         self.max_objs = max_objs
 
-    def __call__(self, gt_boxes, gt_labels, device=None):
+    def __call__(self, input_dict: dict, device=None):
+        gt_boxes = input_dict['boxes']
+        gt_labels = input_dict['labels']
         output_size = self.img_size // 4
         hm = torch.zeros((self.class_num, output_size, output_size), dtype=torch.float32, device=device)
         wh = torch.zeros((self.max_objs, 2), dtype=torch.float32, device=device)
@@ -91,11 +102,9 @@ class CenterNetTargetTransform:
                 offsets[k] = ct - ct_int
                 offsets_mask[k] = 1
 
-        result = {
-            'hm': hm,
-            'wh': wh,
-            'offsets': offsets,
-            'ind': ind,
-            'offsets_mask': offsets_mask
-        }
-        return result
+        input_dict['hm'] = hm
+        input_dict['wh'] = wh
+        input_dict['offsets'] = offsets
+        input_dict['ind'] = ind
+        input_dict['offsets_mask'] = offsets_mask
+        return input_dict

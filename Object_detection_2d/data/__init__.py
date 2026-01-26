@@ -13,18 +13,10 @@ class BatchCollator:
         self.is_train = is_train
 
     def __call__(self, batch):
-        transposed_batch = list(zip(*batch))
-        imgs = default_collate(transposed_batch[0])
-        img_ids = default_collate(transposed_batch[2])
-
-        if self.is_train:
-            list_targets = transposed_batch[1]
-            targets = Container(
-                {key: default_collate([d[key] for d in list_targets]) for key in list_targets[0]}
-            )
-        else:
-            targets = None
-        return imgs, targets, img_ids
+        input_dict = Container(
+            {key: default_collate([d[key] for d in batch]) for key in batch[0]}
+        )
+        return input_dict
 
 
 def build_dataloader(opts):

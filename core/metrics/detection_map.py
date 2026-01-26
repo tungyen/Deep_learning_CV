@@ -13,9 +13,12 @@ class DetectionMap:
         self.dataset = dataset
         self.iou_thres = iou_thres
 
-    def update(self, img_ids, detections):
+    def update(self, input_dict: dict, detections):
+        img_ids = input_dict['img_id']
+        scale = input_dict['scale']
+        padding = input_dict['padding']
         self.pred_results.update(
-            {int(img_id): d for img_id, d in zip(img_ids, detections)}
+            {int(img_id): [d, s, p] for img_id, d, s, p in zip(img_ids, detections, scale, padding)}
         )
 
     def gather(self, local_rank=None):
@@ -38,8 +41,8 @@ class DetectionMap:
             gt_difficulties_all.append(gt_difficulties)
 
             img_info = self.dataset.get_img_info(i)
-            pred = self.pred_results[i]
-            pred = pred.resize((img_info['width'], img_info['height'])).numpy()
+            pred, scale, padding = self.pred_results[i]
+            pred = pred.rescale(scale, padding).numpy()
             boxes, labels, scores = pred['boxes'], pred['labels'], pred['scores']
 
             pred_boxes_all.append(boxes)

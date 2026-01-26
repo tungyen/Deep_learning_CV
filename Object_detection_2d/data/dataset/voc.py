@@ -155,17 +155,21 @@ class VocDetectionDataset(Dataset):
             labels = labels[difficulties == 0]
 
         img = self._read_image(img_id, index)
+        input_dict = {
+            'img': img,
+            'img_id': index
+        }
+
+        if self.splits[0] == 'trainval':
+            input_dict['boxes'] = boxes
+            input_dict['labels'] = labels
         
         if self.transform is not None:
-            img, boxes, labels = self.transform(img, boxes, labels)
-        result = {
-            "boxes": boxes,
-            "labels": labels
-        }
-        if self.target_transform is not None:
-            result = self.target_transform(boxes, labels, self.device)
-        targets = Container(result)
-        return img, targets, index
+            input_dict = self.transform(input_dict)
+        if self.target_transform is not None and self.splits[0] == 'trainval':
+            input_dict = self.target_transform(input_dict, self.device)
+        input_dict = Container(input_dict)
+        return input_dict
 
     def __len__(self):
         return len(self.ids)

@@ -39,12 +39,12 @@ def test_model(args):
 
     visualizer = build_visualizer(class_dict, cmap, opts.visualizer)
 
-    imgs, _, idxes = next(iter(test_dataloader))
+    input_dict = next(iter(test_dataloader))
     with torch.no_grad():
-        detections = model(imgs.to(local_rank), False)
+        detections = model(input_dict['img'].to(local_rank), False)
         detections = [d.to(torch.device("cpu")) for d in detections]
-    img_info = [test_dataloader.dataset.get_img_info(idxes[i]) for i in range(imgs.shape[0])]
-    visualizer.visualize_detection(imgs, detections, img_info, save_path)
+    img_info = [test_dataloader.dataset.get_img_info(input_dict['img_id'][i]) for i in range(input_dict['img'].shape[0])]
+    visualizer.visualize_detection(input_dict, detections, img_info, save_path)
 
 def parse_args():
     parse = argparse.ArgumentParser()
