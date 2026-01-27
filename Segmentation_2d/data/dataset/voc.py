@@ -137,11 +137,14 @@ class VocSegmentationDataset(Dataset):
 
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
-        target = Image.open(self.masks[index])
+        label = Image.open(self.masks[index])
+        input_dict = {
+            'img': img,
+            'label': label
+        }
         if self.transform is not None:
-            img, target = self.transform(img, target)
-
-        return img, target
+            input_dict = self.transform(input_dict)
+        return input_dict
 
     def __len__(self):
         return len(self.images)

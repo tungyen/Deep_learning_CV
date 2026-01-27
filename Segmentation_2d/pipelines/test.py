@@ -39,11 +39,11 @@ def test_model(args):
 
     img_visualizer = build_visualizer(opts.visualizer)
 
-    imgs, _ = next(iter(test_dataloader))
+    input_dict = next(iter(test_dataloader))
     with torch.no_grad():
-        outputs = model(imgs.to(local_rank))
+        outputs = model(input_dict['img'].to(local_rank))
         pred_classes = torch.argmax(outputs, dim=1).cpu().numpy()
-        img_visualizer.visualize(pred_classes, imgs, save_path)
+        img_visualizer.visualize(pred_classes, input_dict, save_path)
 
 def parse_args():
     parse = argparse.ArgumentParser()

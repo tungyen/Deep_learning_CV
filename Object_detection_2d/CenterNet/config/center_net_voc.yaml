@@ -16,13 +16,15 @@ transforms:
     - type: RandomMirror
     - type: ResizeImgBoxes
       size: *img_size
+      resize_boxes: True
     - type: Normalize
       mean: *img_mean
       std: *img_std
     - type: ToTensor
   val:
-    - type: ResizeImg
+    - type: ResizeImgBoxes
       size: *img_size
+      resize_boxes: False
     - type: Normalize
       mean: *img_mean
       std: *img_std

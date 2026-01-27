@@ -37,10 +37,10 @@ def eval_model(args):
         print("Start evaluation model {}!".format(model_name))
     
     with torch.no_grad():
-        for imgs, labels in tqdm(val_dataloader, desc="Evaluate", disable=not is_main_process()):
-            output = model(imgs.to(local_rank))
+        for input_dict in tqdm(val_dataloader, desc="Evaluate", disable=not is_main_process()):
+            output = model(input_dict['img'].to(local_rank))
             pred_class = torch.argmax(output, dim=1)
-            metrics.update(pred_class.cpu(), labels)
+            metrics.update(pred_class.cpu(), input_dict)
     
     metrics.gather(local_rank)
     if is_main_process():

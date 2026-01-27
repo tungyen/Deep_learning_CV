@@ -29,7 +29,6 @@ TRANSFORM_DICT = {
     "RandomMirror": RandomMirror,
     "ToPercentCoords": ToPercentCoords,
     "ToAbsoluteCoords": ToAbsoluteCoords,
-    "ResizeImg": ResizeImg,
     "SubtractMeans": SubtractMeans,
     "ToTensor": ToTensor,
     "Normalize": Normalize,

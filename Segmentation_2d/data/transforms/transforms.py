@@ -10,10 +10,10 @@ class Compose(object):
     def __init__(self, transforms):
         self.transforms = transforms
         
-    def __call__(self, img, label):
+    def __call__(self, input_dict):
         for t in self.transforms:
-            img, label = t(img, label)
-        return img, label
+            input_dict = t(input_dict)
+        return input_dict
     
     def __repr__(self):
         format_string = self.__class__.__name__ + '('
@@ -27,10 +27,12 @@ class RandomHorizontalFlip(object):
     def __init__(self, prob=0.5):
         self.prob = prob
         
-    def __call__(self, img, label):
+    def __call__(input_dict: dict):
         if random.random() < self.prob:
-            return F.hflip(img), F.hflip(label)
-        return img, label
+            input_dict['img'] = F.hflip(input_dict['img'])
+            input_dict['label'] = F.hflip(input_dict['label'])
+            return input_dict
+        return input_dict
     
     def __repr__(self):
         return self.__class__.__name__ + 'p={}'.format(self.prob)
@@ -39,10 +41,12 @@ class RandomVerticalFlip(object):
     def __init__(self, prob=0.5):
         self.prob = prob
 
-    def __call__(self, img, label):
+    def __call__(input_dict: dict):
         if random.random() < self.prob:
-            return F.vflip(img), F.vflip(label)
-        return img, label
+            input_dict['img'] = F.vflip(input_dict['img'])
+            input_dict['label'] = F.vflip(input_dict['label'])
+            return input_dict
+        return input_dict
 
     def __repr__(self):
         return self.__class__.__name__ + '(p={})'.format(self.prob)
@@ -55,8 +59,10 @@ class CenterCrop(object):
         else:
             self.crop_size = tuple(crop_size)
 
-    def __call__(self, img, label):
-        return F.center_crop(img, self.crop_size), F.center_crop(label, self.crop_size)
+    def __call__(input_dict: dict):
+        input_dict['img'] = F.center_crop(input_dict['img'], self.crop_size)
+        input_dict['label'] = F.center_crop(input_dict['label'], self.crop_size)
+        return input_dict
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={0})'.format(self.crop_size)
@@ -67,10 +73,13 @@ class RandomScale(object):
         self.scale_range = scale_range
         self.interpolation = interpolation
 
-    def __call__(self, img, label):
+    def __call__(input_dict: dict):
+        img = input_dict['img']
         scale = random.uniform(self.scale_range[0], self.scale_range[1])
-        target_size = ( int(img.size[1]*scale), int(img.size[0]*scale) )
-        return F.resize(img, target_size, self.interpolation), F.resize(label, target_size, Image.NEAREST)
+        target_size = ( int(img.size[1]*scale), int(img.size[0]*scale))
+        input_dict['img'] = F.resize(img, target_size, self.interpolation)
+        input_dict['label'] = F.resize(label, target_size, Image.NEAREST)
+        return input_dict
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={0}, interpolation=bilinear)'.format(self.size)
@@ -81,59 +90,32 @@ class Scale(object):
         self.scale = scale
         self.interpolation = interpolation
 
-    def __call__(self, img, label):
+    def __call__(input_dict: dict):
+        img = input_dict['img']
+        label = input_dict['label']
         assert img.size == label.size
         target_size = ( int(img.size[1]*self.scale), int(img.size[0]*self.scale) ) # (H, W)
-        return F.resize(img, target_size, self.interpolation), F.resize(label, target_size, Image.NEAREST)
+        input_dict['img'] = F.resize(img, target_size, self.interpolation)
+        input_dict['label'] = F.resize(label, target_size, Image.NEAREST)
+        return input_dict
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={0}, interpolation=bilinear)'.format(self.size)
-    
-    
-class RandomRotation(object):
-    def __init__(self, degrees, resample=False, expand=False, center=None):
-        if isinstance(degrees, numbers.Number):
-            if degrees < 0:
-                raise ValueError("If degrees is a single number, it must be positive.")
-            self.degrees = (-degrees, degrees)
-        else:
-            if len(degrees) != 2:
-                raise ValueError("If degrees is a sequence, it must be of len 2.")
-            self.degrees = degrees
 
-        self.resample = resample
-        self.expand = expand
-        self.center = center
-
-    @staticmethod
-    def get_params(degrees):
-        angle = random.uniform(degrees[0], degrees[1])
-        return angle
-
-    def __call__(self, img, label):
-        angle = self.get_params(self.degrees)
-        return F.rotate(img, angle, self.resample, self.expand, self.center), F.rotate(label, angle, self.resample, self.expand, self.center)
-
-    def __repr__(self):
-        format_string = self.__class__.__name__ + '(degrees={0}'.format(self.degrees)
-        format_string += ', resample={0}'.format(self.resample)
-        format_string += ', expand={0}'.format(self.expand)
-        if self.center is not None:
-            format_string += ', center={0}'.format(self.center)
-        format_string += ')'
-        return format_string
     
 class Pad(object):
     def __init__(self, diviser=32):
         self.diviser = diviser
     
-    def __call__(self, img, label):
+    def __call__(input_dict: dict):
+        img = input_dict['img']
+        label = input_dict['label']
         h, w = img.size
         ph = (h//self.diviser+1)*self.diviser - h if h%self.diviser!=0 else 0
         pw = (w//self.diviser+1)*self.diviser - w if w%self.diviser!=0 else 0
-        img = F.pad(img, ( pw//2, pw-pw//2, ph//2, ph-ph//2) )
-        label = F.pad(label, ( pw//2, pw-pw//2, ph//2, ph-ph//2))
-        return img, label
+        input_dict['img'] = F.pad(img, (pw//2, pw-pw//2, ph//2, ph-ph//2))
+        input_dict['label'] = F.pad(label, (pw//2, pw-pw//2, ph//2, ph-ph//2))
+        return input_dict
     
     
 class ToTensor(object):
@@ -141,11 +123,22 @@ class ToTensor(object):
         self.normalize = normalize
         self.target_type = target_type
         
-    def __call__(self, img, label):
+    def __call__(input_dict: dict):
+        img = input_dict['img']
+        label = input_dict['label']
         if self.normalize:
-            return F.to_tensor(img), torch.from_numpy( np.array( label, dtype=self.target_type) )
+            img = F.to_tensor(img)
+            label = torch.from_numpy( np.array( label, dtype=self.target_type) )
         else:
-            return torch.from_numpy( np.array(img, dtype=np.float32).transpose(2, 0, 1) ), torch.from_numpy( np.array( label, dtype=self.target_type) )
+            img = torch.from_numpy(np.array(img, dtype=np.float32).transpose(2, 0, 1))
+            label = torch.from_numpy(np.array(label, dtype=self.target_type))
+        input_dict['img'] = img
+        input_dict['label'] = label
+        if 'padding' in input_dict:
+            input_dict['padding'] = torch.tensor(input_dict['padding'])
+        if 'rescale_size' in input_dict:
+            input_dict['rescale_size'] = torch.tensor(input_dict['rescale_size'])
+        return input_dict
 
     def __repr__(self):
         return self.__class__.__name__ + '()'
@@ -156,8 +149,9 @@ class Normalize(object):
         self.mean = mean
         self.std = std
 
-    def __call__(self, tensor, label):
-        return F.normalize(tensor, self.mean, self.std), label
+    def __call__(self, input_dict):
+        input_dict['img'] = F.normalize(input_dict['img'], self.mean, self.std)
+        return input_dict
 
     def __repr__(self):
         return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
@@ -184,7 +178,9 @@ class RandomCrop(object):
         j = random.randint(0, w - tw)
         return i, j, th, tw
 
-    def __call__(self, img, label):
+    def __call__(input_dict: dict):
+        img = input_dict['img']
+        label = input_dict['label']
         if self.padding > 0:
             img = F.pad(img, self.padding)
             label = F.pad(label, self.padding)
@@ -200,8 +196,9 @@ class RandomCrop(object):
             label = F.pad(label, padding=int((1 + self.crop_size[0] - label.size[1]) / 2), fill=self.ignore_index)
 
         i, j, h, w = self.get_params(img, self.crop_size)
-
-        return F.crop(img, i, j, h, w), F.crop(label, i, j, h, w)
+        input_dict['img'] = F.crop(img, i, j, h, w)
+        input_dict['label'] = F.crop(label, i, j, h, w)
+        return input_dict
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={0}, padding={1})'.format(self.crop_size, self.padding)
@@ -212,8 +209,10 @@ class Resize(object):
         self.size = tuple(size)
         self.interpolation = interpolation
 
-    def __call__(self, img, label):
-        return F.resize(img, self.size, self.interpolation), F.resize(label, self.size, Image.NEAREST)
+    def __call__(input_dict: dict):
+        input_dict['img'] = F.resize(img, self.size, self.interpolation)
+        input_dict['label'] = F.resize(label, self.size, Image.NEAREST)
+        return input_dict
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={0}, interpolation=bilinear)'.format(self.size)
@@ -223,13 +222,39 @@ class ResizeShorterSide(object):
         self.shorter_size = shorter_size
         self.interpolation = interpolation
 
-    def __call__(self, img, label):
+    def __call__(input_dict: dict):
+        img = input_dict['img']
         w, h = img.size
         if w < h:
             target_size = (self.shorter_size, int(h/w * self.shorter_size))
         else:
             target_size = (int(w/h * self.shorter_size), self.shorter_size)
-        return F.resize(img, target_size, self.interpolation), F.resize(label, target_size, Image.NEAREST)
+        input_dict['img'] = F.resize(img, target_size, self.interpolation)
+        input_dict['label'] = F.resize(label, target_size, Image.NEAREST)
+        return input_dict
+
+class ResizeLetterBoxes(object):
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, input_dict: dict):
+        if isinstance(self.size, tuple):
+            ih, iw = self.size[1], self.size[0]
+        else:
+            ih, iw = self.size, self.size
+        img = input_dict['img']
+        h, w = img.shape[:2]
+        scale = min(iw/w, ih/h)
+        nw, nh = int(scale*w), int(scale*h)
+        img_resized = cv2.resize(img, (nw, nh))
+        dw, dh = (iw-nw) // 2, (ih-nh) // 2
+        img_padded = np.full(shape=[ih, iw, 3], fill_value=0)
+        img_padded[dh:nh+dh, dw:dw+nw, :] = img_resized
+        input_dict['img'] = img_padded
+        input_dict['scale'] = scale
+        input_dict['padding'] = [dw, dh]
+        input_dict['rescale_size'] = [nw, nh]
+        return input_dict
     
     
 class ColorJitter(object):
@@ -284,10 +309,11 @@ class ColorJitter(object):
 
         return transform
 
-    def __call__(self, img, label):
+    def __call__(input_dict: dict):
         transform = self.get_params(self.brightness, self.contrast,
                                     self.saturation, self.hue)
-        return transform(img), label
+        input_dict['img'] = transform(input_dict['img'])
+        return input_dict
 
     def __repr__(self):
         format_string = self.__class__.__name__ + '('
@@ -295,33 +321,4 @@ class ColorJitter(object):
         format_string += ', contrast={0}'.format(self.contrast)
         format_string += ', saturation={0}'.format(self.saturation)
         format_string += ', hue={0})'.format(self.hue)
-        return format_string
-    
-
-class Lambda(object):
-    def __init__(self, lambd):
-        self.lambd = lambd
-
-    def __call__(self, img):
-        return self.lambd(img)
-
-    def __repr__(self):
-        return self.__class__.__name__ + '()'
-    
-    
-class SingleCompose(object):
-    def __init__(self, transforms):
-        self.transforms = transforms
-
-    def __call__(self, img):
-        for t in self.transforms:
-            img = t(img)
-        return img
-
-    def __repr__(self):
-        format_string = self.__class__.__name__ + '('
-        for t in self.transforms:
-            format_string += '\n'
-            format_string += '    {0}'.format(t)
-        format_string += '\n)'
         return format_string

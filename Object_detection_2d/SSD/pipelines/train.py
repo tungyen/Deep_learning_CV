@@ -3,7 +3,6 @@ import argparse
 import numpy as np
 import os
 import torch
-import torch.optim as optim
 
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -15,7 +14,7 @@ from core.utils import is_main_process, init_ddp
 
 from Object_detection_2d.data import build_dataloader
 from Object_detection_2d.SSD.loss import build_loss
-from Object_detection_2d.SSD.model import build_model, PostProcessor
+from Object_detection_2d.SSD.model import build_model
 from Object_detection_2d.utils import parse_config
 
 def train_model(args):

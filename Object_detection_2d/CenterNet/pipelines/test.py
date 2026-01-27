@@ -11,7 +11,7 @@ from core.utils import is_main_process, init_ddp
 
 from Object_detection_2d.data import build_dataloader, build_cmap
 from Object_detection_2d.utils import build_visualizer, parse_config
-from Object_detection_2d.CenterNet.model import build_model, PostProcessor
+from Object_detection_2d.CenterNet.model import build_model
 
 def test_model(args):
     local_rank, rank, world_size = init_ddp()

@@ -104,10 +104,13 @@ class CityScapesDataset(Dataset):
         
         label_path = data["label_img_path"]
         label = Image.open(label_path)
-        
+        input_dict = {
+            'img': img,
+            'label': label
+        }
         if self.transform:
-            img, label = self.transform(img, label)
-        return img, label
+            input_dict = self.transform(input_dict)
+        return input_dict
     
     @classmethod
     def decode_target(cls, target):

@@ -3,7 +3,6 @@ import argparse
 import numpy as np
 import os
 import torch
-import torch.optim as optim
 
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -15,7 +14,7 @@ from core.utils import is_main_process, init_ddp
 
 from Object_detection_2d.data import build_dataloader
 from Object_detection_2d.CenterNet.loss import build_loss
-from Object_detection_2d.CenterNet.model import build_model, PostProcessor
+from Object_detection_2d.CenterNet.model import build_model
 from Object_detection_2d.utils import parse_config
 
 def train_model(args):
@@ -62,7 +61,7 @@ def train_model(args):
         with tqdm(train_dataloader, desc=f"Train Epoch {epoch+1}", disable=not is_main_process()) as pbar:
             for input_dict in pbar:
                 input_dict = input_dict.to(local_rank)
-                pred_dict = model(imgs)
+                pred_dict = model(input_dict['img'])
                 loss = criterion(pred_dict, input_dict)
                 optimizer.zero_grad()
                 loss['loss'].backward()

@@ -107,4 +107,6 @@ class CenterNetTargetTransform:
         input_dict['offsets'] = offsets
         input_dict['ind'] = ind
         input_dict['offsets_mask'] = offsets_mask
+        input_dict.pop('boxes')
+        input_dict.pop('labels')
         return input_dict

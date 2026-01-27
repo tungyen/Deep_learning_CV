@@ -3,7 +3,6 @@ import argparse
 import numpy as np
 import os
 import torch
-import torch.optim as optim
 
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP

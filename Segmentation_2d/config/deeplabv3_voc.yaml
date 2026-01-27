@@ -16,8 +16,10 @@ test_batch_size: 4
 
 transforms:
   train:
-    - type: RandomScale
-      scale_range: [0.5, 2.0]
+    # - type: RandomScale
+    #   scale_range: [0.5, 2.0]
+    - type: ResizeShorterSide
+      shorter_size: 512
     - type: RandomCrop
       crop_size: [512, 512]
       pad_if_needed: True
@@ -27,10 +29,8 @@ transforms:
       mean: *img_mean
       std: *img_std
   val:
-    - type: Resize
-      size: [512, 512]
-    - type: CenterCrop
-      crop_size: [512, 512]
+    - type: ResizeLetterBoxes
+      size: *img_size
     - type: ToTensor
     - type: Normalize
       mean: *img_mean

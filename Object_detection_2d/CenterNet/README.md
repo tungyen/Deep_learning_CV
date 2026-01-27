@@ -9,7 +9,7 @@ Test and evaluation are based on Paskal VOC 2012 val dataset. While training is 
 #### CenterNet 512 ####
 | Width Weight | Offsets Weight | mAP |
 |-----|----- |----------|
-| 0.1 | 1.0 | 92.01% |
+| 0.1 | 1.0 | 95.57% |
 
 ### Training ###
 ```bash

@@ -88,19 +88,6 @@ class ToPercentCoords(object):
         input_dict['boxes'] = boxes
         return input_dict
 
-class ResizeImg(object):
-    def __init__(self, size):
-        self.size = size
-
-    def __call__(self, input_dict: dict):
-        img = input_dict['img']
-        if isinstance(self.size, tuple):
-            img = cv2.resize(img, (self.size[0], self.size[1]))
-        else:
-            img = cv2.resize(img, (self.size, self.size))
-        input_dict['img'] = img
-        return input_dict
-
 class ResizeImgBoxes(object):
     def __init__(self, size, resize_boxes=True):
         self.size = size
