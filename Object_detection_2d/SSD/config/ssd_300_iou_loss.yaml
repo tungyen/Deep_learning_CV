@@ -14,8 +14,6 @@ transforms:
   train:
     - type: ConvertFromInts
     - type: PhotometricDistort
-    # - type: Expand
-    #   mean: *img_mean
     - type: RandomSampleCrop
     - type: RandomMirror
     - type: ResizeImgBoxes
@@ -102,6 +100,7 @@ optimizer:
 
 loss:
   name: MultiBoxesIouLoss
+  prior: *prior
   neg_pos_ratio: 3
   box_loss_weight: 1.0
   center_variance: *center_variance

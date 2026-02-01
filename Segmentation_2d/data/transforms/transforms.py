@@ -5,6 +5,7 @@ import random
 import numbers
 import numpy as np
 from PIL import Image
+import cv2
 
 class Compose(object):
     def __init__(self, transforms):
@@ -27,10 +28,10 @@ class RandomHorizontalFlip(object):
     def __init__(self, prob=0.5):
         self.prob = prob
         
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
         if random.random() < self.prob:
-            input_dict['img'] = F.hflip(input_dict['img'])
-            input_dict['label'] = F.hflip(input_dict['label'])
+            input_dict['img'] = input_dict['img'][:, ::-1, :]
+            input_dict['label'] = input_dict['label'][:, ::-1]
             return input_dict
         return input_dict
     
@@ -41,7 +42,7 @@ class RandomVerticalFlip(object):
     def __init__(self, prob=0.5):
         self.prob = prob
 
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
         if random.random() < self.prob:
             input_dict['img'] = F.vflip(input_dict['img'])
             input_dict['label'] = F.vflip(input_dict['label'])
@@ -59,7 +60,7 @@ class CenterCrop(object):
         else:
             self.crop_size = tuple(crop_size)
 
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
         input_dict['img'] = F.center_crop(input_dict['img'], self.crop_size)
         input_dict['label'] = F.center_crop(input_dict['label'], self.crop_size)
         return input_dict
@@ -73,10 +74,10 @@ class RandomScale(object):
         self.scale_range = scale_range
         self.interpolation = interpolation
 
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
         img = input_dict['img']
         scale = random.uniform(self.scale_range[0], self.scale_range[1])
-        target_size = ( int(img.size[1]*scale), int(img.size[0]*scale))
+        target_size = ( int(img.shape[0]*scale), int(img.shape[1]*scale))
         input_dict['img'] = F.resize(img, target_size, self.interpolation)
         input_dict['label'] = F.resize(label, target_size, Image.NEAREST)
         return input_dict
@@ -90,11 +91,11 @@ class Scale(object):
         self.scale = scale
         self.interpolation = interpolation
 
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
         img = input_dict['img']
         label = input_dict['label']
         assert img.size == label.size
-        target_size = ( int(img.size[1]*self.scale), int(img.size[0]*self.scale) ) # (H, W)
+        target_size = ( int(img.shape[0]*self.scale), int(img.shape[1]*self.scale)) # (H, W)
         input_dict['img'] = F.resize(img, target_size, self.interpolation)
         input_dict['label'] = F.resize(label, target_size, Image.NEAREST)
         return input_dict
@@ -107,7 +108,7 @@ class Pad(object):
     def __init__(self, diviser=32):
         self.diviser = diviser
     
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
         img = input_dict['img']
         label = input_dict['label']
         h, w = img.size
@@ -119,25 +120,23 @@ class Pad(object):
     
     
 class ToTensor(object):
-    def __init__(self, normalize=True, target_type='uint8'):
+    def __init__(self, normalize=True):
         self.normalize = normalize
-        self.target_type = target_type
         
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
         img = input_dict['img']
         label = input_dict['label']
+        img = torch.from_numpy(img.astype(np.float32)).permute(2, 0, 1)
         if self.normalize:
-            img = F.to_tensor(img)
-            label = torch.from_numpy( np.array( label, dtype=self.target_type) )
+            img = img.float() / 255.0
         else:
-            img = torch.from_numpy(np.array(img, dtype=np.float32).transpose(2, 0, 1))
-            label = torch.from_numpy(np.array(label, dtype=self.target_type))
+            img = img.float()
+        label = torch.from_numpy(label.astype(np.int64)).long()
         input_dict['img'] = img
         input_dict['label'] = label
-        if 'padding' in input_dict:
-            input_dict['padding'] = torch.tensor(input_dict['padding'])
-        if 'rescale_size' in input_dict:
-            input_dict['rescale_size'] = torch.tensor(input_dict['rescale_size'])
+        for k in input_dict:
+            if isinstance(input_dict[k], list):
+                input_dict[k] = torch.tensor(input_dict[k])
         return input_dict
 
     def __repr__(self):
@@ -149,8 +148,9 @@ class Normalize(object):
         self.mean = mean
         self.std = std
 
-    def __call__(self, input_dict):
-        input_dict['img'] = F.normalize(input_dict['img'], self.mean, self.std)
+    def __call__(self, input_dict: dict):
+        img = input_dict['img'].float()
+        input_dict['img'] = F.normalize(img, self.mean, self.std)
         return input_dict
 
     def __repr__(self):
@@ -169,7 +169,7 @@ class RandomCrop(object):
 
     @staticmethod
     def get_params(img, output_size):
-        w, h = img.size
+        h, w = img.shape[0], img.shape[1]
         th, tw = output_size
         if w == tw and h == th:
             return 0, 0, h, w
@@ -178,26 +178,28 @@ class RandomCrop(object):
         j = random.randint(0, w - tw)
         return i, j, th, tw
 
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
         img = input_dict['img']
         label = input_dict['label']
-        if self.padding > 0:
-            img = F.pad(img, self.padding)
-            label = F.pad(label, self.padding)
+
+        h, w = img.shape[:2]
+        crop_h, crop_w = self.crop_size
 
         # pad the width if needed
-        if self.pad_if_needed and img.size[0] < self.crop_size[1]:
-            img = F.pad(img, padding=int((1 + self.crop_size[1] - img.size[0]) / 2))
-            label = F.pad(label, padding=int((1 + self.crop_size[1] - label.size[0]) / 2), fill=self.ignore_index)
+        if self.pad_if_needed and w < crop_w:
+            pad = int((1 + crop_w - w) / 2)
+            img = np.pad(img, ((0, 0), (pad, pad), (0, 0)), mode='constant', constant_value=0)
+            label = np.pad(label, ((0, 0), (pad, pad), (0, 0)), mode='constant', constant_value=self.ignore_index)
 
         # pad the height if needed
-        if self.pad_if_needed and img.size[1] < self.crop_size[0]:
-            img = F.pad(img, padding=int((1 + self.crop_size[0] - img.size[1]) / 2))
-            label = F.pad(label, padding=int((1 + self.crop_size[0] - label.size[1]) / 2), fill=self.ignore_index)
+        if self.pad_if_needed and h < crop_h:
+            pad = int((1 + crop_h - h) / 2)
+            img = np.pad(img, ((pad, pad), (0, 0), (0, 0)), mode='constant', constant_value=0)
+            label = np.pad(label, ((pad, pad), (0, 0), (0, 0)), mode='constant', constant_value=self.ignore_index)
 
         i, j, h, w = self.get_params(img, self.crop_size)
-        input_dict['img'] = F.crop(img, i, j, h, w)
-        input_dict['label'] = F.crop(label, i, j, h, w)
+        input_dict['img'] = img[i:i+h, j:j+w, :]
+        input_dict['label'] = label[i:i+h, j:j+w]
         return input_dict
 
     def __repr__(self):
@@ -209,33 +211,43 @@ class Resize(object):
         self.size = tuple(size)
         self.interpolation = interpolation
 
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
+        img = input_dict['img']
+        label = input_dict['label']
+        h, w = img.shape[0], img.shape[1]
         input_dict['img'] = F.resize(img, self.size, self.interpolation)
         input_dict['label'] = F.resize(label, self.size, Image.NEAREST)
+        input_dict['original_size'] = [h, w]
         return input_dict
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={0}, interpolation=bilinear)'.format(self.size)
 
 class ResizeShorterSide(object):
-    def __init__(self, shorter_size, interpolation=Image.BILINEAR):
+    def __init__(self, shorter_size):
         self.shorter_size = shorter_size
-        self.interpolation = interpolation
 
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
         img = input_dict['img']
-        w, h = img.size
+        label = input_dict['label']
+        h, w = img.shape[0], img.shape[1]
         if w < h:
             target_size = (self.shorter_size, int(h/w * self.shorter_size))
         else:
             target_size = (int(w/h * self.shorter_size), self.shorter_size)
-        input_dict['img'] = F.resize(img, target_size, self.interpolation)
-        input_dict['label'] = F.resize(label, target_size, Image.NEAREST)
+        input_dict['img'] = cv2.resize(img, target_size)
+
+        label = input_dict['label']
+        label = Image.fromarray(label)
+        target_w, target_h = target_size
+        label = np.array(F.resize(label, (target_h, target_w), Image.NEAREST))
+        input_dict['label'] = label
         return input_dict
 
 class ResizeLetterBoxes(object):
-    def __init__(self, size):
+    def __init__(self, size, ignore_index):
         self.size = size
+        self.ignore_index = ignore_index
 
     def __call__(self, input_dict: dict):
         if isinstance(self.size, tuple):
@@ -243,17 +255,23 @@ class ResizeLetterBoxes(object):
         else:
             ih, iw = self.size, self.size
         img = input_dict['img']
-        h, w = img.shape[:2]
+        label = input_dict['label']
+        h, w = img.shape[0], img.shape[1]
         scale = min(iw/w, ih/h)
         nw, nh = int(scale*w), int(scale*h)
         img_resized = cv2.resize(img, (nw, nh))
+        label_resized = cv2.resize(label, (nw, nh), interpolation=cv2.INTER_NEAREST)
         dw, dh = (iw-nw) // 2, (ih-nh) // 2
         img_padded = np.full(shape=[ih, iw, 3], fill_value=0)
         img_padded[dh:nh+dh, dw:dw+nw, :] = img_resized
+        label_padded = np.full(shape=[ih, iw], fill_value=self.ignore_index)
+        label_padded[dh:nh+dh, dw:dw+nw] = label_resized
         input_dict['img'] = img_padded
+        input_dict['label'] = label_padded
         input_dict['scale'] = scale
         input_dict['padding'] = [dw, dh]
         input_dict['rescale_size'] = [nw, nh]
+        input_dict['original_size'] = [h, w]
         return input_dict
     
     
@@ -309,7 +327,7 @@ class ColorJitter(object):
 
         return transform
 
-    def __call__(input_dict: dict):
+    def __call__(self, input_dict: dict):
         transform = self.get_params(self.brightness, self.contrast,
                                     self.saturation, self.hue)
         input_dict['img'] = transform(input_dict['img'])

@@ -6,7 +6,6 @@ TRANSFORM_DICT = {
     "CenterCrop": CenterCrop,
     "RandomScale": RandomScale,
     "Scale": Scale,
-    "RandomRotation": RandomRotation,
     "Pad": Pad,
     "ToTensor": ToTensor,
     "Normalize": Normalize,
@@ -14,6 +13,7 @@ TRANSFORM_DICT = {
     "ColorJitter": ColorJitter,
     "Resize": Resize,
     "ResizeShorterSide": ResizeShorterSide,
+    "ResizeLetterBoxes": ResizeLetterBoxes,
 }
 
 

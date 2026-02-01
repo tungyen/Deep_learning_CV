@@ -15,9 +15,14 @@ class ConfusionMatrix:
         self.class_dict = class_dict
         self.confusion_matrix = torch.zeros((class_num, class_num), dtype=torch.int64, device=device)
 
-    def update(self, preds, labels):
-        preds = preds.view(-1).to(torch.int64)
-        labels = labels.view(-1).to(torch.int64)
+    def update(self, preds, input_dict: dict):
+        labels = input_dict["label"]
+
+        if self.task != "img_seg":
+            preds = preds.view(-1).to(torch.int64)
+            labels = labels.view(-1).to(torch.int64)
+        else:
+            preds, labels = self.get_img_seg_data(input_dict)
 
         if self.ignore_index is not None:
             mask = labels != self.ignore_index
@@ -77,3 +82,38 @@ class ConfusionMatrix:
     def reset(self):
         self.confusion_matrix.zero_()
         self.confusion_matrix = self.confusion_matrix.cpu()
+
+    
+    def get_img_seg_data(self, output, input_dict: dict):
+        labels = input_dict['label']
+        bs = labels.shape[0]
+        ori_sizes = input_dict['original_size']
+
+        preds = []
+        targets = []
+
+        if "padding" in input_dict and "rescale_size" in input_dict:
+            paddings = input_dict['padding']
+            rescale_sizes = input_dict['rescale_size']
+            for i in range(bs):
+                pred = output[i]
+                label = labels[i]
+                padding = paddings[i]
+                rescale_size = rescale_sizes[i]
+                ori_size = ori_sizes[i]
+        else:
+            for i in range(bs):
+                pred = output[i]
+                label = labels[i]
+
+                ori_size = ori_sizes[i]
+                pred = F.resize(pred, ori_size, Image.NEAREST).view(-1).to(torch.int64)
+                label = F.resize(label, ori_size, Image.NEAREST).view(-1).to(torch.int64)
+
+                preds.append(pred)
+                targets.append(label)
+
+        preds = torch.cat(preds, dim=0)
+        targets = torch.cat(targets, dim=0)
+        return preds, targets
+

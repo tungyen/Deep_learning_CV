@@ -14,8 +14,6 @@ transforms:
   train:
     - type: ConvertFromInts
     - type: PhotometricDistort
-    # - type: Expand
-    #   mean: *img_mean
     - type: RandomSampleCrop
     - type: RandomMirror
     - type: ResizeImgBoxes
@@ -85,7 +83,7 @@ datasets:
     download_data: [False]
 
 # Training
-epochs: 200
+epochs: 100
 scheduler:
   name: "WarmupMultiStep"
   milestones: [80000, 100000]
@@ -101,6 +99,7 @@ optimizer:
 
 loss:
   name: MultiBoxesIouLoss
+  prior: *prior
   neg_pos_ratio: 3
   box_loss_weight: 1.0
   center_variance: 0.1

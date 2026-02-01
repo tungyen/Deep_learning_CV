@@ -45,7 +45,7 @@ class Mlp(nn.Module):
         in_channels,
         hidden_channels=None,
         out_channels=None,
-        act_layer=nn.GeLU,
+        act_layer=nn.GELU,
         drop=0.
     ):
         super().__init__()
@@ -128,7 +128,7 @@ class SegFormerAttentionBlock(nn.Module):
         drop=0.,
         attn_drop=0.,
         drop_path=0.,
-        act_layer=nn.GeLU,
+        act_layer=nn.GELU,
         norm_layer=nn.LayerNorm,
         reduction_ratio=1
     ):
@@ -207,7 +207,6 @@ class MiT(nn.Module):
         drop_rate=0.,
         attn_drop_rate=0.,
         drop_path_rate=0.1,
-        norm_layer=nn.LayerNorm,
         norm_layer=nn.LayerNorm
     ):
         super().__init__()
@@ -275,7 +274,7 @@ class Linear(nn.Module):
         x = self.proj(x)
         return x
 
-class SegFormerHead(n.Module):
+class SegFormerHead(nn.Module):
     def __init__(
         self,
         in_channels=[64, 128, 256, 512],
@@ -288,7 +287,7 @@ class SegFormerHead(n.Module):
         self.in_channels = in_channels
         self.class_num = class_num
         assert len(in_channels) == len(strides)
-        assert min(strides) == strides[0],
+        assert min(strides) == strides[0]
         self.strides = strides
         self.linear_layers = nn.ModuleList()
 

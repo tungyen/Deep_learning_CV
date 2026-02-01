@@ -136,8 +136,8 @@ class VocSegmentationDataset(Dataset):
         assert (len(self.images) == len(self.masks))
 
     def __getitem__(self, index):
-        img = Image.open(self.images[index]).convert('RGB')
-        label = Image.open(self.masks[index])
+        img = np.array(Image.open(self.images[index]).convert('RGB'))
+        label = np.array(Image.open(self.masks[index]))
         input_dict = {
             'img': img,
             'label': label

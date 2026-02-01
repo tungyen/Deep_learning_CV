@@ -14,8 +14,6 @@ transforms:
   train:
     - type: ConvertFromInts
     - type: PhotometricDistort
-    # - type: Expand
-    #   mean: *img_mean
     - type: RandomSampleCrop
     - type: RandomMirror
     - type: ResizeImgBoxes

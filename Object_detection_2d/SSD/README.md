@@ -10,13 +10,13 @@ Test and evaluation are based on Paskal VOC 2012 val dataset. While training is 
 | Box Weight | Box Loss | mAP |
 |-----|----- |----------|
 | 1.0 | SmoothL1 | 94.77% |
-| 1.0 | CIoU | 72.91% |
+| 1.0 | CIoU | 90.41% |
 
 #### SSD 512 ####
 | Box Weight | Box Loss | mAP |
 |-----|----- |----------|
-| 1.0 | SmoothL1 | 92.27% |
-| 1.0 | CIoU | 73.06% |
+| 1.0 | SmoothL1 | 94.9% |
+| 1.0 | CIoU | 90.55% |
 
 The command below is based on Smooth L1 loss for bounding boxes. If you want to train on IoU Loss, please change to iou_loss config.
 
