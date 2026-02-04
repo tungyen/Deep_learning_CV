@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import torch.distributed as dist
+import torchvision.transforms.functional as F
+from PIL import Image
 
 from core.utils import is_main_process
 
@@ -22,7 +24,7 @@ class ConfusionMatrix:
             preds = preds.view(-1).to(torch.int64)
             labels = labels.view(-1).to(torch.int64)
         else:
-            preds, labels = self.get_img_seg_data(input_dict)
+            preds, labels = self.get_img_seg_data(preds, input_dict)
 
         if self.ignore_index is not None:
             mask = labels != self.ignore_index
@@ -63,7 +65,7 @@ class ConfusionMatrix:
             print("Validation F1 Score ===> {:.4f}".format(f1_score))
             return f1_score
 
-        elif self.task == "semseg":
+        elif self.task == "semseg" or self.task == "img_seg":
             ious = results['ious']
             mious = results['mious']
             print("Validation mIoU ===> {:.4f}".format(mious))
@@ -92,26 +94,25 @@ class ConfusionMatrix:
         preds = []
         targets = []
 
-        if "padding" in input_dict and "rescale_size" in input_dict:
-            paddings = input_dict['padding']
-            rescale_sizes = input_dict['rescale_size']
-            for i in range(bs):
-                pred = output[i]
-                label = labels[i]
-                padding = paddings[i]
-                rescale_size = rescale_sizes[i]
-                ori_size = ori_sizes[i]
-        else:
-            for i in range(bs):
-                pred = output[i]
-                label = labels[i]
+        for i in range(bs):
+            pred = output[i]
+            label = labels[i]
+            ori_size = ori_sizes[i]
 
+            if "padding" in input_dict and "rescale_size" in input_dict:
+                paddings = input_dict['padding']
+                rescale_sizes = input_dict['rescale_size']
+                dw, dh = paddings[i]
+                nw, nh = rescale_sizes[i]
                 ori_size = ori_sizes[i]
-                pred = F.resize(pred, ori_size, Image.NEAREST).view(-1).to(torch.int64)
-                label = F.resize(label, ori_size, Image.NEAREST).view(-1).to(torch.int64)
 
-                preds.append(pred)
-                targets.append(label)
+                pred = pred[dh:nh+dh, dw:dw+nw]
+                label = label[dh:nh+dh, dw:dw+nw]
+            print("Shape of pred: ", pred.shape)
+            pred = F.resize(pred.squeeze(0), ori_size, Image.NEAREST).view(-1).to(torch.int64)
+            label = F.resize(label.squeeze(0), ori_size, Image.NEAREST).view(-1).to(torch.int64)
+            preds.append(pred)
+            targets.append(label)
 
         preds = torch.cat(preds, dim=0)
         targets = torch.cat(targets, dim=0)
