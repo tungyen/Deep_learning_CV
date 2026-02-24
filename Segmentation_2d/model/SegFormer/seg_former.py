@@ -59,7 +59,7 @@ class Mlp(nn.Module):
 
     def forward(self, x, height, width):
         x = self.fc1(x)
-        x = self.dwconv(x)
+        x = self.dwconv(x, height, width)
         x = self.act(x)
         x = self.drop(x)
         x = self.fc2(x)
@@ -157,22 +157,14 @@ class OverlapPatchEmbed(nn.Module):
     def __init__(
         self,
         in_channels=3,
-        img_size=224,
         patch_size=7,
         stride=4,
         embed_dim=768
     ):
         super().__init__()
-        if isinstance(img_size, int):
-            img_size = to_2tuple(img_size)
         if isinstance(patch_size, int):
             patch_size = to_2tuple(patch_size)
 
-        self.img_size = img_size
-        self.patch_size = patch_size
-        self.height = img_size[0] // patch_size[0]
-        self.width = img_size[1] // patch_size[1]
-        self.num_patches = self.height * self.width
         self.proj = nn.Conv2d(
             in_channels,
             embed_dim,
@@ -192,14 +184,12 @@ class OverlapPatchEmbed(nn.Module):
 class MiT(nn.Module):
     def __init__(
         self,
-        img_size=224,
         in_channels=3,
         embed_dims=[64, 128, 256, 512],
         n_heads=[2, 4, 8, 16],
         mlp_ratios=[4, 4, 4, 4],
         patch_sizes=[7, 3, 3, 3],
         strides=[4, 2, 2, 2],
-        img_size_ratio=[1, 4, 8, 16],
         depths=[3, 4, 6, 3],
         reduction_ratios=[8, 4, 2, 1],
         qkv_bias=False,
@@ -223,7 +213,6 @@ class MiT(nn.Module):
         for i in range(layer_nums):
             patch_embedding = OverlapPatchEmbed(
                 in_channels=in_channels,
-                img_size=img_size // img_size_ratio[i],
                 patch_size=patch_sizes[i],
                 stride=strides[i],
                 embed_dim=embed_dims[i]
@@ -323,14 +312,12 @@ class SegFormerHead(nn.Module):
 class SegFormer(nn.Module):
     def __init__(
         self,
-        img_size=224,
         in_channels=3,
         embed_dims=[64, 128, 256, 512],
         n_heads=[2, 4, 8, 16],
         mlp_ratios=[4, 4, 4, 4],
         patch_sizes=[7, 3, 3, 3],
         strides=[4, 2, 2, 2],
-        img_size_ratio=[1, 4, 8, 16],
         depths=[3, 4, 6, 3],
         reduction_ratios=[8, 4, 2, 1],
         qkv_bias=True,
@@ -341,14 +328,12 @@ class SegFormer(nn.Module):
     ):
         super().__init__()
         self.backbone = MiT(
-            img_size=img_size,
             in_channels=in_channels,
             embed_dims=embed_dims,
             n_heads=n_heads,
             mlp_ratios=mlp_ratios,
             patch_sizes=patch_sizes,
             strides=strides,
-            img_size_ratio=img_size_ratio,
             depths=depths,
             reduction_ratios=reduction_ratios,
             qkv_bias=qkv_bias,

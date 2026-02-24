@@ -44,40 +44,40 @@ def set_bn_momentum(model, momentum=0.1):
 
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
-    if classname.find('Conv2d') != -1:
+    if isinstance(m, nn.Conv2d):
         torch.nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
         if m.bias is not None:
             torch.nn.init.constant_(m.bias.data, 0.0)
-    elif classname.find('Conv1d') != -1:
+    elif isinstance(m, nn.Conv1d):
         torch.nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
         if m.bias is not None:
             torch.nn.init.constant_(m.bias.data, 0.0)
-    elif classname.find('Linear') != -1:
+    elif isinstance(m, nn.Linear):
         torch.nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
         if m.bias is not None:
             torch.nn.init.constant_(m.bias.data, 0.0)
 
 def weights_init_xavier(m):
     classname = m.__class__.__name__
-    if classname.find('Conv2d') != -1:
+    if isinstance(m, nn.Linear):
         torch.nn.init.xavier_normal_(m.weight.data)
-    elif classname.find('Conv1d') != -1:
+    elif isinstance(m, nn.Conv1d) or isinstance(m, nn.Conv2d):
         torch.nn.init.xavier_normal_(m.weight.data)
-    elif classname.find('Linear') != -1:
+    elif isinstance(m, nn.LayerNorm):
         torch.nn.init.xavier_normal_(m.weight.data)
         torch.nn.init.constant_(m.bias.data, 0.0)
 
 def weights_init_attn(m):
     classname = m.__class__.__name__
-    if classname.find('Linear') != -1:
+    if isinstance(m, nn.Linear):
         nn.init.trunc_normal_(m.weight, std=.01)
         if m.bias is not None:
             nn.init.zeros_(m.bias)
-    if classname.find('Conv2d') != -1:
+    if isinstance(m, nn.Conv2d):
         nn.init.kaiming_normal_(m.weight, mode="fan_out")
         if m.bias is not None:
             nn.init.zeros_(m.bias)
-    if classname.find('LayerNorm') != -1:
+    if isinstance(m, nn.LayerNorm):
         nn.init.zeros_(m.bias)
         nn.init.ones_(m.weight)
 
@@ -91,21 +91,3 @@ def initialize_weights(weight_init_name):
     if weight_init_name not in WEIGHT_INIT_DICT:
         raise ValueError(f'Unknown weight initialization method {weight_init_name}')
     return WEIGHT_INIT_DICT[weight_init_name]
-
-
-# Position Embedding
-def get_xpos(n_patches, start_idx=0):
-    n_patches_ = int(n_patches ** 0.5)
-    x_positions = torch.arange(start_idx, n_patches_ + start_idx)
-    x_positions = x_positions.unsqueeze(0)
-    x_positions = torch.repeat_interleave(x_positions, n_patches_, 0)
-    x_positions = x_positions.reshape(-1)
-
-    return x_positions
-
-def get_ypos(n_patches, start_idx=0):
-    n_patches_ = int(n_patches ** 0.5)
-    y_positions = torch.arange(start_idx, n_patches_+start_idx)
-    y_positions = torch.repeat_interleave(y_positions, n_patches_, 0)
-
-    return y_positions

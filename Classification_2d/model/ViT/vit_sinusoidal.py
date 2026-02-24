@@ -3,28 +3,7 @@ import torch.nn as nn
 from einops import repeat
 
 from core.utils.model_utils import *
-
-class SinusoidalPositionEmbedding2D(nn.Module):
-    def __init__(self, n_patches, emb_dim):
-        super(SinusoidalPositionEmbedding2D, self).__init__()
-        self.emb_dim = emb_dim // 2
-        
-        x_pos = get_xpos(n_patches).reshape(-1, 1)
-        x_pos_emb = self.gen_emb(x_pos)
-        
-        y_pos = get_ypos(n_patches).reshape(-1, 1)
-        y_pos_emb = self.gen_emb(y_pos)
-        
-        self.pos_emb = torch.cat((x_pos_emb, y_pos_emb), -1)
-        
-    def gen_emb(self, pos):
-        denom = torch.pow(10000, torch.arange(0, self.emb_dim, 2) / self.emb_dim)
-        
-        pos_emb = torch.zeros(1, pos.shape[0], self.emb_dim)
-        denom = pos / denom
-        pos_emb[:, :, ::2] = torch.sin(denom)
-        pos_emb[:, :, 1::2] = torch.cos(denom)
-        return pos_emb
+from core.modules.transformer import SinusoidalPositionEmbedding2D
         
 class PatchEmbedding(nn.Module):
     def __init__(self, img_size=224, patch_size=16, input_channel=3, emb_dim=768):

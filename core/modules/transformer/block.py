@@ -19,7 +19,6 @@ class Mlp(nn.Module):
         x = self.drop(x)
         return x
 
-
 class PatchEmbedding(nn.Module):
     def __init__(self, patch_size=4, in_channels=3, embed_dims=96, patch_norm=True):
         super().__init__()
@@ -35,7 +34,6 @@ class PatchEmbedding(nn.Module):
             x = x.permute(0, 2, 3, 1)
             x = self.norm(x)
             x = x.permute(0, 3, 1, 2)
-
         return x
 
 class PatchMerging(nn.Module):

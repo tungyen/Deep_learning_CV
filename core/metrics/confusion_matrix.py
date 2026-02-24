@@ -108,9 +108,8 @@ class ConfusionMatrix:
 
                 pred = pred[dh:nh+dh, dw:dw+nw]
                 label = label[dh:nh+dh, dw:dw+nw]
-            print("Shape of pred: ", pred.shape)
-            pred = F.resize(pred.squeeze(0), ori_size, Image.NEAREST).view(-1).to(torch.int64)
-            label = F.resize(label.squeeze(0), ori_size, Image.NEAREST).view(-1).to(torch.int64)
+            pred = F.resize(pred.unsqueeze(0), ori_size, Image.NEAREST).view(-1).to(torch.int64)
+            label = F.resize(label.unsqueeze(0), ori_size, Image.NEAREST).view(-1).to(torch.int64)
             preds.append(pred)
             targets.append(label)
 
