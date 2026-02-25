@@ -9,34 +9,15 @@ import math
 from core.utils.model_utils import *
 
 class DepthwiseSeperateConv2d(nn.Module):
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        kernel_size,
-        padding=0,
-        stride=1,
-        bias=True
-    ):
+    def __init__(self, embed_dim):
         super().__init__()
-        self.layers = nn.Sequential(
-            nn.Conv2d(
-                in_channels,
-                in_channels,
-                kernel_size=kernel_size,
-                padding=padding,
-                groups=in_channels,
-                stride=stride,
-                bias=bias
-            ),
-            nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
-        )
+        self.dwconv = nn.Conv2d(embed_dim, embed_dim, 3, 1, 1, bias=True, groups=embed_dim)
 
     def forward(self, x, height, width):
         bs, n, c = x.shape
-        x = x.view(bs, height, width, c).permute(0, 3, 1, 2).contiguous()
-        x = self.layers(x)
-        x = x.permute(0, 2, 3, 1).contiguous().view(bs, n, -1)
+        x = x.transpose(1, 2).view(bs, c, height, width)
+        x = self.dwconv(x)
+        x = x.flatten(2).transpose(1, 2)
         return x
 
 class Mlp(nn.Module):
@@ -51,18 +32,18 @@ class Mlp(nn.Module):
         super().__init__()
         out_channels = out_channels or in_channels
         hidden_channels = hidden_channels or in_channels
-        self.fc1 = nn.Linear(in_channels, hidden_channels)
-        self.dwconv = DepthwiseSeperateConv2d(hidden_channels, hidden_channels, 3, padding=1)
+        self.dense1 = nn.Linear(in_channels, hidden_channels)
+        self.dwconv = DepthwiseSeperateConv2d(hidden_channels)
         self.act = act_layer()
-        self.fc2 = nn.Linear(hidden_channels, out_channels)
+        self.dense2 = nn.Linear(hidden_channels, out_channels)
         self.drop = nn.Dropout(drop)
 
     def forward(self, x, height, width):
-        x = self.fc1(x)
+        x = self.dense1(x)
         x = self.dwconv(x, height, width)
         x = self.act(x)
         x = self.drop(x)
-        x = self.fc2(x)
+        x = self.dense2(x)
         x = self.drop(x)
         return x
 
@@ -83,37 +64,39 @@ class EfficientSelfAttention(nn.Module):
         self.head_dim = embed_dim // n_heads
         self.scale = qk_scale or self.head_dim ** -0.5
 
-        self.q = nn.Linear(embed_dim, embed_dim, bias=qkv_bias)
-        self.kv = nn.Linear(embed_dim, embed_dim * 2, bias=qkv_bias)
-        self.out_layer = nn.Linear(embed_dim, embed_dim)
+        self.query = nn.Linear(embed_dim, embed_dim, bias=qkv_bias)
+        self.key = nn.Linear(embed_dim, embed_dim, bias=qkv_bias)
+        self.value = nn.Linear(embed_dim, embed_dim, bias=qkv_bias)
+        self.proj = nn.Linear(embed_dim, embed_dim)
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj_drop = nn.Dropout(proj_drop)
 
         self.reduction_ratio = reduction_ratio
         if reduction_ratio > 1:
-            self.reduction = nn.Conv2d(embed_dim, embed_dim, kernel_size=reduction_ratio, stride=reduction_ratio)
-            self.norm = nn.LayerNorm(embed_dim)
+            self.sr = nn.Conv2d(embed_dim, embed_dim, kernel_size=reduction_ratio, stride=reduction_ratio)
+            self.layer_norm = nn.LayerNorm(embed_dim)
 
     def forward(self, x, height, width):
         bs, n, c = x.shape
         assert n == height * width, "Input token length does not match given height and width."
-        q = self.q(x).view(bs, n, self.n_heads, self.head_dim).permute(0, 2, 1, 3)
+        q = self.query(x).view(bs, n, self.n_heads, self.head_dim).permute(0, 2, 1, 3)
 
         if self.reduction_ratio > 1:
             x_ = x.permute(0, 2, 1).contiguous().view(bs, c, height, width)
-            x_ = self.reduction(x_).view(bs, c, -1).permute(0, 2, 1).contiguous()
-            x_ = self.norm(x_)
-            kv = self.kv(x_).view(bs, -1, 2, self.n_heads, self.head_dim).permute(2, 0, 3, 1, 4)
+            x_ = self.sr(x_).view(bs, c, -1).permute(0, 2, 1)
+            x_ = self.layer_norm(x_)
+            k = self.key(x_).view(bs, -1, self.n_heads, self.head_dim).permute(0, 2, 1, 3)
+            v = self.value(x_).view(bs, -1, self.n_heads, self.head_dim).permute(0, 2, 1, 3)
         else:
-            kv = self.kv(x).view(bs, -1, 2, self.n_heads, self.head_dim).permute(2, 0, 3, 1, 4)
-        k, v = kv[0], kv[1]
+            k = self.key(x).view(bs, -1, self.n_heads, self.head_dim).permute(0, 2, 1, 3)
+            v = self.value(x).view(bs, -1, self.n_heads, self.head_dim).permute(0, 2, 1, 3)
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
 
         x = (attn @ v).transpose(1, 2).reshape(bs, n, c)
-        x = self.out_layer(x)
+        x = self.proj(x)
         x = self.proj_drop(x)
         return x
 
@@ -133,8 +116,8 @@ class SegFormerAttentionBlock(nn.Module):
         reduction_ratio=1
     ):
         super().__init__()
-        self.norm1 = norm_layer(embed_dim)
-        self.attn = EfficientSelfAttention(
+        self.layer_norm_1 = norm_layer(embed_dim)
+        self.attention = EfficientSelfAttention(
             embed_dim=embed_dim,
             n_heads=n_heads,
             qkv_bias=qkv_bias,
@@ -144,13 +127,13 @@ class SegFormerAttentionBlock(nn.Module):
             reduction_ratio=reduction_ratio
         )
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
-        self.norm2 = norm_layer(embed_dim)
+        self.layer_norm_2 = norm_layer(embed_dim)
         mlp_hidden_dim = int(embed_dim * mlp_ratio)
         self.mlp = Mlp(in_channels=embed_dim, hidden_channels=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
     def forward(self, x, height, width):
-        x = x + self.drop_path(self.attn(self.norm1(x), height, width))
-        x = x + self.drop_path(self.mlp(self.norm2(x), height, width))
+        x = x + self.drop_path(self.attention(self.layer_norm_1(x), height, width))
+        x = x + self.drop_path(self.mlp(self.layer_norm_2(x), height, width))
         return x
 
 class OverlapPatchEmbed(nn.Module):
@@ -172,13 +155,13 @@ class OverlapPatchEmbed(nn.Module):
             stride=stride,
             padding=(patch_size[0] // 2, patch_size[1] // 2)
         )
-        self.norm = nn.LayerNorm(embed_dim)
+        self.layer_norm = nn.LayerNorm(embed_dim)
 
     def forward(self, x):
         x = self.proj(x)
         bs, c, h, w = x.shape
-        x = x.flatten(2).transpose(1, 2).contiguous()
-        x = self.norm(x)
+        x = x.flatten(2).transpose(1, 2)
+        x = self.layer_norm(x)
         return x, h, w
 
 class MiT(nn.Module):
@@ -197,7 +180,8 @@ class MiT(nn.Module):
         drop_rate=0.,
         attn_drop_rate=0.,
         drop_path_rate=0.1,
-        norm_layer=nn.LayerNorm
+        norm_layer=nn.LayerNorm,
+        **kwargs
     ):
         super().__init__()
         self.depths = depths
@@ -207,9 +191,9 @@ class MiT(nn.Module):
         cur_idx = 0
         layer_nums = len(depths)
 
-        self.attn_blocks = nn.ModuleList()
+        self.block = nn.ModuleList()
         self.patch_embeddings = nn.ModuleList()
-        self.norm_layers = nn.ModuleList()
+        self.layer_norm = nn.ModuleList()
         for i in range(layer_nums):
             patch_embedding = OverlapPatchEmbed(
                 in_channels=in_channels,
@@ -235,8 +219,8 @@ class MiT(nn.Module):
                         reduction_ratio=reduction_ratios[i]
                     )
                 )
-            self.attn_blocks.append(attn_blocks)
-            self.norm_layers.append(norm_layer(embed_dims[i]))
+            self.block.append(attn_blocks)
+            self.layer_norm.append(norm_layer(embed_dims[i]))
             cur_idx += depths[i]
             in_channels = embed_dims[i]
 
@@ -246,9 +230,9 @@ class MiT(nn.Module):
 
         for i in range(len(self.depths)):
             x, height, width = self.patch_embeddings[i](x)
-            for blk in self.attn_blocks[i]:
+            for blk in self.block[i]:
                 x = blk(x, height, width)
-            x = self.norm_layers[i](x)
+            x = self.layer_norm[i](x)
             x = x.view(bs, height, width, -1).permute(0, 3, 1, 2).contiguous()
             out_feats.append(x)
         return out_feats
@@ -267,17 +251,14 @@ class SegFormerHead(nn.Module):
     def __init__(
         self,
         in_channels=[64, 128, 256, 512],
-        strides=[4, 2, 2, 2],
         embed_dim=256,
         class_num=20,
-        drop_rate=0.1
+        drop_rate=0.1,
+        **kwargs
     ):
         super().__init__()
         self.in_channels = in_channels
         self.class_num = class_num
-        assert len(in_channels) == len(strides)
-        assert min(strides) == strides[0]
-        self.strides = strides
         self.linear_layers = nn.ModuleList()
 
         for in_channel in in_channels:
@@ -324,7 +305,9 @@ class SegFormer(nn.Module):
         drop_path_rate=0.1,
         head_embed_dim=256,
         class_num=20,
-        weight_init=None
+        weight_init=None,
+        pretrained_weights=None,
+        **kwargs
     ):
         super().__init__()
         self.backbone = MiT(
@@ -339,6 +322,9 @@ class SegFormer(nn.Module):
             qkv_bias=qkv_bias,
             drop_path_rate=drop_path_rate
         )
+
+        if pretrained_weights is not None:
+            self.backbone.load_state_dict(torch.load(pretrained_weights))
 
         self.head = SegFormerHead(
             in_channels=embed_dims,

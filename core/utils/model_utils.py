@@ -70,7 +70,7 @@ def weights_init_xavier(m):
 def weights_init_attn(m):
     classname = m.__class__.__name__
     if isinstance(m, nn.Linear):
-        nn.init.trunc_normal_(m.weight, std=.01)
+        nn.init.trunc_normal_(m.weight, std=.02)
         if m.bias is not None:
             nn.init.zeros_(m.bias)
     if isinstance(m, nn.Conv2d):

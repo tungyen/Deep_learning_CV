@@ -17,8 +17,6 @@ test_batch_size: 4
 
 transforms:
   train:
-    # - type: RandomScale
-    #   scale_range: [0.5, 2.0]
     - type: ResizeShorterSide
       shorter_size: *img_size
     - type: RandomCrop
@@ -50,11 +48,11 @@ transforms:
 model:
   name: "SegFormer"
   in_channels: 3
-  embed_dims: [64, 128, 256, 512]
-  n_heads: [2, 4, 8, 16]
+  embed_dims: [64, 128, 320, 512]
+  n_heads: [1, 2, 5, 8]
   mlp_ratios: [4, 4, 4, 4]
-  patch_sizes: [4, 4, 4, 4]
-  strides: [4, 8, 16, 32]
+  patch_sizes: [7, 3, 3, 3]
+  strides: [4, 2, 2, 2]
   depths: [3, 4, 6, 3]
   reduction_ratios: [8, 4, 2, 1]
   qkv_bias: True
@@ -62,24 +60,24 @@ model:
   head_embed_dim: 256
   class_num: *class_num
   weight_init: "attention"
+  pretrained_weights: "Segmentation_2d/pretrained_weights/SegFormer2/mit_b2_backbone.pth"
 
 # Training
-epochs: 100
+epochs: 200
 scheduler:
   name: "Poly"
   max_iters: 90000
 
 optimizer:
-  name: "SGD"
-  weight_decay: 0.0001
-  momentum: 0.9
-  lr: 0.01
+  name: "AdamW"
+  weight_decay: 0.01
+  lr: 0.0001
 
 loss:
   name: CrossEntropyLoss
   ignore_index: *ignore_index
-  lovasz_weight: 1.5
-  boundary_weight: 0.5
+  # lovasz_weight: 1.5
+  # boundary_weight: 0.5
 
 metrics:
   name: "ConfusionMatrix"

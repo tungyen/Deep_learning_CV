@@ -17,8 +17,6 @@ test_batch_size: 4
 
 transforms:
   train:
-    # - type: RandomScale
-    #   scale_range: [0.5, 2.0]
     - type: ResizeShorterSide
       shorter_size: *img_size
     - type: RandomCrop
