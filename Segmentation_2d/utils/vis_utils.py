@@ -29,7 +29,6 @@ class ImageSegVisualizer:
         colorized_masks = self.dataset.decode_target(masks).astype('uint8')
         imgs_f = imgs.astype(np.float32)
         colorized_masks_f = colorized_masks.astype(np.float32)
-        overlays = ((1 - self.alpha) * imgs_f + self.alpha * colorized_masks_f).astype(np.uint8)
         bs = imgs.shape[0]
         ori_sizes = input_dict['original_size']
         _, axs = plt.subplots(3, bs, figsize=(8, 8))
@@ -38,7 +37,6 @@ class ImageSegVisualizer:
             ori_size = ori_sizes[i]
             img = imgs[i]
             colorized_mask = colorized_masks[i]
-            overlay = overlays[i]
 
             if "padding" in input_dict and "rescale_size" in input_dict:
                 paddings = input_dict['padding']
@@ -48,11 +46,10 @@ class ImageSegVisualizer:
 
                 img = img[dh:nh+dh, dw:dw+nw]
                 colorized_mask = colorized_mask[dh:nh+dh, dw:dw+nw]
-                overlay = overlay[dh:nh+dh, dw:dw+nw]
 
             img = Image.fromarray(img).resize((ori_size[1], ori_size[0]), resample=Image.NEAREST)
             colorized_mask = Image.fromarray(colorized_mask).resize((ori_size[1], ori_size[0]), resample=Image.NEAREST)
-            overlay = Image.fromarray(overlay).resize((ori_size[1], ori_size[0]), resample=Image.NEAREST)
+            overlay = ((1 - self.alpha) * np.array(img) + self.alpha * np.array(colorized_mask)).astype(np.uint8)
 
             axs[0, i].imshow(colorized_mask)
             axs[1, i].imshow(img)

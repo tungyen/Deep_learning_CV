@@ -66,9 +66,17 @@ def train_model(args):
                 optimizer.zero_grad()
                 loss['loss'].backward()
                 optimizer.step()
+                lr = optimizer.param_groups[0]['lr']
+
+                postfix = {
+                    'lr': f"{lr:.6f}"
+                }
+
+                for loss_name, loss_value in loss.items():
+                    postfix[loss_name] = f"{loss_value.item():.4f}"
+
                 if is_main_process():
-                    postfix_dict = {k: f"{v.item():.4f}" for k, v in loss.items()}
-                    pbar.set_postfix(postfix_dict)
+                    pbar.set_postfix(postfix)
             scheduler.step()    
 
         # Validation

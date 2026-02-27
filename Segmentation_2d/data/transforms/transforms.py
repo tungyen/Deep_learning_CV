@@ -61,8 +61,10 @@ class CenterCrop(object):
             self.crop_size = tuple(crop_size)
 
     def __call__(self, input_dict: dict):
-        input_dict['img'] = F.center_crop(input_dict['img'], self.crop_size)
-        input_dict['label'] = F.center_crop(input_dict['label'], self.crop_size)
+        img = input_dict['img']
+        label = input_dict['label']
+        input_dict['img'] = np.array(F.center_crop(Image.fromarray(img), self.crop_size))
+        input_dict['label'] = np.array(F.center_crop(Image.fromarray(label), self.crop_size))
         return input_dict
 
     def __repr__(self):
@@ -76,10 +78,11 @@ class RandomScale(object):
 
     def __call__(self, input_dict: dict):
         img = input_dict['img']
+        label = input_dict['label']
         scale = random.uniform(self.scale_range[0], self.scale_range[1])
         target_size = ( int(img.shape[0]*scale), int(img.shape[1]*scale))
-        input_dict['img'] = F.resize(img, target_size, self.interpolation)
-        input_dict['label'] = F.resize(label, target_size, Image.NEAREST)
+        input_dict['img'] = np.array(F.resize(Image.fromarray(img), target_size, self.interpolation))
+        input_dict['label'] = np.array(F.resize(Image.fromarray(label), target_size, Image.NEAREST))
         return input_dict
 
     def __repr__(self):
@@ -96,8 +99,8 @@ class Scale(object):
         label = input_dict['label']
         assert img.size == label.size
         target_size = ( int(img.shape[0]*self.scale), int(img.shape[1]*self.scale)) # (H, W)
-        input_dict['img'] = F.resize(img, target_size, self.interpolation)
-        input_dict['label'] = F.resize(label, target_size, Image.NEAREST)
+        input_dict['img'] = np.array(F.resize(Image.fromarray(img), target_size, self.interpolation))
+        input_dict['label'] = np.array(F.resize(Image.fromarray(label), target_size, Image.NEAREST))
         return input_dict
 
     def __repr__(self):
@@ -188,14 +191,14 @@ class RandomCrop(object):
         # pad the width if needed
         if self.pad_if_needed and w < crop_w:
             pad = int((1 + crop_w - w) / 2)
-            img = np.pad(img, ((0, 0), (pad, pad), (0, 0)), mode='constant', constant_value=0)
-            label = np.pad(label, ((0, 0), (pad, pad), (0, 0)), mode='constant', constant_value=self.ignore_index)
+            img = np.pad(img, ((0, 0), (pad, pad), (0, 0)), mode='constant', constant_values=0)
+            label = np.pad(label, ((0, 0), (pad, pad)), mode='constant', constant_values=self.ignore_index)
 
         # pad the height if needed
         if self.pad_if_needed and h < crop_h:
             pad = int((1 + crop_h - h) / 2)
-            img = np.pad(img, ((pad, pad), (0, 0), (0, 0)), mode='constant', constant_value=0)
-            label = np.pad(label, ((pad, pad), (0, 0), (0, 0)), mode='constant', constant_value=self.ignore_index)
+            img = np.pad(img, ((pad, pad), (0, 0), (0, 0)), mode='constant', constant_values=0)
+            label = np.pad(label, ((pad, pad), (0, 0)), mode='constant', constant_values=self.ignore_index)
 
         i, j, h, w = self.get_params(img, self.crop_size)
         input_dict['img'] = img[i:i+h, j:j+w, :]
@@ -215,8 +218,8 @@ class Resize(object):
         img = input_dict['img']
         label = input_dict['label']
         h, w = img.shape[0], img.shape[1]
-        input_dict['img'] = F.resize(img, self.size, self.interpolation)
-        input_dict['label'] = F.resize(label, self.size, Image.NEAREST)
+        input_dict['img'] = np.array(F.resize(Image.fromarray(img), self.size, self.interpolation))
+        input_dict['label'] = np.array(F.resize(Image.fromarray(label), self.size, Image.NEAREST))
         input_dict['original_size'] = [h, w]
         return input_dict
 

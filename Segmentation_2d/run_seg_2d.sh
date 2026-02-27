@@ -6,8 +6,8 @@ CONFIG=$3
 # torchrun --nproc_per_node=${NUM_GPU} Segmentation_2d/pipelines/train.py \
 # --exp ${EXP} --config_path ${CONFIG}
 
-# torchrun --nproc_per_node=${NUM_GPU} Segmentation_2d/pipelines/eval.py \
-# --exp ${EXP} --config_path ${CONFIG}
-
-torchrun --nproc_per_node=${NUM_GPU} Segmentation_2d/pipelines/test.py \
+torchrun --nproc_per_node=${NUM_GPU} Segmentation_2d/pipelines/eval.py \
 --exp ${EXP} --config_path ${CONFIG}
+
+# torchrun --nproc_per_node=${NUM_GPU} Segmentation_2d/pipelines/test.py \
+# --exp ${EXP} --config_path ${CONFIG}

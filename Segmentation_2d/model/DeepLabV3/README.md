@@ -7,22 +7,28 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 | Model | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
 |-------|-----|----------|-------------------|----------|
 | DeepLabV3 | 1.0 | None | None | 64.65% |
-| DeepLabV3 | 1.0 | 1.5 | None | 66.41% |
-| DeepLabV3 | 1.0 | 1.5 | 0.5 | 67.69% |
+| DeepLabV3 | 1.0 | 1.0 | None | 66.41% |
+| DeepLabV3 | 1.0 | 1.0 | 0.5 | 67.69% |
 | DeepLabV3++ | 1.0 | None | None | 69.91% |
 | DeepLabV3++ | 1.0 | 1.5 | None | 70.63% |
 | DeepLabV3++ | 1.0 | 1.5 | 0.5 | 71.41% |
 
 
 ### Paskal VOC dataset ###
-| Model | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
+| Model | CE Weight | Lovasz Weight | Boundary Weight | Backbone | mIoUs |
 |-------|-----|----------|-------------------|----------|
-| DeepLabV3 | 1.0 | None | None | 77.55% |
-| DeepLabV3 | 1.0 | 1.5 | None | 78.85% |
-| DeepLabV3 | 1.0 | 1.5 | 0.5 | 79.05% |
-| DeepLabV3++ | 1.0 | None | None | 78.07% |
-| DeepLabV3++ | 1.0 | 1.5 | None | 79.53% |
-| DeepLabV3++ | 1.0 | 1.5 | 0.5 | 78.98% |
+| DeepLabV3 | 1.0 | None | None | ResNet-101 | 70.19% |
+| DeepLabV3 | 1.0 | 1.0 | None | ResNet-101 | 69.19% |
+| DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet-101 | 69.37% |
+| DeepLabV3 | 1.0 | None | None | ResNet-152 | 72.83% |
+| DeepLabV3 | 1.0 | 1.0 | None | ResNet-152 | 72.41% |
+| DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet-152 | 71.94% |
+| DeepLabV3++ | 1.0 | None | None | ResNet-101 | % |
+| DeepLabV3++ | 1.0 | 1.0 | None | ResNet-101 | % |
+| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet-101 | % |
+| DeepLabV3++ | 1.0 | None | None | ResNet-152 | % |
+| DeepLabV3++ | 1.0 | 1.0 | None | ResNet-152 | % |
+| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet-152 | % |
 
 You can change weight of lovasz/boundary loss in config by changing `lovasz_weight` and `boundary_weight`.
 ## Running the code ##
