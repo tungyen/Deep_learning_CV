@@ -11,14 +11,16 @@ dataset_name: &dataset_name "VOC"
 year: "2012"
 download: False
 data_path: Dataset/VOC
-train_batch_size: 8
-val_batch_size: 4
+train_batch_size: 16
+val_batch_size: 16
 test_batch_size: 4
 
 transforms:
   train:
-    - type: ResizeShorterSide
-      shorter_size: *img_size
+    - type: RandomScale
+      scale_range: [0.5, 2.0]
+    # - type: ResizeShorterSide
+    #   shorter_size: *img_size
     - type: RandomCrop
       crop_size: *img_size
       ignore_index: *ignore_index
@@ -46,7 +48,7 @@ transforms:
       std: *img_std
 
 model:
-  name: "DeepLabV3"
+  name: "DeepLabV3Plus"
   backbone: "resnet101"
   class_num: *class_num
   in_channel: 2048
@@ -54,10 +56,10 @@ model:
   weight_init: "xavier"
 
 # Training
-epochs: 100
+epochs: 80
 scheduler:
   name: "Poly"
-  max_iters: 90000
+  max_iters: 7360
 
 optimizer:
   name: "SGD"
@@ -68,8 +70,8 @@ optimizer:
 loss:
   name: CrossEntropyLoss
   ignore_index: *ignore_index
-  lovasz_weight: 1.5
-  boundary_weight: 0.5
+  lovasz_weight: 1.0
+  # boundary_weight: 0.5
 
 metrics:
   name: "ConfusionMatrix"

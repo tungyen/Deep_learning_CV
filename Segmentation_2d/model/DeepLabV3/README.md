@@ -23,12 +23,12 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 | DeepLabV3 | 1.0 | None | None | ResNet-152 | 72.83% |
 | DeepLabV3 | 1.0 | 1.0 | None | ResNet-152 | 72.41% |
 | DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet-152 | 71.94% |
-| DeepLabV3++ | 1.0 | None | None | ResNet-101 | % |
-| DeepLabV3++ | 1.0 | 1.0 | None | ResNet-101 | % |
-| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet-101 | % |
-| DeepLabV3++ | 1.0 | None | None | ResNet-152 | % |
-| DeepLabV3++ | 1.0 | 1.0 | None | ResNet-152 | % |
-| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet-152 | % |
+| DeepLabV3++ | 1.0 | None | None | ResNet-101 | 73.31% |
+| DeepLabV3++ | 1.0 | 1.0 | None | ResNet-101 | 73.65% |
+| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet-101 | 69.93% |
+| DeepLabV3++ | 1.0 | None | None | ResNet-152 | 77.09% |
+| DeepLabV3++ | 1.0 | 1.0 | None | ResNet-152 | 76.31% |
+| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet-152 | 76.5% |
 
 You can change weight of lovasz/boundary loss in config by changing `lovasz_weight` and `boundary_weight`.
 ## Running the code ##

@@ -9,22 +9,24 @@ class CrossEntropyLoss(nn.Module):
         self.boundary_weight = boundary_weight
         self.ignore_index = ignore_index
 
+        self.CE = nn.CrossEntropyLoss(ignore_index=self.ignore_index)
+        self.lovasz_softmax = LovaszSoftmaxLoss(ignore_index=self.ignore_index)
+        self.boundary = BoundaryLoss(ignore_index=self.ignore_index)
+
     def forward(self, logits, labels):
         loss_dict = {}
-        CE = nn.CrossEntropyLoss(ignore_index=self.ignore_index)
-        ce_loss = CE(logits, labels)
+        ce_loss = self.CE(logits, labels)
         total_loss = ce_loss
         loss_dict['ce_loss'] = ce_loss
 
         if self.lovasz_weight is not None:
-            lovasz_softmax = LovaszSoftmaxLoss(ignore_index=self.ignore_index)
-            lovasz_softmax_loss = self.lovasz_weight * lovasz_softmax(logits, labels)
+            lovasz_softmax_loss = self.lovasz_weight * self.lovasz_softmax(logits, labels)
             loss_dict['lovasz_softmax_loss'] = lovasz_softmax_loss
             total_loss += lovasz_softmax_loss
             
         if self.boundary_weight is not None:
-            boundary = BoundaryLoss(ignore_index=self.ignore_index)
-            boundary_loss = self.boundary_weight * boundary(logits, labels)
+            
+            boundary_loss = self.boundary_weight * self.boundary(logits, labels)
             loss_dict['boundary_loss'] = boundary_loss
             total_loss += boundary_loss
         loss_dict['loss'] = total_loss
