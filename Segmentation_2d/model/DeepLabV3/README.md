@@ -16,7 +16,7 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 
 ### Paskal VOC dataset ###
 | Model | CE Weight | Lovasz Weight | Boundary Weight | Backbone | mIoUs |
-|-------|-----|----------|-------------------|----------|
+|-------|-----|----------|-------------------|----------|-------|
 | DeepLabV3 | 1.0 | None | None | ResNet-101 | 70.19% |
 | DeepLabV3 | 1.0 | 1.0 | None | ResNet-101 | 69.19% |
 | DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet-101 | 69.37% |
