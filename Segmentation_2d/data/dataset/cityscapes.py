@@ -100,10 +100,10 @@ class CityScapesDataset(Dataset):
         data = self.data[index]
 
         img_path = data["img_path"]
-        img = Image.open(img_path).convert('RGB')
+        img = np.array(Image.open(img_path).convert('RGB'))
         
         label_path = data["label_img_path"]
-        label = Image.open(label_path)
+        label = np.array(Image.open(label_path))
         input_dict = {
             'img': img,
             'label': label

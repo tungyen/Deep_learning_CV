@@ -4,28 +4,34 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 ## Experiment ##
 
 ### CityScapes dataset ###
-| Model | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
-|-------|-----|----------|-------------------|----------|
-| DeepLabV3 | 1.0 | None | None | 64.65% |
-| DeepLabV3 | 1.0 | 1.0 | None | 66.41% |
-| DeepLabV3 | 1.0 | 1.0 | 0.5 | 67.69% |
-| DeepLabV3++ | 1.0 | None | None | 69.91% |
-| DeepLabV3++ | 1.0 | 1.5 | None | 70.63% |
-| DeepLabV3++ | 1.0 | 1.5 | 0.5 | 71.41% |
+| Model | CE Weight | Lovasz Weight | Boundary Weight | Backbone | mIoUs |
+|-------|-----|----------|-------------------|----------|-------|
+| DeepLabV3 | 1.0 | None | None | ResNet101 | 69.35% |
+| DeepLabV3 | 1.0 | 1.0 | None | ResNet101 | % |
+| DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet101 | % |
+| DeepLabV3 | 1.0 | None | None | ResNet152 | % |
+| DeepLabV3 | 1.0 | 1.0 | None | ResNet152 | % |
+| DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet152 | % |
+| DeepLabV3++ | 1.0 | None | None | ResNet101 | % |
+| DeepLabV3++ | 1.0 | 1.5 | None | ResNet101 | % |
+| DeepLabV3++ | 1.0 | 1.5 | 0.5 | ResNet101 | % |
+| DeepLabV3++ | 1.0 | None | None | ResNet152 | % |
+| DeepLabV3++ | 1.0 | 1.0 | None | ResNet152 | % |
+| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet152 | % |
 
 
 ### Paskal VOC dataset ###
 | Model | CE Weight | Lovasz Weight | Boundary Weight | Backbone | mIoUs |
 |-------|-----|----------|-------------------|----------|-------|
-| DeepLabV3 | 1.0 | None | None | ResNet-101 | 70.19% |
-| DeepLabV3 | 1.0 | 1.0 | None | ResNet-101 | 69.19% |
-| DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet-101 | 69.37% |
-| DeepLabV3 | 1.0 | None | None | ResNet-152 | 72.83% |
-| DeepLabV3 | 1.0 | 1.0 | None | ResNet-152 | 72.41% |
-| DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet-152 | 71.94% |
+| DeepLabV3 | 1.0 | None | None | ResNet-101 | 73.59% |
+| DeepLabV3 | 1.0 | 1.0 | None | ResNet-101 | 72.89% |
+| DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet-101 | 72.99% |
+| DeepLabV3 | 1.0 | None | None | ResNet-152 | 75.39% |
+| DeepLabV3 | 1.0 | 1.0 | None | ResNet-152 | 75.29% |
+| DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet-152 | 75.38% |
 | DeepLabV3++ | 1.0 | None | None | ResNet-101 | 73.31% |
 | DeepLabV3++ | 1.0 | 1.0 | None | ResNet-101 | 73.65% |
-| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet-101 | 69.93% |
+| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet-101 | 74.02% |
 | DeepLabV3++ | 1.0 | None | None | ResNet-152 | 77.09% |
 | DeepLabV3++ | 1.0 | 1.0 | None | ResNet-152 | 76.31% |
 | DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet-152 | 76.5% |

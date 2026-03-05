@@ -253,8 +253,8 @@ class ResizeLetterBoxes(object):
         self.ignore_index = ignore_index
 
     def __call__(self, input_dict: dict):
-        if isinstance(self.size, tuple):
-            ih, iw = self.size[1], self.size[0]
+        if isinstance(self.size, tuple) or isinstance(self.size, list):
+            ih, iw = self.size[0], self.size[1]
         else:
             ih, iw = self.size, self.size
         img = input_dict['img']
@@ -311,29 +311,29 @@ class ColorJitter(object):
 
         if brightness is not None:
             brightness_factor = random.uniform(brightness[0], brightness[1])
-            transforms.append(Lambda(lambda img: F.adjust_brightness(img, brightness_factor)))
+            transforms.append(Lambda(lambda img: F.adjust_brightness(Image.fromarray(img), brightness_factor)))
 
         if contrast is not None:
             contrast_factor = random.uniform(contrast[0], contrast[1])
-            transforms.append(Lambda(lambda img: F.adjust_contrast(img, contrast_factor)))
+            transforms.append(Lambda(lambda img: F.adjust_contrast(Image.fromarray(img), contrast_factor)))
 
         if saturation is not None:
             saturation_factor = random.uniform(saturation[0], saturation[1])
-            transforms.append(Lambda(lambda img: F.adjust_saturation(img, saturation_factor)))
+            transforms.append(Lambda(lambda img: F.adjust_saturation(Image.fromarray(img), saturation_factor)))
 
         if hue is not None:
             hue_factor = random.uniform(hue[0], hue[1])
-            transforms.append(Lambda(lambda img: F.adjust_hue(img, hue_factor)))
+            transforms.append(Lambda(lambda img: F.adjust_hue(Image.fromarray(img), hue_factor)))
 
         random.shuffle(transforms)
-        transform = SingleCompose(transforms)
-
-        return transform
+        return transforms
 
     def __call__(self, input_dict: dict):
-        transform = self.get_params(self.brightness, self.contrast,
+        transforms = self.get_params(self.brightness, self.contrast,
                                     self.saturation, self.hue)
-        input_dict['img'] = transform(input_dict['img'])
+        for t in transforms:
+            img = input_dict['img']
+            input_dict['img'] = np.array(t(img))
         return input_dict
 
     def __repr__(self):
@@ -343,3 +343,13 @@ class ColorJitter(object):
         format_string += ', saturation={0}'.format(self.saturation)
         format_string += ', hue={0})'.format(self.hue)
         return format_string
+
+class Lambda(object):
+    def __init__(self, lambd):
+        self.lambd = lambd
+
+    def __call__(self, img):
+        return self.lambd(img)
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'

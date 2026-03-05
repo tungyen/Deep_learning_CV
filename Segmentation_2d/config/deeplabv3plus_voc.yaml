@@ -71,7 +71,7 @@ loss:
   name: CrossEntropyLoss
   ignore_index: *ignore_index
   lovasz_weight: 1.0
-  # boundary_weight: 0.5
+  boundary_weight: 0.5
 
 metrics:
   name: "ConfusionMatrix"
