@@ -13,8 +13,8 @@ from core.metrics import build_metrics
 from core.utils import is_main_process, init_ddp
 
 from Object_detection_2d.data import build_dataloader
-from Object_detection_2d.CenterNet.loss import build_loss
-from Object_detection_2d.CenterNet.model import build_model
+from Object_detection_2d.loss import build_loss
+from Object_detection_2d.model import build_model
 from Object_detection_2d.utils import parse_config
 
 def train_model(args):
@@ -34,22 +34,19 @@ def train_model(args):
     if is_main_process():
         print("Start training model {} on {} dataset!".format(model_name, dataset_type))
     train_dataloader, val_dataloader, _ = build_dataloader(opts)
-    class_dict = val_dataloader.dataset.class_dict
-    model = build_model(opts.model).to(local_rank)
-
-    epochs = opts.epochs
-    opts.optimizer.lr *= world_size
     train_size = len(train_dataloader)
+    model = build_model(opts.model).to(local_rank)
+    epochs = opts.epochs
 
-    if opts.scheduler.name == "CosineAnnealingWarmup":
-        warmup_epochs = opts.scheduler.pop('warmup_epochs', None)
-        opts.scheduler.first_cycle_steps = train_size * (epochs - warmup_epochs)
-        opts.scheduler.warmup_steps = train_size * warmup_epochs
     optimizer = build_optimizer(opts.optimizer, model.parameters())
+
+    opts.scheduler.train_size = train_size
+    opts.scheduler.world_size = world_size
+    opts.scheduler.epochs = epochs
     scheduler = build_scheduler(opts.scheduler, optimizer)
     criterion = build_loss(opts.loss)
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
-    
+
     class_dict = val_dataloader.dataset.get_class_dict()
     metrics = build_metrics(class_dict, val_dataloader.dataset, opts.metrics)
     best_metric = 0.0
@@ -60,9 +57,11 @@ def train_model(args):
         model.train()
         with tqdm(train_dataloader, desc=f"Train Epoch {epoch+1}", disable=not is_main_process()) as pbar:
             for input_dict in pbar:
-                input_dict = input_dict.to(local_rank)
-                pred_dict = model(input_dict['img'])
-                loss = criterion(pred_dict, input_dict)
+                imgs = input_dict['img'].to(local_rank)
+                boxes = input_dict['boxes'].to(local_rank)
+                labels = input_dict['labels'].to(local_rank)
+                pred_boxes, pred_logits = model(imgs)
+                loss = criterion(pred_boxes, pred_logits, boxes, labels)
                 optimizer.zero_grad()
                 loss['loss'].backward()
                 optimizer.step()
@@ -71,6 +70,7 @@ def train_model(args):
                 postfix = {
                     'lr': f"{lr:.6f}"
                 }
+
                 for loss_name, loss_value in loss.items():
                     postfix[loss_name] = f"{loss_value.item():.4f}"
 
@@ -87,13 +87,14 @@ def train_model(args):
                 detections = model(imgs, False)
                 detections = [d.to(torch.device("cpu")) for d in detections]
             metrics.update(input_dict, detections)
-        metrics.gather(local_rank)
 
+        metrics.gather(local_rank)
         if is_main_process():
             metrics_results = metrics.compute_metrics()
             if metrics_results > best_metric:
                 best_metric = metrics_results
                 torch.save(model.module.state_dict(), weight_path)
+        metrics.reset()
 
 def parse_args():
     parse = argparse.ArgumentParser()

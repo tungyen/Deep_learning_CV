@@ -2,8 +2,11 @@ import math
 import torch.optim as optim
 
 class CosineAnnealingWarmup(optim.lr_scheduler._LRScheduler):
-    def __init__(self, optimizer, first_cycle_steps, max_lr,
-                 min_lr, warmup_steps, cycle_mult=1.0, gamma=1.0, last_epoch=-1):
+    def __init__(self, optimizer, max_lr, min_lr, warmup_epochs, epochs, cycle_mult=1.0,
+                 gamma=1.0, last_epoch=-1, train_size=-1, **kwargs):
+
+        first_cycle_steps = train_size * (epochs - warmup_epochs)
+        warmup_steps = train_size * warmup_epochs
         assert warmup_steps < first_cycle_steps
 
         self.first_cycle_steps = first_cycle_steps

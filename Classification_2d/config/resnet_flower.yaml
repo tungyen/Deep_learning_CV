@@ -48,7 +48,6 @@ model:
 epochs: 100
 scheduler:
   name: "Poly"
-  max_iters: 90000
 
 optimizer:
   name: "Adam"

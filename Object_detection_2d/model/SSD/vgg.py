@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 
-from Object_detection_2d.SSD.model.layer import L2Norm
+from Object_detection_2d.model.SSD.layer import L2Norm
 from core.utils import load_state_dict_from_url
 
 model_urls = {

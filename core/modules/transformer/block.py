@@ -2,14 +2,14 @@ import torch
 from torch import nn
 
 class Mlp(nn.Module):
-    def __init__(self, in_channels, hidden_channels=None, out_channels=None, act_layer=nn.GELU, drop=0.):
+    def __init__(self, in_chans, hidden_chans=None, out_chans=None, act_layer=nn.GELU, drop_rate=0.):
         super().__init__()
-        out_channels = out_channels or in_channels
-        hidden_channels = hidden_channels or in_channels
-        self.fc1 = nn.Linear(in_channels, hidden_channels)
+        out_chans = out_chans or in_chans
+        hidden_chans = hidden_chans or in_chans
+        self.fc1 = nn.Linear(in_chans, hidden_chans)
         self.act = act_layer()
-        self.fc2 = nn.Linear(hidden_channels, out_channels)
-        self.drop = nn.Dropout(drop)
+        self.fc2 = nn.Linear(hidden_chans, out_chans)
+        self.drop = nn.Dropout(drop_rate)
 
     def forward(self, x):
         x = self.fc1(x)
@@ -20,9 +20,9 @@ class Mlp(nn.Module):
         return x
 
 class PatchEmbedding(nn.Module):
-    def __init__(self, patch_size=4, in_channels=3, embed_dims=96, patch_norm=True):
+    def __init__(self, in_chans=3, embed_dim=96, patch_size=4, patch_norm=True):
         super().__init__()
-        self.proj = nn.Conv2d(in_channels=in_channels, out_channels=embed_dims, kernel_size=patch_size, stride=patch_size)
+        self.proj = nn.Conv2d(in_chans=in_chans, out_chans=embed_dim, kernel_size=patch_size, stride=patch_size)
         if patch_norm:
             self.norm = nn.LayerNorm(embed_dims)
         else:
@@ -37,10 +37,10 @@ class PatchEmbedding(nn.Module):
         return x
 
 class PatchMerging(nn.Module):
-    def __init__(self, in_channels):
+    def __init__(self, in_chans):
         super().__init__()
-        self.norm = nn.LayerNorm(4 * in_channels)
-        self.reduction = nn.Conv2d(in_channels=4*in_channels, out_channels=2*in_channels, kernel_size=1, bias=False)
+        self.norm = nn.LayerNorm(4 * in_chans)
+        self.reduction = nn.Conv2d(in_chans=4*in_chans, out_chans=2*in_chans, kernel_size=1, bias=False)
 
     def forward(self, x):
         x_lu = x[:, :, 0::2, 0::2]

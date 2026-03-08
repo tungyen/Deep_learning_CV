@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.hub import load_state_dict_from_url
 import torch.utils.model_zoo as model_zoo
 
-from Object_detection_2d.CenterNet.model.post_processor import PostProcessor
+from Object_detection_2d.model.CenterNet.post_processor import PostProcessor
 
 model_urls = {
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',

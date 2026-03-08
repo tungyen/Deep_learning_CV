@@ -32,8 +32,14 @@ def train_model(args):
     if is_main_process():
         print("Start training model {}!".format(opts.model.name))
     
-    train_dataloader, val_dataloader, _ = build_dataloader(opts)
     epochs = opts.epochs
+    train_dataloader, val_dataloader, _ = build_dataloader(opts)
+    train_size = len(train_dataloader)
+    opts.scheduler.tain_size = train_size
+
+    opts.scheduler.world_size = world_size
+    opts.scheduler.epochs = epochs
+    
     model_name = opts.model.name
     model = build_model(opts.model).to(local_rank)
     optimizer = build_optimizer(opts.optimizer, model.parameters())

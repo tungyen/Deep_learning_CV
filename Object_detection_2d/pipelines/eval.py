@@ -11,7 +11,7 @@ from core.metrics import build_metrics
 from core.utils import is_main_process, init_ddp
 
 from Object_detection_2d.data import build_dataloader
-from Object_detection_2d.SSD.model import build_model
+from Object_detection_2d.model import build_model
 from Object_detection_2d.utils import parse_config
 
 def eval_model(args):

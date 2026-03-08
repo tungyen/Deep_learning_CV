@@ -1,11 +1,9 @@
-from Object_detection_2d.SSD.model.ssd import *
-from Object_detection_2d.SSD.model.anchors import PriorBox
-from Object_detection_2d.SSD.model.layer import L2Norm
-from Object_detection_2d.SSD.model.vgg import VGG
-from Object_detection_2d.SSD.model.post_processor import PostProcessor
+from Object_detection_2d.model.SSD import SSD, PriorBox
+from Object_detection_2d.model.CenterNet import CenterNet
 
 MODEL_DICT = {
-    "SSD": SSD
+    "SSD": SSD,
+    "CenterNet": CenterNet,
 }
 
 def build_model(opts):

@@ -13,7 +13,7 @@ Test and evaluation are based on Paskal VOC 2012 val dataset. While training is 
 
 ### Training ###
 ```bash
-bash Object_detection_2d/CenterNet/run_centernet.sh centernet_voc_512 Object_detection_2d/CenterNet/config/center_net_voc.yaml
+bash Object_detection_2d/run_object_detection_2d.sh centernet_voc_512 Object_detection_2d/config/center_net_voc.yaml
 ```
 
 ### Result of voc Dataset ###
@@ -21,4 +21,4 @@ bash Object_detection_2d/CenterNet/run_centernet.sh centernet_voc_512 Object_det
 ### Paskal VOC ###
 
 #### Centernet 512: ####
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Object_detection_2d/CenterNet/img/centernet_voc_512.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Object_detection_2d/img/centernet_voc_512.png)

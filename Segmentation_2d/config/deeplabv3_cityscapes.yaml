@@ -51,7 +51,7 @@ transforms:
 
 model:
   name: "DeepLabV3"
-  backbone: "resnet101"
+  backbone: "resnet152"
   class_num: *class_num
   in_channel: 2048
   bn_momentum: 0.1
@@ -61,7 +61,6 @@ model:
 epochs: 80
 scheduler:
   name: "Poly"
-  max_iters: 30000
 
 optimizer:
   name: "SGD"
@@ -72,8 +71,8 @@ optimizer:
 loss:
   name: CrossEntropyLoss
   ignore_index: *ignore_index
-  # lovasz_weight: 1.5
-  # boundary_weight: 0.5
+  lovasz_weight: 1.5
+  boundary_weight: 0.5
 
 metrics:
   name: "ConfusionMatrix"

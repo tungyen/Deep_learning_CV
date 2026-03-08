@@ -1,5 +1,4 @@
-from Object_detection_2d.CenterNet.model.center_net import CenterNet
-from Object_detection_2d.CenterNet.model.post_processor import PostProcessor
+from Object_detection_2d.model.CenterNet.center_net import CenterNet
 
 MODEL_DICT = {
     "CenterNet": CenterNet,

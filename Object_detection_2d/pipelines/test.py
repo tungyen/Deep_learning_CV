@@ -10,7 +10,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from core.utils import is_main_process, init_ddp
 
 from Object_detection_2d.data import build_dataloader
-from Object_detection_2d.SSD.model import build_model
+from Object_detection_2d.model import build_model
 from Object_detection_2d.utils import parse_config, build_visualizer, build_cmap
 
 def test_model(args):

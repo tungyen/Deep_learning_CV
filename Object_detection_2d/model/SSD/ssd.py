@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from Object_detection_2d.SSD.model.vgg import VGG
-from Object_detection_2d.SSD.model.post_processor import PostProcessor
-from Object_detection_2d.SSD.model.anchors import PriorBox
+from Object_detection_2d.model.SSD.vgg import VGG
+from Object_detection_2d.model.SSD.post_processor import PostProcessor
+from Object_detection_2d.model.SSD.anchors import PriorBox
 from core.utils.box_utils import *
 
 class DetectionHead(nn.Module):

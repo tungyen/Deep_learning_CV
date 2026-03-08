@@ -22,7 +22,7 @@ The command below is based on Smooth L1 loss for bounding boxes. If you want to 
 
 ### Training ###
 ```bash
-bash Object_detection_2d/SSD/run_ssd.sh ssd_300_smooth_l1 Object_detection_2d/SSD/config/ssd_300_regression_loss.yaml
+bash Object_detection_2d/run_object_detection_2d.sh ssd_300_smooth_l1 Object_detection_2d/config/ssd_300_regression_loss.yaml
 ```
 
 ### Result of voc Dataset ###
@@ -32,7 +32,7 @@ bash Object_detection_2d/SSD/run_ssd.sh ssd_300_smooth_l1 Object_detection_2d/SS
 Since ciou loss leads to worsen performance, only result based on smooth-L1 loss are shown here.
 
 #### SSD 300: ####
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Object_detection_2d/SSD/img/SSD_VOC_300_regression.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Object_detection_2d/img/SSD_VOC_300_regression.png)
 
 #### SSD 512: ####
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Object_detection_2d/SSD/img/SSD_VOC_512_regression.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Object_detection_2d/img/SSD_VOC_512_regression.png)

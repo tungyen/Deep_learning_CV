@@ -2,13 +2,13 @@ from torch.optim.lr_scheduler import _LRScheduler
 from bisect import bisect_right
 
 class WarmupMultiStepLR(_LRScheduler):
-    def __init__(self, optimizer, milestones, gamma=0.1, warmup_factor=1.0 / 3, warmup_iters=500, last_epoch=-1):
+    def __init__(self, optimizer, milestones, gamma=0.1, warmup_factor=1.0 / 3, warmup_iters=500, last_epoch=-1, world_size=1, **kwargs):
         if not list(milestones) == sorted(milestones):
             raise ValueError(
                 "Milestones should be a list of " " increasing integers. Got {}",
                 milestones,
             )
-        self.milestones = milestones
+        self.milestones = [m // world_size for m in milestones]
         self.gamma = gamma
         self.warmup_factor = warmup_factor
         self.warmup_iters = warmup_iters
