@@ -1,40 +1,40 @@
 import torch
 from torch import nn
 
-def get_xpos(n_patches, start_idx=0):
-    n_patches_ = int(n_patches ** 0.5)
-    x_positions = torch.arange(start_idx, n_patches_ + start_idx)
+def get_xpos(num_patch, start_idx=0):
+    num_patch_ = int(num_patch ** 0.5)
+    x_positions = torch.arange(start_idx, num_patch_ + start_idx)
     x_positions = x_positions.unsqueeze(0)
-    x_positions = torch.repeat_interleave(x_positions, n_patches_, 0)
+    x_positions = torch.repeat_interleave(x_positions, num_patch_, 0)
     x_positions = x_positions.reshape(-1)
 
     return x_positions
 
-def get_ypos(n_patches, start_idx=0):
-    n_patches_ = int(n_patches ** 0.5)
-    y_positions = torch.arange(start_idx, n_patches_+start_idx)
-    y_positions = torch.repeat_interleave(y_positions, n_patches_, 0)
+def get_ypos(num_patch, start_idx=0):
+    num_patch_ = int(num_patch ** 0.5)
+    y_positions = torch.arange(start_idx, num_patch_+start_idx)
+    y_positions = torch.repeat_interleave(y_positions, num_patch_, 0)
 
     return y_positions
 
 
 class SinusoidalPositionEmbedding2D(nn.Module):
-    def __init__(self, n_patches, emb_dim):
+    def __init__(self, num_patch, embed_dim):
         super().__init__()
-        self.emb_dim = emb_dim // 2
+        self.embed_dim = embed_dim // 2
         
-        x_pos = get_xpos(n_patches).reshape(-1, 1)
+        x_pos = get_xpos(num_patch).reshape(-1, 1)
         x_pos_emb = self.gen_emb(x_pos)
         
-        y_pos = get_ypos(n_patches).reshape(-1, 1)
+        y_pos = get_ypos(num_patch).reshape(-1, 1)
         y_pos_emb = self.gen_emb(y_pos)
         
         self.pos_emb = torch.cat((x_pos_emb, y_pos_emb), -1)
         
     def gen_emb(self, pos):
-        denom = torch.pow(10000, torch.arange(0, self.emb_dim, 2) / self.emb_dim)
+        denom = torch.pow(10000, torch.arange(0, self.embed_dim, 2) / self.embed_dim)
         
-        pos_emb = torch.zeros(1, pos.shape[0], self.emb_dim)
+        pos_emb = torch.zeros(1, pos.shape[0], self.embed_dim)
         denom = pos / denom
         pos_emb[:, :, ::2] = torch.sin(denom)
         pos_emb[:, :, 1::2] = torch.cos(denom)
@@ -42,10 +42,10 @@ class SinusoidalPositionEmbedding2D(nn.Module):
 
 
 class LearnedPositionEmbedding2D(nn.Module):
-    def __init__(self, row_size, col_size, emb_dim):
+    def __init__(self, row_size, col_size, embed_dim):
         super().__init__()
-        self.row_embedding = nn.Embedding(row_size, emb_dim // 2)
-        self.col_embedding = nn.Embedding(col_size, emb_dim // 2)
+        self.row_embedding = nn.Embedding(row_size, embed_dim // 2)
+        self.col_embedding = nn.Embedding(col_size, embed_dim // 2)
         self._init_weights()
 
     def _init_weights(self):
@@ -67,13 +67,13 @@ class LearnedPositionEmbedding2D(nn.Module):
 
 
 class RelativePositionEmbedding2D(nn.Module):
-    def __init__(self, emb_dim, seq_len, max_relative_dist):
-        super(RelativePositionEmbedding2D, self).__init__()
+    def __init__(self, embed_dim, seq_len, max_relative_dist):
+        super().__init__()
         
         self.max_relative_dist = max_relative_dist
         
-        self.x_embedding = nn.Embedding(max_relative_dist*2+2, emb_dim // 2)
-        self.y_embedding = nn.Embedding(max_relative_dist*2+2, emb_dim // 2)
+        self.x_embedding = nn.Embedding(max_relative_dist*2+2, embed_dim // 2)
+        self.y_embedding = nn.Embedding(max_relative_dist*2+2, embed_dim // 2)
         
         x_pos = get_xpos(seq_len-1)
         x_dis = self.generate_relative_dis(x_pos)
@@ -99,9 +99,9 @@ class RelativePositionEmbedding2D(nn.Module):
 
 
 class RotatoryPositionEmbedding2D(nn.Module):
-    def __init__(self, seq_len, emb_dim):
-        super(RotatoryPositionEmbedding2D, self).__init__()
-        self.emb_dim = emb_dim // 2
+    def __init__(self, seq_len, embed_dim):
+        super().__init__()
+        self.embed_dim = embed_dim // 2
         n_patch = seq_len - 1
         
         x_pos = get_xpos(n_patch, start_idx=1).reshape(-1, 1)
@@ -118,7 +118,7 @@ class RotatoryPositionEmbedding2D(nn.Module):
         
     def generate_rope1D(self, pos):
         pos = F.pad(pos, (0, 0, 1, 0))
-        theta = -2 * torch.arange(start=1, end=self.emb_dim//2+1) / self.emb_dim
+        theta = -2 * torch.arange(start=1, end=self.embed_dim//2+1) / self.embed_dim
         theta = torch.repeat_interleave(theta, 2, 0)
         theta = torch.pow(10000, theta)
         
@@ -129,8 +129,8 @@ class RotatoryPositionEmbedding2D(nn.Module):
     
     
     def forward(self, x):
-        x_axis = x[:, :, :, :self.emb_dim]
-        y_axis = x[:, :, :, self.emb_dim:]
+        x_axis = x[:, :, :, :self.embed_dim]
+        y_axis = x[:, :, :, self.embed_dim:]
         
         x_axis_cos = x_axis * self.x_cos
         x_axis_shift = torch.stack((-x_axis[:, :, :, 1::2], x_axis[:, :, :, ::2]), -1)

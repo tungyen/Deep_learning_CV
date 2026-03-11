@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from timm.models.layers import trunc_normal_, DropPath
 
-from Classification_2d.model.ViT.attention_block import *
+from core.modules.transformer import PatchMerging
 from core.utils.model_utils import *
 
 def window_partition(x, window_size):
@@ -55,23 +55,23 @@ def get_mask(img_size, window_size, shift_size):
     return attn_mask
 
 class WindowAttention(nn.Module):
-    def __init__(self, window_size, n_heads, embed_dims, qkv_bias=True, attention_drop=0., proj_drop=0.):
+    def __init__(self, window_size, num_head, embed_dim, qkv_bias=True, attention_drop=0., proj_drop=0.):
         super().__init__()
         self.window_size = window_size
-        self.n_heads = n_heads
-        self.scale = (embed_dims // n_heads) ** -0.5
+        self.num_head = num_head
+        self.scale = (embed_dim // num_head) ** -0.5
 
         self.relative_position_bias_table = nn.Parameter(
-            torch.zeros((2 * window_size - 1) * (2 * window_size - 1), n_heads)
+            torch.zeros((2 * window_size - 1) * (2 * window_size - 1), num_head)
         )
 
         trunc_normal_(self.relative_position_bias_table, std=0.02)
         relative_position_index = get_relative_position_index(window_size)
         self.register_buffer('relative_position_index', relative_position_index)
 
-        self.qkv = nn.Linear(embed_dims, embed_dims * 3)
+        self.qkv = nn.Linear(embed_dim, embed_dim * 3)
         self.attn_drop = nn.Dropout(attention_drop)
-        self.proj = nn.Linear(embed_dims, embed_dims)
+        self.proj = nn.Linear(embed_dim, embed_dim)
         self.proj_drop = nn.Dropout(proj_drop)
         self.softmax = nn.Softmax(dim=-1)
 
@@ -79,7 +79,7 @@ class WindowAttention(nn.Module):
         bs, c, window_size, _ = x.shape
         x = x.permute(0, 2, 3, 1)
         qkv = self.qkv(x)
-        qkv = qkv.reshape(bs, window_size * window_size, c // self.n_heads, self.n_heads, 3)
+        qkv = qkv.reshape(bs, window_size * window_size, c // self.num_head, self.num_head, 3)
         q = qkv[:, :, :, :, 0].permute(0, 3, 1, 2)
         k = qkv[:, :, :, :, 1].permute(0, 3, 1, 2)
         v = qkv[:, :, :, :, 2].permute(0, 3, 1, 2)
@@ -93,9 +93,9 @@ class WindowAttention(nn.Module):
         if mask is not None:
             n_windows = mask.shape[0]
             mask = mask.unsqueeze(1).unsqueeze(0)
-            attn_weight = attn_weight.view(bs // n_windows, n_windows, self.n_heads, window_size ** 2, window_size ** 2)
+            attn_weight = attn_weight.view(bs // n_windows, n_windows, self.num_head, window_size ** 2, window_size ** 2)
             attn_weight = attn_weight + mask
-            attn_weight = attn_weight.view(-1, self.n_heads, window_size ** 2, window_size ** 2)
+            attn_weight = attn_weight.view(-1, self.num_head, window_size ** 2, window_size ** 2)
 
         attn_weight = self.softmax(attn_weight)
         x = attn_weight @ v
@@ -109,8 +109,8 @@ class WindowAttention(nn.Module):
 class SwinTransformerBlock(nn.Module):
     def __init__(
         self,
-        embed_dims,
-        n_heads,
+        embed_dim,
+        num_head,
         img_size,
         window_size=7,
         shift_size=0,
@@ -122,18 +122,18 @@ class SwinTransformerBlock(nn.Module):
         norm_layer=nn.LayerNorm,
     ):
         super().__init__()
-        self.embed_dims = embed_dims
-        self.n_heads = n_heads
+        self.embed_dim = embed_dim
+        self.num_head = num_head
         self.window_size = window_size
         self.shift_size = shift_size
         self.mlp_ratio= mlp_ratio
         self.img_size = img_size
 
-        self.norm_0 = norm_layer(embed_dims)
-        self.attn = WindowAttention(window_size, n_heads, embed_dims, qkv_bias, attn_drop, drop)
-        self.norm_1 = norm_layer(embed_dims)
-        self.norm_2 = norm_layer(embed_dims)
-        self.mlp = Mlp(in_channels=embed_dims, hidden_channels=int(mlp_ratio * embed_dims))
+        self.norm_0 = norm_layer(embed_dim)
+        self.attn = WindowAttention(window_size, num_head, embed_dim, qkv_bias, attn_drop, drop)
+        self.norm_1 = norm_layer(embed_dim)
+        self.norm_2 = norm_layer(embed_dim)
+        self.mlp = Mlp(in_chans=embed_dim, hidden_chans=int(mlp_ratio * embed_dim))
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
         if self.shift_size > 0:
@@ -166,8 +166,8 @@ class SwinTransformerBlock(nn.Module):
 class SwinTransformerBlockStack(nn.Module):
     def __init__(
         self,
-        embed_dims,
-        n_heads,
+        embed_dim,
+        num_head,
         img_size,
         window_size=7,
         mlp_ratio=4.0,
@@ -179,10 +179,10 @@ class SwinTransformerBlockStack(nn.Module):
     ):
         super().__init__()
         self.WMHA = SwinTransformerBlock(
-            embed_dims, n_heads, img_size, window_size, 0, mlp_ratio, qkv_bias, drop, attn_drop, drop_path[0], norm_layer
+            embed_dim, num_head, img_size, window_size, 0, mlp_ratio, qkv_bias, drop, attn_drop, drop_path[0], norm_layer
         )
         self.SWMHA = SwinTransformerBlock(
-            embed_dims, n_heads, img_size, window_size, window_size // 2, mlp_ratio, qkv_bias, drop, attn_drop, drop_path[1], norm_layer
+            embed_dim, num_head, img_size, window_size, window_size // 2, mlp_ratio, qkv_bias, drop, attn_drop, drop_path[1], norm_layer
         )
 
     def forward(self, x):
@@ -196,8 +196,8 @@ class SwinTransformer(nn.Module):
         self,
         img_size,
         patch_size=4,
-        in_channels=3,
-        embed_dims=96,
+        in_chans=3,
+        embed_dim=96,
         window_size=7,
         mlp_ratio=4.0,
         qkv_bias=True,
@@ -206,7 +206,7 @@ class SwinTransformer(nn.Module):
         drop_path_rate=0.1,
         patch_norm=True,
         depths=[2, 2, 6, 2],
-        n_heads=[3, 6, 12, 24],
+        num_heads=[3, 6, 12, 24],
         norm_layer=nn.LayerNorm,
         include_top=True,
         class_num=5,
@@ -214,30 +214,30 @@ class SwinTransformer(nn.Module):
     ):
         super().__init__()
         self.n_layers = len(depths)
-        self.embed_dims = embed_dims
+        self.embed_dim = embed_dim
         self.patch_norm = patch_norm
-        self.out_channels = int(embed_dims * (2 ** (self.n_layers - 1)))
+        self.out_channels = int(embed_dim * (2 ** (self.n_layers - 1)))
         self.mlp_ratio = mlp_ratio
 
-        self.patch_embedding = PatchEmbedding(patch_size, in_channels, embed_dims, patch_norm)
+        self.patch_embedding = PatchEmbedding(patch_size, in_chans, embed_dim, patch_norm)
         self.pos_drop = nn.Dropout(drop_rate)
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
 
         img_size //= patch_size
-        in_channels = embed_dims
+        in_chans = embed_dim
         self.layers = nn.ModuleList()
         cur_idx = 0
         for i in range(self.n_layers):
             cur_layer = nn.ModuleList()
             if i > 0:
-                cur_layer.append(PatchMerging(in_channels=in_channels))
+                cur_layer.append(PatchMerging(in_chans=in_chans))
                 img_size //= 2
-                in_channels *= 2
+                in_chans *= 2
             for j in range(depths[i] // 2):
                 cur_layer.append(
                     SwinTransformerBlockStack(
-                        embed_dims=in_channels,
-                        n_heads=n_heads[i],
+                        embed_dim=in_chans,
+                        num_head=num_heads[i],
                         img_size=img_size,
                         window_size=window_size,
                         mlp_ratio=mlp_ratio,

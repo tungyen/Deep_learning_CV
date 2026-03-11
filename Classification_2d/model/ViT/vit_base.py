@@ -21,12 +21,13 @@ class VitBase(nn.Module):
         self,
         in_chans=3,
         embed_dim=768,
-        num_heads=8,
+        num_head=8,
         mlp_ratio=4.0,
         depth=12,
         patch_size=16,
         norm_layer=nn.LayerNorm,
         class_num=5,
+        include_top=True,
         **kwargs
     ):
         super().__init__()
@@ -34,14 +35,17 @@ class VitBase(nn.Module):
         self.attn_blocks = nn.ModuleList([
             TransformerEncoderBlock(
                 embed_dim=embed_dim,
-                num_heads=num_heads,
+                num_head=num_head,
                 mlp_ratio=mlp_ratio,
+                norm_layer=norm_layer,
                 **kwargs
             )
-        ] for _ in range(depth))
-        self.mlp_head = ClsHead(embed_dim=embed_dim, class_num=class_num, norm_layer=norm_layer)
-            PatchEmbedding(img_size, patch_size, input_channel, emb_dim),
-            TransformerEncoder(L, **kwargs),
+        for _ in range(depth)])
+
+        self.cls_head = ClsHead(embed_dim=embed_dim, class_num=class_num, norm_layer=norm_layer)
+        self.CLS = nn.Parameter(torch.randn(1, 1, self.emb_dim))
+        nn.init.trunc_normal_(self.CLS, std=0.02)
+        self.include_top=include_top
 
     def forward(self, x):
         raise NotImplementedError("This function is not implemented yet")

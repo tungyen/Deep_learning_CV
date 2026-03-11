@@ -35,13 +35,11 @@ def train_model(args):
     epochs = opts.epochs
     model_name = opts.model.name
     model = build_model(opts.model).to(local_rank)
-    opts.optimizer.lr *= world_size
-    train_size = len(train_dataloader)
 
-    if opts.scheduler.name == "CosineAnnealingWarmup":
-        warmup_epochs = opts.scheduler.pop('warmup_epochs', None)
-        opts.scheduler.first_cycle_steps = train_size * (epochs - warmup_epochs)
-        opts.scheduler.warmup_steps = train_size * warmup_epochs
+    opts.scheduler.train_size = len(train_dataloader)
+    opts.scheduler.epochs = epochs
+    opts.scheduler.world_size = world_size
+
     optimizer = build_optimizer(opts.optimizer, model.parameters())
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     scheduler = build_scheduler(opts.scheduler, optimizer)
@@ -62,8 +60,16 @@ def train_model(args):
                 optimizer.zero_grad()
                 loss['loss'].backward()
                 optimizer.step()
+
+                lr = optimizer.param_groups[0]['lr']
+                postfix = {'lr': f"{lr:.6f}"}
+                for loss_name, loss_value in loss.items():
+                    postfix[loss_name] = f"{loss_value.item():.4f}"
+
+                if is_main_process():
+                    pbar.set_postfix(postfix)
+
                 scheduler.step()
-                pbar.set_postfix(total_loss=f"{loss['loss'].item():.4f}")
 
         # Validation
         model.eval()

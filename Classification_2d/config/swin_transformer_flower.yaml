@@ -41,12 +41,12 @@ model:
   name: "SwinTransformer"
   class_num: *class_num
   img_size: *img_size
-  in_channels: 3
+  in_chans: 3
   patch_size: 4
-  embed_dims: 96
+  embed_dim: 96
   window_size: 7
   depths: [4, 4, 10, 4]
-  n_heads: [3, 6, 12, 24]
+  num_heads: [3, 6, 12, 24]
   weight_init: "attention"
 
 # Training

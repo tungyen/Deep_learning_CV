@@ -40,11 +40,12 @@ transforms:
 model:
   name: "VitRope"
   class_num: *class_num
-  input_channel: 3
+  in_chans: 3
   patch_size: 16
-  emb_dim: 768
+  embed_dim: 768
+  mlp_ratio: 4.0
   img_size: 224
-  L: 12
+  depth: 12
   weight_init: "attention"
 
 # Training

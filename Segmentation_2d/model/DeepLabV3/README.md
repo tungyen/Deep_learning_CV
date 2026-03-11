@@ -12,12 +12,12 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 | DeepLabV3 | 1.0 | None | None | ResNet152 | 70.11% |
 | DeepLabV3 | 1.0 | 1.0 | None | ResNet152 | 71.54% |
 | DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet152 | 71.57% |
-| DeepLabV3++ | 1.0 | None | None | ResNet101 | % |
-| DeepLabV3++ | 1.0 | 1.5 | None | ResNet101 | % |
-| DeepLabV3++ | 1.0 | 1.5 | 0.5 | ResNet101 | % |
+| DeepLabV3++ | 1.0 | None | None | ResNet101 | 71.74% |
+| DeepLabV3++ | 1.0 | 1.5 | None | ResNet101 | 73.4% |
+| DeepLabV3++ | 1.0 | 1.5 | 0.5 | ResNet101 | 73.53% |
 | DeepLabV3++ | 1.0 | None | None | ResNet152 | % |
 | DeepLabV3++ | 1.0 | 1.0 | None | ResNet152 | % |
-| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet152 | % |
+| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet152 | 73.65% |
 
 
 ### Paskal VOC dataset ###
@@ -53,37 +53,53 @@ bash Segmentation_2d/run_seg_2d.sh 1 exp Segmentation_2d/config/deeplabv3plus_ci
 #### DeepLabV3 ####
 CE = 1.0:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/deeplabv3_cityscapes.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/deeplabv3_resnet152_cityscapes_512_1024.png)
+
+CE = 1.0, Lovasz = 1.5:
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz/deeplabv3_resnet152_cityscapes_512_1024_lovasz_1.5.png)
 
 CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound_default/deeplabv3_cityscapes.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/deeplabv3_resnet152_cityscapes_512_1024_lovasz_1.5_bound_0.5.png)
 
 #### DeepLabV3+ ####
 CE = 1.0:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/deeplabv3plus_cityscapes.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/deeplabv3plus_resnet152_cityscapes_512_1024.png)
+
+CE = 1.0, Lovasz = 1.5:
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz/deeplabv3plus_resnet152_cityscapes_512_1024_lovasz_1.5.png)
 
 CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound_default/deeplabv3plus_cityscapes.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/deeplabv3plus_resnet152_cityscapes_512_1024_lovasz_1.5_bound_0.5.png)
 
 ### Result of Paskal VOC 2012 Dataset ###
 
 #### DeepLabV3 ####
 CE = 1.0:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/deeplabv3_voc_2012_aug.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/deeplabv3_resnet152_voc_512.png)
+
+CE = 1.0, Lovasz = 1.5:
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz/deeplabv3_resnet152_voc_512_lovasz_1.5.png)
 
 CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound_default/deeplabv3_voc_2012_aug.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/deeplabv3_resnet152_voc_512_lovasz_1.5_bound_0.5.png)
 
 #### DeepLabV3+ ####
 CE = 1.0:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/deeplabv3plus_voc_2012_aug.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/deeplabv3plus_resnet152_voc_512.png)
+
+CE = 1.0, Lovasz = 1.5:
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz/deeplabv3plus_resnet152_voc_512_lovasz_1.5.png)
 
 CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound_default/deeplabv3plus_voc_2012_aug.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/deeplabv3plus_resnet152_voc_512_lovasz_1.5_bound_0.5.png)

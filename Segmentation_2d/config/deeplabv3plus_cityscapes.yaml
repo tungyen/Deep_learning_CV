@@ -10,7 +10,7 @@ img_size: &img_size [512, 1024]
 
 data_path: "Dataset/cityscapes/"
 meta_path: "Dataset/cityscapes/meta"
-train_batch_size: 8
+train_batch_size: 4
 val_batch_size: 8
 test_batch_size: 4
 
@@ -51,7 +51,7 @@ transforms:
 
 model:
   name: "DeepLabV3Plus"
-  backbone: "resnet101"
+  backbone: "resnet152"
   class_num: *class_num
   in_channel: 2048
   bn_momentum: 0.1
@@ -66,12 +66,12 @@ optimizer:
   name: "SGD"
   weight_decay: 0.0001
   momentum: 0.9
-  lr: 0.01
+  lr: 0.005
 
 loss:
   name: CrossEntropyLoss
   ignore_index: *ignore_index
-  # lovasz_weight: 1.5
+  lovasz_weight: 1.5
   # boundary_weight: 0.5
 
 metrics:
