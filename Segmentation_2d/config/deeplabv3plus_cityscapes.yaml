@@ -71,7 +71,7 @@ optimizer:
 loss:
   name: CrossEntropyLoss
   ignore_index: *ignore_index
-  lovasz_weight: 1.5
+  # lovasz_weight: 1.5
   # boundary_weight: 0.5
 
 metrics:
