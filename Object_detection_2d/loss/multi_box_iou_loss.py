@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from core.utils.box_utils import *
-from Object_detection_2d.SSD.loss.iou_loss import *
+from Object_detection_2d.loss.iou_loss import *
 
 class MultiBoxesIouLoss(nn.Module):
     def __init__(self, priors_xy, neg_pos_ratio, box_loss_weight, center_variance, size_variance):
@@ -16,7 +16,12 @@ class MultiBoxesIouLoss(nn.Module):
         self.center_variance = center_variance
         self.size_variance = size_variance
         
-    def forward(self, pred_boxes, pred_logits, gt_boxes, gt_labels):
+    def forward(self, pred, gt):
+        pred_boxes = pred['boxes']
+        pred_logits = pred['logits']
+        gt_boxes = gt['boxes']
+        gt_labels = gt['labels']
+
         loss_dict = {}
         batch_size = pred_boxes.shape[0]
         class_num = pred_logits.shape[2]

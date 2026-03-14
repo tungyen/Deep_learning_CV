@@ -2,7 +2,7 @@ img_size: &img_size 512
 class_num: &class_num 21
 img_mean: &img_mean [0.40789655, 0.44719303, 0.47026116]
 img_std: &img_std [0.2886383, 0.27408165, 0.27809834]
-root: "Object_detection_2d/CenterNet"
+root: "Object_detection_2d"
 
 train_batch_size: 16
 eval_batch_size: 8

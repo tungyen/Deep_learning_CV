@@ -52,7 +52,7 @@ class SSD(nn.Module):
         backbone_feats = self.backbone(x)
         boxes, cls_scores = self.det_head(backbone_feats)
         if is_train:
-            return boxes, cls_scores
+            return {"boxes": boxes, "logits": cls_scores}
         self.prior_xy = self.prior_xy.to(x.device)
         cls_scores = F.softmax(cls_scores, dim=2)
         boxes = offset_to_cxcy(boxes, self.prior_xy, self.center_variance, self.size_variance)

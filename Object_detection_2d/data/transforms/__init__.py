@@ -1,4 +1,4 @@
-from Object_detection_2d.SSD.model.anchors import PriorBox
+from Object_detection_2d.model.SSD.anchors import PriorBox
 from Object_detection_2d.data.transforms.transforms import *
 from Object_detection_2d.data.transforms.target_transforms import *
 

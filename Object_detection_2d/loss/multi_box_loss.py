@@ -10,7 +10,12 @@ class MultiBoxesLoss(nn.Module):
         super().__init__()
         self.neg_pos_ratio = neg_pos_ratio
         
-    def forward(self, pred_boxes, pred_logits, gt_boxes, gt_labels):
+    def forward(self, pred, gt):
+        pred_boxes = pred['boxes']
+        pred_logits = pred['logits']
+        gt_boxes = gt['boxes']
+        gt_labels = gt['labels']
+
         loss_dict = {}
         batch_size = pred_boxes.shape[0]
         class_num = pred_logits.shape[2]

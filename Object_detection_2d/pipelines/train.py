@@ -57,11 +57,9 @@ def train_model(args):
         model.train()
         with tqdm(train_dataloader, desc=f"Train Epoch {epoch+1}", disable=not is_main_process()) as pbar:
             for input_dict in pbar:
-                imgs = input_dict['img'].to(local_rank)
-                boxes = input_dict['boxes'].to(local_rank)
-                labels = input_dict['labels'].to(local_rank)
-                pred_boxes, pred_logits = model(imgs)
-                loss = criterion(pred_boxes, pred_logits, boxes, labels)
+                input_dict = input_dict.to(local_rank)
+                pred = model(input_dict['img'])
+                loss = criterion(pred, input_dict)
                 optimizer.zero_grad()
                 loss['loss'].backward()
                 optimizer.step()
