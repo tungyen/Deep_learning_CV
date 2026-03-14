@@ -54,9 +54,11 @@ def train_model(args):
         model.train()
 
         with tqdm(train_dataloader, desc=f"Train Epoch {epoch+1}", disable=not is_main_process()) as pbar:
-            for imgs, labels in pbar:
-                outputs = model(imgs.to(local_rank))
-                loss = criterion(outputs, labels.to(local_rank))
+            for input_dict in pbar:
+                imgs = input_dict['img'].to(local_rank)
+                labels = input_dict['label'].type(torch.LongTensor).to(local_rank)
+                outputs = model(imgs)
+                loss = criterion(outputs, labels)
                 optimizer.zero_grad()
                 loss['loss'].backward()
                 optimizer.step()
@@ -74,10 +76,10 @@ def train_model(args):
         # Validation
         model.eval()
         with torch.no_grad():
-            for imgs, labels in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
-                outputs = model(imgs.to(local_rank))
+            for input_dict in tqdm(val_dataloader, desc=f"Evaluate Epoch {epoch+1}", disable=not is_main_process()):
+                outputs = model(input_dict['img'].to(local_rank))
                 pred_classes = torch.argmax(outputs, dim=1)
-                metrics.update(pred_classes.cpu(), labels)
+                metrics.update(pred_classes.cpu(), input_dict)
 
         metrics.gather(local_rank)
         if is_main_process():

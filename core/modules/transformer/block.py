@@ -22,9 +22,9 @@ class Mlp(nn.Module):
 class PatchEmbedding(nn.Module):
     def __init__(self, in_chans=3, embed_dim=96, patch_size=4, patch_norm=True):
         super().__init__()
-        self.proj = nn.Conv2d(in_chans=in_chans, out_chans=embed_dim, kernel_size=patch_size, stride=patch_size)
+        self.proj = nn.Conv2d(in_channels=in_chans, out_channels=embed_dim, kernel_size=patch_size, stride=patch_size)
         if patch_norm:
-            self.norm = nn.LayerNorm(embed_dims)
+            self.norm = nn.LayerNorm(embed_dim)
         else:
             self.norm = None
 
@@ -40,7 +40,7 @@ class PatchMerging(nn.Module):
     def __init__(self, in_chans):
         super().__init__()
         self.norm = nn.LayerNorm(4 * in_chans)
-        self.reduction = nn.Conv2d(in_chans=4*in_chans, out_chans=2*in_chans, kernel_size=1, bias=False)
+        self.reduction = nn.Conv2d(in_channels=4*in_chans, out_channels=2*in_chans, kernel_size=1, bias=False)
 
     def forward(self, x):
         x_lu = x[:, :, 0::2, 0::2]

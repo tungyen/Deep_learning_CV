@@ -13,6 +13,7 @@ class MultiHeadAttention(nn.Module):
         attn_drop_rate=0.,
         qkv_bias=True,
         qk_scale=None,
+        **kwargs
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -68,7 +69,7 @@ class TransformerEncoderBlock(nn.Module):
         self.dropout1 = nn.Dropout(drop_rate)
         self.dropout2 = nn.Dropout(drop_rate)
         mlp_hidden_dim = int(mlp_ratio * embed_dim)
-        self.mlp = MLP(in_chans=embed_dim, hidden_chans=mlp_hidden_dim, act_layer=act_layer, drop_rate=drop_rate)
+        self.mlp = Mlp(in_chans=embed_dim, hidden_chans=mlp_hidden_dim, act_layer=act_layer, drop_rate=drop_rate)
 
     def forward(self, x):
         x = x + self.dropout1(self.attn(self.norm1(x)))

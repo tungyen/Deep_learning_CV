@@ -42,7 +42,7 @@ class FlowerDataset(Dataset):
         if self.transforms is not None:
             img, label = self.transforms(img, label)
             
-        return img, label
+        return {"img": img, "label": label}
 
     def get_class_dict(self):
         return self.class_dict

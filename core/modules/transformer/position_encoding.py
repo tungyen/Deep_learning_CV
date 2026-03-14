@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 def get_xpos(num_patch, start_idx=0):
     num_patch_ = int(num_patch ** 0.5)

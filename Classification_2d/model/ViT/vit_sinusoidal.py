@@ -4,7 +4,7 @@ from einops import repeat
 
 from core.utils.model_utils import *
 from core.modules.transformer import SinusoidalPositionEmbedding2D
-from core.Classification_2d.model.ViT.vit_base import VitBase
+from Classification_2d.model.ViT.vit_base import VitBase
         
 class VitSinusoidal(VitBase):
     def __init__(
@@ -20,8 +20,8 @@ class VitSinusoidal(VitBase):
         self.patch_length = self.img_size // self.patch_size
 
         self.seq_length = self.patch_length ** 2
-        pos_embedding = SinusoidalPositionEmbedding2D(self.seq_length, embed_dim).pos_emb
-        self.register("pos_embedding", pos_embedding)
+        pos_embedding = SinusoidalPositionEmbedding2D(self.seq_length, self.embed_dim).pos_emb
+        self.register_buffer("pos_embedding", pos_embedding)
 
         if weight_init is not None:
             self.apply(initialize_weights(weight_init))

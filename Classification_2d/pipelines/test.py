@@ -40,9 +40,10 @@ def test_model(args):
     class_dict = test_dataloader.dataset.get_class_dict()
     img_visualizer = build_visualizer(class_dict, opts.visualizer)
 
-    imgs, _ = next(iter(test_dataloader))
+    input_dict = next(iter(test_dataloader))
     with torch.no_grad():
-        outputs = model(imgs.to(local_rank))
+        imgs = input_dict['img']
+        outputs = model(input_dict['img'].to(local_rank))
         outputs = torch.softmax(outputs, dim=1)
         pred_classes = torch.argmax(outputs, dim=1).cpu().numpy()
         outputs = outputs.cpu().numpy()

@@ -5,7 +5,7 @@ from einops import repeat
 
 from core.utils.model_utils import *
 from core.modules.transformer import RotatoryPositionEmbedding2D, MultiHeadAttention
-from core.Classification_2d.model.ViT.vit_base import VitBase
+from Classification_2d.model.ViT.vit_base import VitBase
     
 class MultiHeadAttentionRope(MultiHeadAttention):
     def __init__(self, seq_len, **kwargs):

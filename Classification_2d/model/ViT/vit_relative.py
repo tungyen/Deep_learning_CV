@@ -5,7 +5,7 @@ from einops import repeat
 
 from core.utils.model_utils import *
 from core.modules.transformer import RelativePositionEmbedding2D, MultiHeadAttention
-from core.Classification_2d.model.ViT.vit_base import VitBase
+from Classification_2d.model.ViT.vit_base import VitBase
     
 class MultiHeadAttentionRelativeDist(MultiHeadAttention):
     def __init__(self, seq_len, max_relative_dist=2, **kwargs):
@@ -29,7 +29,7 @@ class MultiHeadAttentionRelativeDist(MultiHeadAttention):
         q_pos = q_pos.permute(0, 2, 1) # (N, E, N)
         
         q = q.permute(2, 0, 1, 3) # (N, B, H, E)
-        q = q.reshape(N, -1, self.head_emb_dim)
+        q = q.reshape(N, -1, self.head_dim)
         
         relative_q = torch.matmul(q, q_pos) # (N, BH, N)
         relative_q = relative_q.reshape(N, B, -1, N)
@@ -50,7 +50,7 @@ class MultiHeadAttentionRelativeDist(MultiHeadAttention):
         weight = weight.permute(2, 0, 1, 3) # (N, B, H, N)
         weight = weight.reshape(N, -1, N) # (N, BH, N)
         relative_v = torch.matmul(weight, v_pos) # (N, BH, E)
-        relative_v = relative_v.reshape(N, B, -1, self.head_emb_dim) # (N, B, H, E)
+        relative_v = relative_v.reshape(N, B, -1, self.head_dim) # (N, B, H, E)
         relative_v = relative_v.permute(1, 2, 0, 3) # (B, H, N, E)
         x += relative_v
         

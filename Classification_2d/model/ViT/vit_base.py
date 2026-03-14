@@ -41,9 +41,9 @@ class VitBase(nn.Module):
                 **kwargs
             )
         for _ in range(depth)])
-
+        self.embed_dim = embed_dim
         self.cls_head = ClsHead(embed_dim=embed_dim, class_num=class_num, norm_layer=norm_layer)
-        self.CLS = nn.Parameter(torch.randn(1, 1, self.emb_dim))
+        self.CLS = nn.Parameter(torch.randn(1, 1, embed_dim))
         nn.init.trunc_normal_(self.CLS, std=0.02)
         self.include_top=include_top
 

@@ -20,7 +20,7 @@ class CIFAR10(Dataset):
         img, label = self.dataset[idx]
         if self.transforms is not None:
             img, label = self.transforms(img, label)
-        return img, label
+        return {"img": img, "label": label}
 
     def get_class_dict(self):
         return self.class_dict
