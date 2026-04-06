@@ -4,6 +4,8 @@ from tqdm import tqdm
 import torch.distributed as dist
 import torchvision.transforms.functional as F
 from PIL import Image
+from rich.table import Table
+from rich.console import Console
 
 from core.utils import is_main_process
 
@@ -57,23 +59,47 @@ class ConfusionMatrix:
         }
 
         if self.task == "cls":
-            precision = results['mean_precision']
-            recall = results['mean_recall']
-            f1_score = results['mean_f1_score']
-            print("Validation Precision ===> {:.4f}".format(precision))
-            print("Validation Recall ===> {:.4f}".format(recall))
-            print("Validation F1 Score ===> {:.4f}".format(f1_score))
-            return f1_score
+            self._print_table(results, show_iou=False)
+            return results['mean_f1_score']
 
-        elif self.task == "semseg" or self.task == "img_seg":
-            ious = results['ious']
-            mious = results['mious']
-            print("Validation mIoU ===> {:.4f}".format(mious))
-            for cls in self.class_dict:
-                if cls >= len(ious):
-                    continue
-                print("{} IoU: {:.4f}".format(self.class_dict[cls], ious[cls]))
-            return mious
+        elif self.task in ("semseg", "img_seg"):
+            self._print_table(results, show_iou=True)
+            return results['mious']
+
+    def _print_table(self, results, show_iou=True):
+        console = Console()
+        table = Table(title="Validation Metrics", show_header=True, header_style="bold cyan", title_style="bold white")
+        table.add_column("Class", style="bold white", justify="left")
+        if show_iou:
+            table.add_column("IoU", justify="center")
+        table.add_column("Precision", justify="center")
+        table.add_column("Recall",    justify="center")
+        table.add_column("F1 Score",  justify="center")
+
+        for cls in self.class_dict:
+            if cls >= len(results['ious']):
+                continue
+            row = [self.class_dict[cls]]
+            if show_iou:
+                row.append(f"{results['ious'][cls]:.4f}")
+            row += [
+                f"{results['precision'][cls]:.4f}",
+                f"{results['recall'][cls]:.4f}",
+                f"{results['f1_score'][cls]:.4f}",
+            ]
+            table.add_row(*row)
+
+        table.add_section()
+        mean_row = ["[bold yellow]Mean[/bold yellow]"]
+        if show_iou:
+            mean_row.append(f"[bold yellow]{results['mious']:.4f}[/bold yellow]")
+        mean_row += [
+            f"[bold yellow]{results['mean_precision']:.4f}[/bold yellow]",
+            f"[bold yellow]{results['mean_recall']:.4f}[/bold yellow]",
+            f"[bold yellow]{results['mean_f1_score']:.4f}[/bold yellow]",
+        ]
+        table.add_row(*mean_row)
+        console.print(table)
 
     def gather(self, local_rank):
         if is_main_process():

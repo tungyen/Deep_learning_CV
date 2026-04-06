@@ -10,7 +10,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from core.optimizer import build_optimizer
 from core.scheduler import build_scheduler
 from core.metrics import build_metrics
-from core.utils import is_main_process, init_ddp
+from core.utils import is_main_process, init_ddp, save_checkpoint, load_checkpoint
 
 from Object_detection_2d.data import build_dataloader
 from Object_detection_2d.loss import build_loss
@@ -30,6 +30,12 @@ def train_model(args):
     dataset_type = opts.datasets.dataset_name
     exec_path = os.path.join(root, "runs")
     weight_path = os.path.join(root, 'runs', exp, "max-ap-val.pt")
+    checkpoint_path = os.path.join(root, 'runs', exp, "last-checkpoint.pth")
+
+    if is_main_process():
+        config_save_path = os.path.join(root, 'runs', exp, 'config.txt')
+        with open(config_save_path, 'w') as f:
+            json.dump(opts, f, indent=4)
 
     if is_main_process():
         print("Start training model {} on {} dataset!".format(model_name, dataset_type))
@@ -38,7 +44,7 @@ def train_model(args):
     model = build_model(opts.model).to(local_rank)
     epochs = opts.epochs
 
-    optimizer = build_optimizer(opts.optimizer, model.parameters())
+    optimizer = build_optimizer(opts.optimizer, model)
 
     opts.scheduler.train_size = train_size
     opts.scheduler.world_size = world_size
@@ -49,9 +55,18 @@ def train_model(args):
 
     class_dict = val_dataloader.dataset.get_class_dict()
     metrics = build_metrics(class_dict, val_dataloader.dataset, opts.metrics)
+
     best_metric = 0.0
+    start_epoch = 0
+
+    if args.resume and os.path.exists(checkpoint_path):
+        start_epoch, best_metric = load_checkpoint(
+            checkpoint_path, model, optimizer, scheduler, local_rank
+        )
+        if is_main_process():
+            print(f"Resumed from epoch {start_epoch}, best_metric={best_metric:.4f}")
             
-    for epoch in range(epochs):
+    for epoch in range(start_epoch, epochs):
         # Train
         train_dataloader.sampler.set_epoch(epoch)
         model.train()
@@ -63,11 +78,16 @@ def train_model(args):
                 optimizer.zero_grad()
                 loss['loss'].backward()
                 optimizer.step()
-                lr = optimizer.param_groups[0]['lr']
 
-                postfix = {
-                    'lr': f"{lr:.6f}"
-                }
+                lr_groups = {}
+                if len(optimizer.param_groups) == 1:
+                    lr_groups['lr'] = optimizer.param_groups[0]['lr']
+                else:
+                    for i, group in enumerate(optimizer.param_groups):
+                        key = f"lr_{group.get('name')}"
+                        lr_groups[key] = group['lr']
+
+                postfix = {k: f"{v:.2e}" for k, v in lr_groups.items()}
 
                 for loss_name, loss_value in loss.items():
                     postfix[loss_name] = f"{loss_value.item():.4f}"
@@ -92,12 +112,14 @@ def train_model(args):
             if metrics_results > best_metric:
                 best_metric = metrics_results
                 torch.save(model.module.state_dict(), weight_path)
+            save_checkpoint(model, optimizer, scheduler, epoch, best_metric, checkpoint_path)
         metrics.reset()
 
 def parse_args():
     parse = argparse.ArgumentParser()
     parse.add_argument('--exp', type=str, required=True)
     parse.add_argument('--config_path', type=str, required=True)
+    parse.add_argument('--resume', default=True)
     args = parse.parse_args()
     return args
 
