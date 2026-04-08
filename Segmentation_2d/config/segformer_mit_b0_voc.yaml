@@ -1,17 +1,18 @@
-class_num: &class_num 19
-ignore_index: &ignore_index 19
+class_num: &class_num 21
+ignore_index: &ignore_index 255
 root: "Segmentation_2d"
 task: &task "img_seg"
+img_size: &img_size 512
 
 img_mean: &img_mean [0.485, 0.456, 0.406]
 img_std: &img_std [0.229, 0.224, 0.225]
-dataset_name: &dataset_name "CityScapes"
-img_size: &img_size [512, 1024]
+dataset_name: &dataset_name "VOC"
 
-data_path: "Dataset/cityscapes/"
-meta_path: "Dataset/cityscapes/meta"
-train_batch_size: 8
-val_batch_size: 8
+year: "2012"
+download: False
+data_path: Dataset/VOC
+train_batch_size: 16
+val_batch_size: 16
 test_batch_size: 4
 
 transforms:
@@ -22,12 +23,7 @@ transforms:
       crop_size: *img_size
       ignore_index: *ignore_index
       pad_if_needed: True
-    - type: ColorJitter
-      brightness: 0.5
-      contrast: 0.5
-      saturation: 0.5
     - type: RandomHorizontalFlip
-      prob: 0.5
     - type: ToTensor
     - type: Normalize
       mean: *img_mean
@@ -52,22 +48,22 @@ transforms:
 model:
   name: "SegFormer"
   in_channels: 3
-  embed_dims: [64, 128, 320, 512]
+  embed_dims: [32, 64, 160, 256]
   n_heads: [1, 2, 5, 8]
   mlp_ratios: [4, 4, 4, 4]
   patch_sizes: [7, 3, 3, 3]
   strides: [4, 2, 2, 2]
-  depths: [3, 4, 6, 3]
+  depths: [2, 2, 2, 2]
   reduction_ratios: [8, 4, 2, 1]
   qkv_bias: True
   drop_path_rate: 0.1
   head_embed_dim: 256
   class_num: *class_num
   weight_init: "attention"
-  pretrained_weights: "Segmentation_2d/pretrained_weights/SegFormer/mit_b2_backbone.pth"
+  pretrained_weights: "Segmentation_2d/pretrained_weights/SegFormer/mit_b0_backbone.pth"
 
 # Training
-epochs: 430
+epochs: 100
 scheduler:
   name: "Poly"
 
@@ -75,11 +71,13 @@ optimizer:
   name: "AdamW"
   weight_decay: 0.01
   lr: 0.00006
+  # lr_multi_dict:
+  #   backbone: 0.9
 
 loss:
   name: CrossEntropyLoss
   ignore_index: *ignore_index
-  lovasz_weight: 1.5
+  lovasz_weight: 1.0
   boundary_weight: 0.5
 
 metrics:

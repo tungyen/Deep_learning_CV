@@ -6,11 +6,11 @@ task: &task "img_seg"
 img_mean: &img_mean [0.485, 0.456, 0.406]
 img_std: &img_std [0.229, 0.224, 0.225]
 dataset_name: &dataset_name "CityScapes"
-img_size: &img_size [1024, 1024]
+img_size: &img_size [512, 1024]
 
 data_path: "Dataset/cityscapes/"
 meta_path: "Dataset/cityscapes/meta"
-train_batch_size: 2
+train_batch_size: 8
 val_batch_size: 4
 test_batch_size: 4
 
@@ -64,10 +64,10 @@ model:
   head_embed_dim: 256
   class_num: *class_num
   weight_init: "attention"
-  pretrained_weights: "Segmentation_2d/pretrained_weights/SegFormer2/mit_b0_backbone.pth"
+  pretrained_weights: "Segmentation_2d/pretrained_weights/SegFormer/mit_b0_backbone.pth"
 
 # Training
-epochs: 100
+epochs: 430
 scheduler:
   name: "Poly"
 
@@ -75,14 +75,12 @@ optimizer:
   name: "AdamW"
   weight_decay: 0.01
   lr: 0.00006
-  lr_multi_dict:
-    backbone: 0.1
 
 loss:
   name: CrossEntropyLoss
   ignore_index: *ignore_index
-  # lovasz_weight: 1.5
-  # boundary_weight: 0.5
+  lovasz_weight: 1.5
+  boundary_weight: 0.5
 
 metrics:
   name: "ConfusionMatrix"

@@ -1,7 +1,7 @@
 from torch.optim.lr_scheduler import _LRScheduler
 
 class PolyLR(_LRScheduler):
-    def __init__(self, optimizer, power=1.0, min_lr=1e-6, last_epoch=-1, train_size=-1, epochs=1, **kwargs):
+    def __init__(self, optimizer, power=0.9, min_lr=1e-6, last_epoch=-1, train_size=-1, epochs=1, **kwargs):
         self.power = power
         self.max_iters = train_size * epochs
         self.min_lr = min_lr

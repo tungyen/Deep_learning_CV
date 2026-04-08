@@ -21,7 +21,7 @@ Model with task category:
 ## 2D Semantic Segmentation ##
 1. **DeepLabV3**
 2. **DeepLabV3+**
-3. **SegFormer (todo)**
+3. **SegFormer**
 4. **Segmenter (todo)**
 5. **OCRNet (todo)**
 

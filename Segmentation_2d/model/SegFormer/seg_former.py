@@ -323,9 +323,6 @@ class SegFormer(nn.Module):
             drop_path_rate=drop_path_rate
         )
 
-        if pretrained_weights is not None:
-            self.backbone.load_state_dict(torch.load(pretrained_weights))
-
         self.head = SegFormerHead(
             in_channels=embed_dims,
             strides=strides,
@@ -335,6 +332,9 @@ class SegFormer(nn.Module):
 
         if weight_init is not None:
             self.apply(initialize_weights(weight_init))
+
+        if pretrained_weights is not None:
+            self.backbone.load_state_dict(torch.load(pretrained_weights))
 
     def forward(self, x):
         feats = self.backbone(x)

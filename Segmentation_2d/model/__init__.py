@@ -1,11 +1,13 @@
 from Segmentation_2d.model.DeepLabV3 import *
 from Segmentation_2d.model.SegFormer import SegFormer
+from Segmentation_2d.model.Segmenter import Segmenter
 
 
 MODEL_DICT = {
     "DeepLabV3": DeepLabV3,
     "DeepLabV3Plus": DeepLabV3Plus,
     "SegFormer": SegFormer,
+    "Segmenter": Segmenter,
 }
 
 def build_model(opts):

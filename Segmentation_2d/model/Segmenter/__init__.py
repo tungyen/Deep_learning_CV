@@ -1,0 +1,1 @@
+from Segmentation_2d.model.Segmenter.segmenter import Segmenter

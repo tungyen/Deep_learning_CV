@@ -57,6 +57,7 @@ class TransformerEncoderBlock(nn.Module):
         embed_dim=768,
         num_head=12,
         drop_rate=0,
+        drop_path_rate=0.,
         mlp_ratio=4,
         act_layer=nn.GELU,
         norm_layer=nn.LayerNorm,
@@ -66,12 +67,11 @@ class TransformerEncoderBlock(nn.Module):
         self.norm2 = norm_layer(embed_dim)
 
         self.attn = MultiHeadAttention(embed_dim=embed_dim, num_head=num_head, proj_drop_rate=drop_rate, **kwargs)
-        self.dropout1 = nn.Dropout(drop_rate)
-        self.dropout2 = nn.Dropout(drop_rate)
+        self.drop_path = DropPath(drop_path_rate) if drop_path_rate > 0. else nn.Identity()
         mlp_hidden_dim = int(mlp_ratio * embed_dim)
         self.mlp = Mlp(in_chans=embed_dim, hidden_chans=mlp_hidden_dim, act_layer=act_layer, drop_rate=drop_rate)
 
     def forward(self, x):
-        x = x + self.dropout1(self.attn(self.norm1(x)))
-        x = x + self.dropout2(self.mlp(self.norm2(x)))
+        x = x + self.drop_path(self.attn(self.norm1(x)))
+        x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
