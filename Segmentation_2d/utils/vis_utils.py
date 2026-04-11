@@ -31,7 +31,7 @@ class ImageSegVisualizer:
         colorized_masks_f = colorized_masks.astype(np.float32)
         bs = imgs.shape[0]
         ori_sizes = input_dict['original_size']
-        _, axs = plt.subplots(3, bs, figsize=(8, 8))
+        _, axs = plt.subplots(3, bs, figsize=(3 * bs, 6))
 
         for i in range(bs):
             ori_size = ori_sizes[i]

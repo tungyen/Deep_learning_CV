@@ -7,17 +7,17 @@ First of all, please follow [My Dataset Guidance](https://github.com/tungyen/Dee
 | Model | CE Weight | Lovasz Weight | Boundary Weight | Backbone | mIoUs |
 |-------|-----|----------|-------------------|----------|-------|
 | DeepLabV3 | 1.0 | None | None | ResNet101 | 69.35% |
-| DeepLabV3 | 1.0 | 1.0 | None | ResNet101 | 70.89% |
-| DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet101 | 70.59% |
+| DeepLabV3 | 1.0 | 1.5 | None | ResNet101 | 70.89% |
+| DeepLabV3 | 1.0 | 1.5 | 0.5 | ResNet101 | 70.59% |
 | DeepLabV3 | 1.0 | None | None | ResNet152 | 70.11% |
-| DeepLabV3 | 1.0 | 1.0 | None | ResNet152 | 71.54% |
-| DeepLabV3 | 1.0 | 1.0 | 0.5 | ResNet152 | 71.57% |
+| DeepLabV3 | 1.0 | 1.5 | None | ResNet152 | 71.54% |
+| DeepLabV3 | 1.0 | 1.5 | 0.5 | ResNet152 | 71.57% |
 | DeepLabV3++ | 1.0 | None | None | ResNet101 | 71.74% |
 | DeepLabV3++ | 1.0 | 1.5 | None | ResNet101 | 73.4% |
 | DeepLabV3++ | 1.0 | 1.5 | 0.5 | ResNet101 | 73.53% |
 | DeepLabV3++ | 1.0 | None | None | ResNet152 | 71.68% |
-| DeepLabV3++ | 1.0 | 1.0 | None | ResNet152 | 73.57% |
-| DeepLabV3++ | 1.0 | 1.0 | 0.5 | ResNet152 | 73.65% |
+| DeepLabV3++ | 1.0 | 1.5 | None | ResNet152 | 73.57% |
+| DeepLabV3++ | 1.0 | 1.5 | 0.5 | ResNet152 | 73.65% |
 
 
 ### Paskal VOC dataset ###

@@ -15,7 +15,7 @@ python download_pretrained_mit.py --backbone_name mit_b0
 |-------|-----|-----|-----|-----|
 | SegFormer-B0 | 1.0 | None | None | 69.91% |
 | SegFormer-B0 | 1.0 | 1.0 | 0.5 | 70.94% |
-| SegFormer-B2 | 1.0 | None | None | 76.12% |
+| SegFormer-B2 | 1.0 | None | None | 76.46% |
 | SegFormer-B2 | 1.0 | 1.0 | 0.5 | % |
 
 
@@ -44,7 +44,7 @@ CE = 1.0:
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/segformer_b0_cityscapes.png)
 
 
-CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
+CE = 1.0, Lovasz = 1.0, Boundary = 0.5:
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/segformer_b0_cityscapes.png)
 
@@ -54,6 +54,6 @@ CE = 1.0:
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/segformer_b2_cityscapes.png)
 
 
-CE = 1.0, Lovasz = 1.5, Boundary = 0.5:
+CE = 1.0, Lovasz = 1.0, Boundary = 0.5:
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/segformer_b2_cityscapes.png)
