@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from timm.models.layers import DropPath, trunc_normal_
 
-from core.modules.transformer import TransformerEncoderBlock
+from core.modules.transformer import TransformerEncoderBlock, PatchEmbedding
 
 def resize_pos_embed(posemb, grid_old_shape, grid_new_shape, num_extra_tokens):
     # Rescale the grid of position embeddings when loading from state_dict. Adapted from
@@ -24,71 +24,55 @@ def resize_pos_embed(posemb, grid_old_shape, grid_new_shape, num_extra_tokens):
     posemb = torch.cat([posemb_tok, posemb_grid], dim=1)
     return posemb
 
-class PatchEmbedding(nn.Module):
-    def __init__(self, image_size, patch_size, embed_dim, channels):
-        super().__init__()
-
-        self.image_size = image_size
-        if image_size[0] % patch_size != 0 or image_size[1] % patch_size != 0:
-            raise ValueError("image dimensions must be divisible by the patch size")
-        self.grid_size = image_size[0] // patch_size, image_size[1] // patch_size
-        self.num_patches = self.grid_size[0] * self.grid_size[1]
-        self.patch_size = patch_size
-
-        self.proj = nn.Conv2d(
-            channels, embed_dim, kernel_size=patch_size, stride=patch_size
-        )
-
-    def forward(self, im):
-        B, C, H, W = im.shape
-        x = self.proj(im).flatten(2).transpose(1, 2)
-        return x
-
-
 class VisionTransformer(nn.Module):
     def __init__(
         self,
-        image_size,
+        img_size,
+        in_chans,
+        class_num,
         patch_size,
-        n_layers,
-        d_model,
-        d_ff,
-        n_heads,
-        n_cls,
-        dropout=0.1,
+        embed_dim,
+        n_layer,
+        n_head,
+        mlp_ratio=4.0,
+        drop_rate=0.1,
         drop_path_rate=0.0,
-        channels=3,
+        **kwargs
     ):
         super().__init__()
         self.patch_embed = PatchEmbedding(
-            image_size,
-            patch_size,
-            d_model,
-            channels,
+            img_size=img_size,
+            in_chans=in_chans,
+            embed_dim=embed_dim,
+            patch_size=patch_size,
         )
         self.patch_size = patch_size
-        self.n_layers = n_layers
-        self.d_model = d_model
-        self.d_ff = d_ff
-        self.n_heads = n_heads
-        self.dropout = nn.Dropout(dropout)
-        self.n_cls = n_cls
+        self.n_layer = n_layer
+        self.embed_dim = embed_dim
+        self.n_heads = n_head
+        self.class_num = class_num
 
         # cls and pos tokens
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, d_model))
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.pos_embed = nn.Parameter(
-            torch.randn(1, self.patch_embed.num_patches + 1, d_model)
+            torch.randn(1, self.patch_embed.n_patches + 1, embed_dim)
         )
 
         # transformer blocks
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, n_layers)]
         self.blocks = nn.ModuleList(
-            [TransformerEncoderBlock(d_model, n_heads, d_ff, dropout, dpr[i]) for i in range(n_layers)]
+            [TransformerEncoderBlock(
+                embed_dim=embed_dim,
+                num_heads=n_heads,
+                mlp_ratio=mlp_ratio,
+                drop_rate=drop_rate,
+                drop_path_rate=dpr[i],
+                **kwargs
+            ) for i in range(n_layer)]
         )
 
-        # output head
-        self.norm = nn.LayerNorm(d_model)
-        self.head = nn.Linear(d_model, n_cls)
+        self.norm = nn.LayerNorm(embed_dim)
+        self.head = nn.Linear(embed_dim, class_num)
 
         trunc_normal_(self.pos_embed, std=0.02)
         trunc_normal_(self.cls_token, std=0.02)
@@ -98,11 +82,10 @@ class VisionTransformer(nn.Module):
     def no_weight_decay(self):
         return {"pos_embed", "cls_token", "dist_token"}
 
-    def forward(self, im, return_features=False):
-        B, _, H, W = im.shape
-        PS = self.patch_size
+    def forward(self, x, return_features=False):
+        B, _, H, W = x.shape
 
-        x = self.patch_embed(im)
+        x = self.patch_embed(x).flatten(2).transpose(1, 2)
         cls_tokens = self.cls_token.expand(B, -1, -1)
         x = torch.cat((cls_tokens, x), dim=1)
 
@@ -112,16 +95,13 @@ class VisionTransformer(nn.Module):
             pos_embed = resize_pos_embed(
                 pos_embed,
                 self.patch_embed.grid_size,
-                (H // PS, W // PS),
+                (H // self.patch_size, W // self.patch_size),
                 num_extra_tokens,
             )
         x = x + pos_embed
-        x = self.dropout(x)
-
         for blk in self.blocks:
             x = blk(x)
         x = self.norm(x)
-
         if return_features:
             return x
 

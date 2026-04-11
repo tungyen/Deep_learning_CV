@@ -20,9 +20,12 @@ class Mlp(nn.Module):
         return x
 
 class PatchEmbedding(nn.Module):
-    def __init__(self, in_chans=3, embed_dim=96, patch_size=4, patch_norm=True):
+    def __init__(self, img_size, in_chans=3, embed_dim=96, patch_size=4, patch_norm=True):
         super().__init__()
+        self.img_size = img_size
         self.proj = nn.Conv2d(in_channels=in_chans, out_channels=embed_dim, kernel_size=patch_size, stride=patch_size)
+        self.n_patches = (img_size[0] // patch_size) * (img_size[1] // patch_size)
+        self.grid_size = img_size[0] // patch_size, img_size[1] // patch_size
         if patch_norm:
             self.norm = nn.LayerNorm(embed_dim)
         else:

@@ -12,7 +12,8 @@ class VitSinusoidal(VitBase):
         img_size=224,
         patch_size=16,
         weight_init=None,
-        **kwargs):
+        **kwargs
+    ):
         super().__init__(patch_size=patch_size, **kwargs)
 
         self.img_size = img_size

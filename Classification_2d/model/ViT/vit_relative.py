@@ -67,7 +67,8 @@ class VitRelative(VitBase):
         img_size=224,
         patch_size=16,
         weight_init=None,
-        **kwargs):
+        **kwargs
+    ):
         super().__init__(patch_size=patch_size, **kwargs)
 
         patch_len = img_size // patch_size

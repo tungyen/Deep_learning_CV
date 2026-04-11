@@ -86,21 +86,23 @@ class Segmenter(nn.Module):
         self,
         img_size=(224, 224),
         class_num=20,
-        in_channels=3,
-        encoder_embed_dims=512,
+        in_chans=3,
+        encoder_embed_dim=512,
         n_head=8,
         mlp_ratio=4,
         patch_size=8,
-        n_layer=12,
+        encoder_n_layer=12,
+        decoder_n_layer=4,
         qkv_bias=True,
+        drop_rate=0.,
         drop_path_rate=0.1,
         weight_init=None,
         pretrained_weights=None,
         **kwargs
     ):
         super().__init__()
-        self.in_channels = in_channels
-        self.encoder_embed_dims = encoder_embed_dims
+        self.in_chans = in_chans
+        self.encoder_embed_dim = encoder_embed_dim
         self.n_head = n_head
         self.mlp_ratio = mlp_ratio
         self.patch_size = patch_size
@@ -110,23 +112,28 @@ class Segmenter(nn.Module):
         self.class_num = class_num
 
         self.encoder = VisionTransformer(
-            image_size=img_size,
+            img_size=img_size,
+            in_chans=in_chans,
+            class_num=class_num,
             patch_size=patch_size,
-            n_layers=n_layer,
-            d_model=encoder_embed_dims,
-            d_ff=encoder_embed_dims * mlp_ratio,
-            n_heads=n_head,
-            n_cls=class_num,
+            embed_dim=encoder_embed_dim,
+            n_layer=encoder_n_layer,
+            mlp_ratio=mlp_ratio,
+            n_head=n_head,
+            drop_rate=drop_rate,
             drop_path_rate=drop_path_rate,
+            qkv_bias=qkv_bias,
+            **kwargs
         )
 
         self.decoder = MaskTransformer(
             class_num=class_num,
             patch_size=patch_size,
-            in_channels=encoder_embed_dims,
-            n_layer=n_layer,
+            in_channels=encoder_embed_dim,
+            n_layer=decoder_n_layer,
             n_head=n_head,
             mlp_ratio=mlp_ratio,
+            drop_rate=drop_rate,
             drop_path_rate=drop_path_rate,
             **kwargs
         )
