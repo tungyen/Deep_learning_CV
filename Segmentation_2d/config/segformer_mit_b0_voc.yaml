@@ -63,7 +63,7 @@ model:
   pretrained_weights: "Segmentation_2d/pretrained_weights/SegFormer/mit_b0_backbone.pth"
 
 # Training
-epochs: 100
+epochs: 400
 scheduler:
   name: "Poly"
 

@@ -16,16 +16,16 @@ python download_pretrained_mit.py --backbone_name mit_b0
 | SegFormer-B0 | 1.0 | None | None | 69.91% |
 | SegFormer-B0 | 1.0 | 1.0 | 0.5 | 70.94% |
 | SegFormer-B2 | 1.0 | None | None | 76.46% |
-| SegFormer-B2 | 1.0 | 1.0 | 0.5 | % |
+| SegFormer-B2 | 1.0 | 1.0 | 0.5 | 77.02% |
 
 
 ### Paskal VOC dataset ###
 | Model | CE Weight | Lovasz Weight | Boundary Weight | mIoUs |
 |-------|-----|-----|-----|-----|
-| SegFormer-B0 | 1.0 | None | None | % |
-| SegFormer-B0 | 1.0 | 1.0 | 0.5 | % |
-| SegFormer-B2 | 1.0 | None | None | % |
-| SegFormer-B2 | 1.0 | 1.0 | 0.5 | % |
+| SegFormer-B0 | 1.0 | None | None | 68.51% |
+| SegFormer-B0 | 1.0 | 1.0 | 0.5 | 68.45% |
+| SegFormer-B2 | 1.0 | None | None | 79.87% |
+| SegFormer-B2 | 1.0 | 1.0 | 0.5 | 79.91% |
 
 
 You can change weight of lovasz/boundary loss in config by changing `lovasz_weight` and `boundary_weight`.
@@ -57,3 +57,25 @@ CE = 1.0:
 CE = 1.0, Lovasz = 1.0, Boundary = 0.5:
 
 ![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/segformer_b2_cityscapes.png)
+
+
+### Result of Paskal VOC 2012 Dataset ###
+
+#### SegFormer B0 ####
+CE = 1.0:
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/segformer_b0_voc.png)
+
+CE = 1.0, Lovasz = 1.0, Boundary = 0.5:
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/segformer_b0_voc.png)
+
+#### SegFormer B2 ####
+CE = 1.0:
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/segformer_b2_voc_voc.png)
+
+
+CE = 1.0, Lovasz = 1.0, Boundary = 0.5:
+
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/segformer_b2_voc_voc.png)
