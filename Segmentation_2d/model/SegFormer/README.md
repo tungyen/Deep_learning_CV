@@ -73,9 +73,9 @@ CE = 1.0, Lovasz = 1.0, Boundary = 0.5:
 #### SegFormer B2 ####
 CE = 1.0:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/segformer_b2_voc_voc.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce/segformer_b2_voc.png)
 
 
 CE = 1.0, Lovasz = 1.0, Boundary = 0.5:
 
-![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/segformer_b2_voc_voc.png)
+![image](https://github.com/tungyen/Deep_learning_CV/blob/master/Segmentation_2d/img/ce_lovasz_bound/segformer_b2_voc.png)
